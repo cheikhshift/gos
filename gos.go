@@ -132,7 +132,7 @@ func main() {
     			core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
     			fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
-    			core.RunCmd("echo " + os.Args[2] + " | sudo -S python setup.py install" )
+    			core.RunCmd("python setup.py install" )
     			//time.Sleep(time.Second *120)
     			fmt.Println("Done")
     			return
