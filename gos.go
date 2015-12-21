@@ -84,6 +84,12 @@ func writeLocalProtocol(pack string){
 					        GetString = [[process componentsSeparatedByString:@"?"] objectAtIndex:1];
 					        process = [[process componentsSeparatedByString:@"?"] objectAtIndex:0];
 					    }
+
+
+                        if([self.request HTTPBody] != nil){
+                            GetString = [GetString stringByAppendingString:@"&"];
+                            GetString = [GetString stringByAppendingString:[NSString stringWithUTF8String:[self.request.HTTPBody bytes] ]];
+                        }
 					    
 					    CFStringRef fileExtension = (__bridge CFStringRef)[process pathExtension];
 					    CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
@@ -102,11 +108,50 @@ func writeLocalProtocol(pack string){
 					          
 					  
 					    [[self client] URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-					    [[self client] URLProtocol:self didLoadData:Go` + UpperInitial(pack) +`LoadUrl(process, nil, self.request.HTTPMethod)];
+					    [[self client] URLProtocol:self didLoadData:Go` + UpperInitial(pack) +`LoadUrl(process, [self parseParams:GetString], self.request.HTTPMethod)];
 					    [[self client] URLProtocolDidFinishLoading:self];
 					      });
 					   
 					}
+
+					- (NSData *) parseParams: (NSString *) input {
+					    if(![input isEqualToString:@""]){
+					    NSArray *pieces = [input componentsSeparatedByString:@"&"];
+					    NSDictionary *payload = [NSMutableDictionary new];
+					    
+					    
+					    
+					    for (int i = 0; i < pieces.count; i++) {
+					        NSString * param  = [pieces objectAtIndex:i];
+					        if(![param isEqualToString:@""]){
+					         
+					            NSArray *keyset = [param componentsSeparatedByString:@"="];
+					            [payload setValue:[self urlDecode:[keyset objectAtIndex:1] ] forKey:[self urlDecode:[keyset objectAtIndex:0]] ];
+					            
+					        }
+					    }
+					    NSError *error;
+					    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:payload
+					                                                       options:NSJSONWritingPrettyPrinted // Pass 0 if you don't care about the readability of the generated string
+					                                                         error:&error];
+					    
+					    if (! jsonData) {
+					        NSLog(@"Got an error: %@", error);
+					        return nil;
+					    } else {
+					        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+					        return [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+					    }
+					    }
+					    return nil;
+					    
+					}
+
+					- (NSString *) urlDecode :(NSString *) input {
+					    return [[input stringByReplacingOccurrencesOfString:@"+" withString:@" "]
+					            stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+					}
+	
 
 					- (void) stopLoading {
 					    

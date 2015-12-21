@@ -68,6 +68,27 @@ func NewLenChars(length int, chars []byte) string {
 func Process(template *gos,r string, web string, tmpl string) (local_string string) {
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
+
+	mathFuncs := ` 
+
+			 func net_add(x,v float64) float64 {
+					return v + x				   
+			 }
+
+			 func net_subs(x,v float64) float64 {
+				   return v - x
+			 }
+
+			 func net_multiply(x,v float64) float64 {
+				   return v * x
+			 }
+
+			 func net_divided(x,v float64) float64 {
+				   return v/x
+			 }
+
+	`
+
 	if template.Type == "webapp" {
 	local_string = `package main 
 import (`
@@ -121,7 +142,7 @@ import (`
 
 		
 		fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) {
           		netMa += `,"` + imp + `" : net_` + imp
@@ -200,6 +221,8 @@ import (`
 
 					return false
 				}
+
+				`  + mathFuncs + `
 
 				func net_sessionGetInt(key string,s *sessions.Session) interface{} {
 					return s.Values[key]
@@ -695,7 +718,7 @@ import (`
 		}
 	
 		fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) {
           		netMa += `,"` + imp + `" : net_` + imp
@@ -712,6 +735,9 @@ import (`
 			}
 			}
 
+			for _,imp := range template.Header.Structs {
+				netMa += `,"is` + imp.Name + `":net_is` + imp.Name
+			}
 
            for _,imp := range template.Templates.Templates {
 
@@ -758,6 +784,7 @@ import (`
 					    Title string
 					    Body  []byte
 					 	Parameters map[string]interface{}
+					 	Session session
 					    isResource bool
 					}
 
@@ -769,7 +796,11 @@ import (`
 				}
 
 				func paramGet(ke string,f map[string]interface{}) string {
+					if _, ok := f[ke]; ok {
 					return f[ke].(string)
+					} else {
+						return ""
+					}
 				}
 			
 				func dummy_timer(){
@@ -798,6 +829,7 @@ import (`
 
 								  if !p.isResource {
 								      p.Parameters = f.(map[string]interface{}) 
+								      p.Session = openSession()
 								      return   []byte(html.UnescapeString(string(renderTemplate("web" + path, p))))
 								  } else {
 								       return p.Body
@@ -830,6 +862,8 @@ import (`
 
 					return false
 				}
+
+				` + mathFuncs + `
 
 				func net_GetSession(key string) interface{} {
 					s := openSession() 
@@ -1116,6 +1150,12 @@ import (`
 			type ` + imp.Name + ` struct {`
 			local_string += imp.Attributes
 			local_string += `
+			}`
+
+			local_string += `
+			func net_is` + imp.Name + ` (arg interface{}) ` + imp.Name + ` {`
+			local_string += `
+				return arg.(` + imp.Name +`)
 			}`
 			}
 		}

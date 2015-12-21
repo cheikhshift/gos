@@ -39,7 +39,7 @@
         [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:self.viewurl]] ];
     }
     else {
-        [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://localhost/"]] ];
+        [self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://localhost/index"]] ];
     }
     
     [self setNeedsStatusBarAppearanceUpdate];
