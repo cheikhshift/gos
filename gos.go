@@ -163,6 +163,67 @@ func writeLocalProtocol(pack string){
 	ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos/iosClasses/FlowProtocol.m",[]byte(cObjFile), 0644)
 }
 
+var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
+<gos>
+	<!--Stating the deployment type GoS should compile -->
+	<!-- Curent valid types are webapp,shell and bind -->
+	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
+	<deploy>SETTHIS</deploy>
+	<package>mymobile</package>
+	
+	<!-- Using import within different tags will have different results -->
+	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
+	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
+	<!-- To be less dramating, GoS will skip packages that it has already imported -->
+	
+	<!-- Go File output name -->
+	<output>server_out.go</output>
+	<!-- exported session fields available to Session -->
+
+
+	<key>a very very very very secret key</key>
+	<!-- Declare global variables -->
+	<!-- Contains interfaces and structs
+	 that will be used by the GoS application -->
+	<header> 
+			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
+	</header>
+	<methods>
+		<!-- Vars are defined as usual except within the var attribute for example :  -->
+		<!-- If there is a basic go function : func hackfmt(data string, data2 string) -->
+		<!-- the attribute names would be called as such var="data string,data2 string" -->
+		<!-- Similar to a go function decleration-->
+		<!--  if a method matches the criteria for an  interface it will be used as an interface method -->
+		<!-- To prevent that use the autoface attribute and set it to "false" By default it is true -->
+		<!-- Use the keep-local="true" attribute to limit a method within a Go file -->	
+		<!-- Sometimes your method will return data  -->
+		<!-- And to do so we will need to add a return var list by using the return attribute  -->
+		<!-- Sometimes the autointerface will reuse the wrong the function, or your interface methods need a bit more distinction -->
+		<!-- Vis a  vis which object types are used in generating these mutating methods -->
+		<!--Use the limit attribute to narrow down the applicable structs for this method -->
+		<!-- Use the object attribute to determine the name of the local variable name to be mutated within the function. By default GoS will assume object is the variable name  -->
+	</methods>
+
+	<templates>
+ 		<!-- Template libraries are useful for expediting page creation and reuse common website elements within this GoS application -->
+ 		<!-- Templates are nested and customized with the template function instead of using the normal {{template "Name"}} call you can now use {{Button &{Color:"#fff"}& }}
+ 		{{Modal &{Color:"#fff"}& }}  -->
+ 		<!-- *Notice that special braces are used to initialize the parameters of the struct '&{' and '}&' -->
+ 		
+ 		<!-- <template name="Bootstrap_alert" tmpl="bootstrap/alert" struct="Bootstrap_alert" /> -->
+ 		
+	</templates>
+	<endpoints>
+      <!-- Depending on your build type the usage of this tag will vary. -->
+      <!-- For WebServers it will override any request for a given path and run the specified method. No vars or return types are needed for  -->
+      <!-- methods linked to an API call, please keep in mind that you may use w for http.ResponseWriter and r for http.Request . Additional available function variables is params and session. If a function is api listed it will not be used anywhere else.-->
+      <!-- <end /> is the endpoint tag and has the variables path,method, -->
+      <!-- Happy trails!!! -->
+      <!-- <end path="/index/api" method="login" type="POST" ></end> -->
+	</endpoints>
+</gos>
+` 
+
 
 func main() {
 	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
@@ -180,6 +241,15 @@ func main() {
     			core.RunCmd("python setup.py install" )
     			//time.Sleep(time.Second *120)
     			fmt.Println("Done")
+    			return
+    		}
+
+    		if os.Args[1] == "make" {
+    		//2 is project folder
+    		
+    		    os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/web", 0777 )
+    			os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/tmpl",0777 )
+    			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.xml", []byte(gosTemplate), 0777)	
     			return
     		}
     
