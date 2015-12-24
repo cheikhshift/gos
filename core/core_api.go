@@ -871,11 +871,19 @@ import (`
 				}
 				func net_GetSessionString(key string) string {
 					s := openSession() 
+					if _, ok := s.Values[key]; ok {
 					return s.Values[key].(string)
+					} else {
+						return ""
+					}
 				}
 				func net_GetSessionFloat(key string) float64 {
 					s := openSession() 
+					if _, ok := s.Values[key]; ok {
 					return s.Values[key].(float64)
+					} else {
+						return 0
+					}
 				}
 
 				func net_RemoveSessionField(key string) string {
