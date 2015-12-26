@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log"
+	"io"
 	"io/ioutil"
 	"encoding/xml"
 	"bytes"
@@ -13,6 +14,7 @@ import (
 	"os/exec"
 	"bufio"
 	"crypto/rand"
+	"path/filepath"
 )
 
 
@@ -27,6 +29,111 @@ var	int_methods  []string
 var	api_methods  []string
 var	int_mappings []string
 var StdChars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+
+
+func RemoveContents(dir string) error {
+    d, err := os.Open(dir)
+    if err != nil {
+        return err
+    }
+    defer d.Close()
+    names, err := d.Readdirnames(-1)
+    if err != nil {
+        return err
+    }
+    for _, name := range names {
+        err = os.RemoveAll(filepath.Join(dir, name))
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+
+func CopyFile(source string, dest string) (err error) {
+    sf, err := os.Open(source)
+    if err != nil {
+        return err
+    }
+    defer sf.Close()
+    df, err := os.Create(dest)
+    if err != nil {
+        return err
+    }
+    defer df.Close()
+    _, err = io.Copy(df, sf)
+    if err == nil {
+        si, err := os.Stat(source)
+        if err != nil {
+            err = os.Chmod(dest, si.Mode())
+        }
+
+    }
+
+    return
+}
+//updates
+// Recursively copies a directory tree, attempting to preserve permissions. 
+// Source directory must exist, destination directory must *not* exist. 
+func CopyDir(source string, dest string) (err error) {
+
+    // get properties of source dir
+    fi, err := os.Stat(source)
+    if err != nil {
+        return err
+    }
+
+    if !fi.IsDir() {
+        return &CustomError{"Source is not a directory"}
+    }
+
+    // ensure dest dir does not already exist
+
+    _, err = os.Open(dest)
+    if !os.IsNotExist(err) {
+         err = os.MkdirAll(dest, fi.Mode())
+	    if err != nil {
+	        return err
+	    }
+    }
+
+    // create dest dir
+
+  
+
+    entries, err := ioutil.ReadDir(source)
+
+    for _, entry := range entries {
+
+        sfp := source + "/" + entry.Name()
+        dfp := dest + "/" + entry.Name()
+        if entry.IsDir() {
+            err = CopyDir(sfp, dfp)
+            if err != nil {
+                log.Println(err)
+            }
+        } else {
+            // perform copy         
+            err = CopyFile(sfp, dfp)
+            if err != nil {
+                log.Println(err)
+            }
+        }
+
+    }
+    return
+}
+
+// A struct for returning custom error messages
+type CustomError struct {
+    What string
+}
+
+// Returns the error message defined in What as a string
+func (e *CustomError) Error() string {
+    return e.What
+}
 
 func NewLen(length int) string {
 	return NewLenChars(length, StdChars)
@@ -178,6 +285,29 @@ import (`
 					if  !contains(net_imports, imp.Src) {
 						net_imports = append(net_imports, imp.Src)
 					}
+			} else {
+				pathsplit := strings.Split(imp.Src,"/")
+				gosName := pathsplit[len(pathsplit) - 1]
+				pathsplit = pathsplit[:len(pathsplit)-1]
+				if imp.Download == "true" {
+						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
+						RunCmd("go get " + strings.Join(pathsplit,"/"))
+				}
+				//split and replace last section
+				fmt.Println("∑ Processing XML Yåå ", pathsplit)
+				xmlPackageDir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit,"/") + "/" 
+				xml_iter,_ := LoadGos( xmlPackageDir + gosName  )
+				if xml_iter.Package != "" {
+					//copy gole with given path -
+					fmt.Println("Installing Resources into project!")
+					//delete prior to copy
+				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
+				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
+					CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
+					CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
+				} else {
+					fmt.Println("∑ Error, Couldn't import your files no package name specified")
+				}
 			}
 		}
 
@@ -1535,6 +1665,7 @@ func LoadGos(path string) (*gos,*Error) {
    		//fmt.Println(imp.Src)
    		if strings.Contains(imp.Src,".xml") {
    			v.MergeWith(GOHOME + "/" + strings.Trim(imp.Src,"/"))
+   			//copy files
    		}
    	}
 
@@ -1551,15 +1682,29 @@ func (d*gos) MergeWith(target string) {
     for _,im := range imp.RootImports {
    	if strings.Contains(im.Src,".xml") {
    			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
+   			//copy files
+   	} else {
+   		d.RootImports = append(d.RootImports, im)
    	}
    }
 
-    d.RootImports = append(imp.RootImports,d.RootImports...)
+    //d.RootImports = append(imp.RootImports,d.RootImports...)
     d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
     d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
-    d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+    //Specialize method for templates
+
+    if imp.Package != "" && imp.Type == "package" {
+    		fmt.Println("Parsing Prefixes for " + imp.Package);
+    	for _,im := range imp.Templates.Templates {
+    		im.TemplateFile =  imp.Package + "/" + im.TemplateFile
+    		d.Templates.Templates = append(d.Templates.Templates, im) 
+    	}
+	} else {
+    	d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+	}
+
     d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)
 	}			
 }

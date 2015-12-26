@@ -266,14 +266,14 @@ func main() {
 
 			//fmt.Println(coreTemplate.Methods.Methods)
 			coreTemplate.WriteOut = false
+
+			//always delete add on folders prior
+		
 			core.Process(coreTemplate,GOHOME, webroot,template_root);
 
 			if coreTemplate.Type == "webapp" {
-					if os.Args[1] == "export" {
-						coreTemplate.WriteOut = true				
-					}
 
-				
+
 					if os.Args[1] == "run" {
 						os.Chdir(GOHOME)
 						fmt.Println("Invoking go-bindata");

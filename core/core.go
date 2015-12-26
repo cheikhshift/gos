@@ -34,11 +34,14 @@ type gos struct {
 	 Main string `xml:"main"`
 	 Variables []GlobalVariables `xml:"var"`
 	 WriteOut bool
+	 Export string `xml:"export"`
 	 Key string `xml:"key"`
 	 Session string `xml:"session"`
 	 Template_path string `xml:"templatePath"`
 	 Web_root string `xml:"webroot"`
 	 Package string `xml:"package"`
+	 Web string `xml:"web"`
+	 Tmpl string `xml:"tmpl"`
 	 RootImports []Import `xml:"import"`
 	 Init_Func string `xml:"init"`
 	 Header Header `xml:"header"`
