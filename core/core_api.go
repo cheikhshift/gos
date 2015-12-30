@@ -848,7 +848,7 @@ import (`
 		}
 	
 		fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		     netMa := 	`template.FuncMap{"Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) {
           		netMa += `,"` + imp + `" : net_` + imp
@@ -898,6 +898,36 @@ import (`
 		}
 		local_string += `
 		)
+
+               type Flow interface {
+         			PushView(url string)
+         			DismissView()
+         			DismissViewatInt(index int)
+         			Width() float64
+         			Height() float64
+         		}
+
+         		func net_pushView(url string,flow Flow) string {
+         			flow.PushView(url)
+         			return ""
+         		}
+
+         		func net_dismissView(flow Flow) string {
+         			flow.DismissView()
+         			return ""
+         		}
+
+         		func net_layerWidth(flow Flow) float64 {
+         			return flow.Width()
+         		}
+         		func net_layerHeight(flow Flow) float64 {
+         			return flow.Height()
+         		}
+
+         		func net_dismissViewatInt(ind int,flow Flow) string {
+         			flow.DismissViewatInt(ind)
+         			return ""
+         		}
 				
 				var key = []byte("` + template.Key +`")
 
@@ -915,6 +945,7 @@ import (`
 					    Body  []byte
 					 	Parameters map[string]interface{}
 					 	Session session
+					 	Layer Flow
 					    isResource bool
 					}
 
@@ -938,7 +969,7 @@ import (`
 					fmt.Println(dg)
 				}
 
-				func LoadUrl(path string,bod []byte,method string)[]byte { 
+				func LoadUrl(path string,bod []byte,method string,flow Flow)[]byte { 
 								
 				body := new(bytes.Buffer)
 				body.Write(bod)
@@ -946,7 +977,7 @@ import (`
 				if bod != nil {
 				_ = json.Unmarshal(bod, &f)
 				}
-				data,proceed := apiAttempt(path,method,bod)				
+				data,proceed := apiAttempt(path,method,bod,flow)				
 				if proceed {
 					return data
 				} else {
@@ -960,6 +991,7 @@ import (`
 								  if !p.isResource {
 								      p.Parameters = f.(map[string]interface{}) 
 								      p.Session = openSession()
+								      p.Layer = flow
 								      return   []byte(html.UnescapeString(string(renderTemplate("web" + path, p))))
 								  } else {
 								       return p.Body
@@ -1189,7 +1221,7 @@ import (`
 				    //load custom struts
 				    return &page{Title: title, Body: body,isResource:false}, nil
 				}
-				func apiAttempt(path string, method string,bod []byte) ([]byte,bool) {
+				func apiAttempt(path string, method string,bod []byte,layer Flow) ([]byte,bool) {
 				//	session, er := store.Get(r, "session-")
 					response := ""
 					session := openSession()

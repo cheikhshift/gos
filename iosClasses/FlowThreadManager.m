@@ -7,7 +7,6 @@
 //
 
 #import "FlowThreadManager.h"
-#import "ViewController.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 
 @implementation FlowThreadManager {
@@ -209,6 +208,15 @@ didFailLoadWithError:(NSError *)error {
     [viewController dismissViewControllerAnimated:YES completion:nil];
 }
 
++ (void) pulseView : (NSString *) url {
+    UIStoryboard *st = [UIStoryboard storyboardWithName:@"Main"
+                                                 bundle:[NSBundle mainBundle]];
+    
+    ViewController *viewController =  [st instantiateViewControllerWithIdentifier:@"FlowView"];
+    viewController.override = YES;
+    viewController.viewurl = [NSString stringWithFormat:@"http://localhost/%@", url];
+    [(UINavigationController *)[UIApplication sharedApplication].keyWindow.rootViewController pushViewController:viewController animated:YES];
+}
 
 
 
@@ -386,7 +394,7 @@ didFailLoadWithError:(NSError *)error {
         viewController.viewurl = payload[@"url"];
         [(UINavigationController *)[UIApplication sharedApplication].keyWindow.rootViewController pushViewController:viewController animated:YES];
         initialjs = @"";
-        /*
+        /*
          UIStoryboard *sb = [UIStoryboard storyboardWithName:@"NameOfStoryBoard" bundle:nil];
          UITabBarController *rootViewController = [sb instantiateViewControllerWithIdentifier:@"NameOfTabBarController"];
          [[UIApplication sharedApplication].keyWindow setRootViewController:rootViewController];

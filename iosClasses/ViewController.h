@@ -7,6 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "FlowThreadManager.h"
+#import "FlowProtocol.h"
 
 
 @interface ViewController : UIViewController

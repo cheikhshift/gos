@@ -26,5 +26,6 @@ typedef void(^CodeProcessCompletion)(NSString *result);
 + (BOOL) saveobject:(id)object withName:(NSString *) key;
 + (void) webviewCompletion:(Completion) finished;
 + (void) userDidCancelPayment;
++ (void) pulseView : (NSString *) url;
 + (void) pinLogin;
 @end

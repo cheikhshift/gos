@@ -7,12 +7,11 @@
 //
 
 #import "ViewController.h"
-#import "FlowThreadManager.h"
-#import "FlowProtocol.h"
 
-@interface ViewController ()
+@interface ViewController()
 
 @end
+
 
 @implementation ViewController
 

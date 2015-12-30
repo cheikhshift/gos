@@ -25,6 +25,9 @@ shutil.copy2(iosclasses + "StoryBoards/Main_iPad.storyboard", dest + "Main_iPad.
 
 project.add_file_if_doesnt_exist(iosclasses + "AppDelegate.m",group)
 project.add_file_if_doesnt_exist(iosclasses + "FlowProtocol.h",group)
+project.add_file_if_doesnt_exist(iosclasses + "FlowProtocol.h",group)
+project.add_file_if_doesnt_exist(iosclasses + "FlowTissue.h",group)
+project.add_file_if_doesnt_exist(iosclasses + "FlowTissue.m",group)
 project.add_file_if_doesnt_exist(iosclasses + "FlowThreadManager.h",group)
 
 project.add_file_if_doesnt_exist(iosclasses + "FlowThreadManager.m",group)

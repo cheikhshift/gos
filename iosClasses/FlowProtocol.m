@@ -7,6 +7,7 @@
 					//
 
 					#import "FlowProtocol.h"
+					#import "FlowTissue.h"
 					#import "Mymobile/Mymobile.h"
 
 					@implementation FlowProtocol
@@ -62,7 +63,8 @@
 					          
 					  
 					    [[self client] URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-					    [[self client] URLProtocol:self didLoadData:GoMymobileLoadUrl(process, [self parseParams:GetString], self.request.HTTPMethod)];
+					     FlowTissue *ftis = [[FlowTissue alloc] init];
+					    [[self client] URLProtocol:self didLoadData:GoMymobileLoadUrl(process, [self parseParams:GetString], self.request.HTTPMethod,ftis)];
 					    [[self client] URLProtocolDidFinishLoading:self];
 					      });
 					   
