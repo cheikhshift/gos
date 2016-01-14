@@ -848,7 +848,7 @@ import (`
 		}
 	
 		fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		     netMa := 	`template.FuncMap{"GetLocation": net_supportGetLocation,"Run": net_supportRunjs,"PlaySound" : net_supportSoundPlay,"StopSound" : net_supportSoundStop,"SetVolume" : net_supportSoundSetVolume,"GetVolume" : net_supportSoundGetVolume, "isPlaying" : net_supportSoundisPlaying,"trackMotion": net_supportMotionStart,"stopMotion" : net_supportMotionStop,"ShowLoad" : net_supportShowload, "HideLoad" : net_supportHideLoad, "Device": net_supportDevice,"TakePicture" : net_supportTakePicture, "Notify" : net_supportNotify,"AbsolutePath" : net_supportFileAbsPath,"Download" : net_supportFileDownload,"Download_lg" : net_supportFileDownloadLarge,"Base64" : net_supportBase64,"DeleteRes" : net_supportDeleteFile , "Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) {
           		netMa += `,"` + imp + `" : net_` + imp
@@ -899,14 +899,157 @@ import (`
 		local_string += `
 		)
 
-               type Flow interface {
+                type Flow interface {
          			PushView(url string)
          			DismissView()
          			DismissViewatInt(index int)
          			Width() float64
          			Height() float64
+         			Device() int
+         			ShowLoad()
+         			HideLoad()
+         			RunJS(line string)
+
+         			Play(path string)
+        			Stop()
+        			SetVolume(power int)
+        			GetVolume() int
+        			IsPlaying() bool
+        			PlayFromWebRoot(path string)
+
+        			RequestLocation()
+        			TrackMotion()
+        			StopMotion()
+
+        			CreatePictureNamed(name string)
+        			OpenAppLink(url string)
+
+    
+         			Notify(title string,message string)
+
+         			AbsolutePath(file string) string
+         			Download(url string, target string) bool
+         			DownloadLarge(url string, target string)
+         			Base64String(target string) string
+         			GetBytes(target string) []byte
+         			GetBytesFromUrl(target string) []byte
+         			DeleteDirectory(path string) bool
+         			DeleteFile(path string) bool
+         			
          		}
 
+         		
+
+
+         		func net_supportGetLocation(flow Flow) string {
+         			flow.RequestLocation()
+         			return ""
+         		}
+
+         		func net_supportRunjs(jss string,flow Flow) string {
+         			flow.RunJS(jss)
+         			return ""
+         		}
+
+         		// sound funcs 
+
+         		func net_supportSoundPlay(file string,flow Flow) string {
+         			flow.PlayFromWebRoot(file)
+         			return ""
+         		}
+
+         		func net_supportSoundStop(flow Flow) string {
+         			flow.Stop()
+         			return ""
+         		}
+
+         		func net_supportSoundSetVolume(level int, flow Flow) string {
+         			flow.SetVolume(level)
+         			return ""
+         		}
+
+         		func net_supportSoundGetVolume(flow Flow) int {
+         			return flow.GetVolume()
+         		}
+
+         		func net_supportSoundisPlaying(flow Flow) bool {
+         			return flow.IsPlaying()
+         		}
+
+         		// end sound funcs 
+
+         		func net_supportMotionStart(flow Flow) string {
+         			flow.TrackMotion()
+         			return ""
+         		}
+
+         		func net_supportMotionStop(flow Flow) string {
+         			flow.StopMotion()
+         			return ""
+         		}
+
+         		func net_supportDevice(flow Flow) int {
+         			return flow.Device()
+         		}
+
+         		func net_supportShowload(flow Flow) string {
+         			flow.ShowLoad()
+         			return ""
+         		}
+
+         		func net_supportHideLoad(flow Flow) string {
+         			flow.HideLoad()
+         			return ""
+         		}
+
+         		func net_supportTakePicture(pic string,flow Flow) string {
+         			flow.CreatePictureNamed(pic)
+         			return ""
+         		}
+
+         		func net_supportNotify(title string,message string,flow Flow) string {
+         			flow.Notify(title,message)
+         			return ""
+         		}
+
+         		// start file manager 
+     
+
+         		func net_supportFileAbsPath(path string, file Flow) string {
+         			return file.AbsolutePath(path)
+         		}
+
+         		func net_supportFileDownload(url string,target string, file Flow) bool {
+         			return file.Download(url,target);
+         		}
+
+         		func net_supportFileDownloadLarge(url string, target string, file Flow) string {
+         			file.DownloadLarge(url, target)
+         			return ""
+         		}
+
+         		func net_supportBase64(path string,file Flow) string {
+         			return file.Base64String(path)
+         		}
+
+         		func net_supportGetBytes(target string, file Flow) []byte {
+         			return file.GetBytes(target)
+         		}
+
+         		func net_supportGetBytesFromUrl(target string, file Flow) []byte {
+         			return file.GetBytesFromUrl(target)
+         		}
+
+         		func net_supportDeleteFolder(path string,file Flow) bool {
+         			return file.DeleteDirectory(path)
+         		}
+
+         		func net_supportDeleteFile(path string,file Flow) bool {
+         			return file.DeleteFile(path)
+         		}
+
+
+         		// End file manager 
          		func net_pushView(url string,flow Flow) string {
          			flow.PushView(url)
          			return ""

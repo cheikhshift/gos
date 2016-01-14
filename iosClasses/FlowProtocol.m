@@ -41,7 +41,7 @@
 					    }
 
 
-                        if([self.request HTTPBody] != nil){
+                        if([self.request HTTPBody] != nil && [self.request.HTTPBody length] > 0){
                             GetString = [GetString stringByAppendingString:@"&"];
                             GetString = [GetString stringByAppendingString:[NSString stringWithUTF8String:[self.request.HTTPBody bytes] ]];
                         }
@@ -63,8 +63,8 @@
 					          
 					  
 					    [[self client] URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-					     FlowTissue *ftis = [[FlowTissue alloc] init];
-					    [[self client] URLProtocol:self didLoadData:GoMymobileLoadUrl(process, [self parseParams:GetString], self.request.HTTPMethod,ftis)];
+					   
+					    [[self client] URLProtocol:self didLoadData:GoMymobileLoadUrl(process, [self parseParams:GetString], self.request.HTTPMethod,[FlowThreadManager tissue])];
 					    [[self client] URLProtocolDidFinishLoading:self];
 					      });
 					   

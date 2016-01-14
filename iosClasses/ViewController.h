@@ -11,7 +11,7 @@
 #import "FlowProtocol.h"
 
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController  <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet UIWebView *webView;
 @property BOOL override;

@@ -45,6 +45,25 @@
     
 }
 
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+    
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    
+    UIImage *chosenImage = info[UIImagePickerControllerEditedImage];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString *savedImagePath = [documentsDirectory stringByAppendingPathComponent:[FlowThreadManager instance].tempstring];
+    NSData *imageData = UIImagePNGRepresentation(chosenImage);
+    [imageData writeToFile:savedImagePath atomically:NO];
+    [FlowThreadManager runJS:@"cameraComplete()"];
+    [picker dismissViewControllerAnimated:YES completion:NULL];
+    
+}
+
 -(UIStatusBarStyle)preferredStatusBarStyle{
     return UIStatusBarStyleLightContent
     ;

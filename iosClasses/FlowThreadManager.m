@@ -15,11 +15,73 @@
 static  NSMutableDictionary *dataset;
 static  NSArray *threads;
 static  FlowThreadManager *flowlayer;
+static  FlowTissue *tissuelayer;
 static Completion runAfter;
 
+static CLGeocoder *geocoder;
+static CLPlacemark *placemark;
 
 
++ (void) getGPS {
+    //not working atm...
+    FlowThreadManager *inj = [FlowThreadManager instance];
+    if(inj.locationManager != nil){
+        inj.locationManager = [[CLLocationManager alloc] init];
+        geocoder = [[CLGeocoder alloc] init];
+        inj.locationManager.delegate = inj;
+        inj.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+        inj.locationManager.distanceFilter = kCLDistanceFilterNone;
+        [inj.locationManager requestWhenInUseAuthorization];
+        [inj.locationManager startUpdatingLocation];
+    }
+    
+}
 
+- (void)accelerometer:(UIAccelerometer *)accelerometer didAccelerate:
+(UIAcceleration *)acceleration{
+        /* call endpoint update */
+        //Will use js Subset to handle GPS and accelerometer
+}
+
+#pragma mark - CLLocationManagerDelegate
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    NSLog(@"GPS didFailWithError: %@", error);
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation
+{
+    NSLog(@"didUpdateToLocation: %@", newLocation);
+    CLLocation *currentLocation = newLocation;
+    
+    if (currentLocation != nil) {
+      //  longitudeLabel.text = [NSString stringWithFormat:@"%.8f", currentLocation.coordinate.longitude];
+       // latitudeLabel.text = [NSString stringWithFormat:@"%.8f", currentLocation.coordinate.latitude];
+    }
+    /*
+     
+     addressLabel.text = [NSString stringWithFormat:@"%@ %@\n%@ %@\n%@\n%@",
+     placemark.subThoroughfare, placemark.thoroughfare,
+     placemark.postalCode, placemark.locality,
+     placemark.administrativeArea,
+     placemark.country];
+     */
+    // Stop Location Manager
+    [self.locationManager stopUpdatingLocation];
+    
+    NSLog(@"Resolving the Address");
+    [geocoder reverseGeocodeLocation:currentLocation completionHandler:^(NSArray *placemarks, NSError *error) {
+        NSLog(@"Found placemarks: %@, error: %@", placemarks, error);
+        if (error == nil && [placemarks count] > 0) {
+            placemark = [placemarks lastObject];
+            //callback via Go end point...
+            } else {
+            NSLog(@"%@", error.debugDescription);
+        }
+    } ];
+    
+}
 
 + (void) createFlowLayer {
     if(![flowlayer isKindOfClass:[FlowThreadManager class]]){
@@ -27,6 +89,51 @@ static Completion runAfter;
     }
 }
 
++ (void) takePicture:(NSString *)name {
+    [FlowThreadManager instance].tempstring = name;
+    
+    if (![UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+        
+        UIAlertView *myAlertView = [[UIAlertView alloc] initWithTitle:@"Error"
+                                                              message:@"Device has no camera"
+                                                             delegate:nil
+                                                    cancelButtonTitle:@"OK"
+                                                    otherButtonTitles: nil];
+        
+        [myAlertView show];
+        
+    }
+    else {
+        UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+        picker.delegate = [FlowThreadManager currentFlowEnclosing];
+        picker.allowsEditing = YES;
+       
+        picker.sourceType = UIImagePickerControllerSourceTypeCamera;
+        
+        [[FlowThreadManager currentFlowEnclosing] presentViewController:picker animated:YES completion:NULL];
+    }
+}
+
++ (ViewController*) currentFlowEnclosing {
+    UINavigationController *navcontroller = (UINavigationController *)[UIApplication sharedApplication].keyWindow.rootViewController;
+    // Replace the current view controller
+    //viewdidappear
+    NSMutableArray *viewControllers = [NSMutableArray arrayWithArray:[navcontroller viewControllers]];
+    
+    ViewController *viewrs;
+    if([[viewControllers lastObject] isKindOfClass:[ViewController class]]){
+        viewrs = [viewControllers lastObject];
+    }
+    else  viewrs = [viewControllers objectAtIndex:[viewControllers count] - 2];
+    return viewrs;
+}
+
++ (id) tissue {
+    if(![tissuelayer isKindOfClass:[FlowTissue class]]){
+        tissuelayer = [[FlowTissue alloc] init];
+    }
+    return tissuelayer;
+}
 
 +(FlowThreadManager *) instance {
     [self createFlowLayer];
@@ -523,6 +630,14 @@ didFailLoadWithError:(NSError *)error {
     
 }
 
++ (void) loadScreen:(BOOL)switc usingMessage:(NSString *)message {
+    if(switc){
+        [DejalBezelActivityView activityViewForView:[FlowThreadManager currentFlowEnclosing].view];
+    }
+    else {
+        [DejalBezelActivityView removeView];
+    }
+}
 
 + (void) runJS:(NSString *)function {
     [[FlowThreadManager currentFlow] stringByEvaluatingJavaScriptFromString:function];

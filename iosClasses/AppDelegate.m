@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "ViewController.h"
+#import "FlowTissue.h"
 
 @interface AppDelegate ()
 
@@ -17,14 +18,25 @@
     UINavigationController *navController;
 }
 
+-(void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+    
+    //Tell the system that you ar done. || or no new data in that frame push etc
+    NSLog(@"BG event");
+    [FlowTissue handleRequest:@"/background"];
+    completionHandler(UIBackgroundFetchResultNewData);
+}
+
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
     
     self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
+    [application registerUserNotificationSettings:[UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound categories:nil]];
     
     UIStoryboard *st = [UIStoryboard storyboardWithName:@"Main"
                                                  bundle:[NSBundle mainBundle]];
+    [[UIApplication sharedApplication] setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
     
     ViewController *viewController =  [st instantiateViewControllerWithIdentifier:@"FlowView"];
     navController = [[UINavigationController alloc] initWithRootViewController:viewController];
@@ -41,6 +53,8 @@
     
     return YES;
 }
+
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
