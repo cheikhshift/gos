@@ -311,7 +311,7 @@ import (`
 			}
 		}
 
-		fmt.Println(template.Methods.Methods[0].Name)
+	//	fmt.Println(template.Methods.Methods[0].Name)
 
 		for _,imp := range net_imports {
 			local_string += `
