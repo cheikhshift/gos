@@ -206,12 +206,7 @@ import (`
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
-		if template.Type == "bind" {
-			net_imports = append(net_imports, "net/http/httptest")
-		} else {
-			net_imports = append(net_imports, "github.com/elazarl/go-bindata-assetfs")
-		}
-
+	
 		for _,imp := range template.Methods.Methods {
 			if !contains(available_methods, imp.Name) {
 				available_methods = append(available_methods, imp.Name)
@@ -796,7 +791,9 @@ import (`
 			}`
 
 		
-			local_string += `func main() {
+			local_string += `
+			
+			func main() {
 				` + template.Main
 				
 					
