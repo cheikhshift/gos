@@ -206,11 +206,7 @@ import (`
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
-		if template.Type == "bind" {
-			net_imports = append(net_imports, "net/http/httptest")
-		} else {
-			net_imports = append(net_imports, "github.com/elazarl/go-bindata-assetfs")
-		}
+	
 
 		for _,imp := range template.Methods.Methods {
 			if !contains(available_methods, imp.Name) {
@@ -225,7 +221,7 @@ import (`
 				meth := template.findMethod(imp.Method)
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
-					` + meth.Method + `
+					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
 					callmet = true
 				}
 				` 
@@ -241,7 +237,7 @@ import (`
 			` + imp.Name +` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval +`)
 					    go func() {
 					        for _ = range ` + imp.Name +`.C {
-					           ` + meth.Method +`
+					           ` + strings.Replace(meth.Method, `&#38;`, `&`,-1) +`
 					        }
 					    }()
     `
@@ -311,7 +307,7 @@ import (`
 			}
 		}
 
-		fmt.Println(template.Methods.Methods[0].Name)
+	//	fmt.Println(template.Methods.Methods[0].Name)
 
 		for _,imp := range net_imports {
 			local_string += `
@@ -454,7 +450,7 @@ import (`
 
 				func handler(w http.ResponseWriter, r *http.Request, context string) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-				  p,err := loadPage(r.URL.Path , context,r)
+				  p,err := loadPage(r.URL.Path , context,r,w)
 				  if err != nil {
 				        http.Error(w, err.Error(), http.StatusInternalServerError)
 				        return
@@ -467,10 +463,10 @@ import (`
 				  }
 				}
 
-				func loadPage(title string, servlet string,r *http.Request) (*Page,error) {
+				func loadPage(title string, servlet string,r *http.Request,w http.ResponseWriter) (*Page,error) {
 				    filename :=  "` +  web + `" + title + ".tmpl"
 				    if title == "/" {
-				    	filename = "` + web + `/index.tmpl"
+				      http.Redirect(w,r,"/index",302)
 				    }
 				    body, err := Asset(filename)
 				    if err != nil {
@@ -656,7 +652,7 @@ import (`
 						}
 
 						local_string += ` {
-									` + meth.Method
+									` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
 
 						if stripSpaces(function_map[1]) == "" {
 							local_string += ` 
@@ -673,7 +669,7 @@ import (`
 						func (` + objectName + ` ` + imp.Templ +`) ` +  stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") +`) ` + stripSpaces(function_map[1])
 
 							local_string += ` {
-							` + meth.Method
+							` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
 
 						local_string +=  `
 						}`
@@ -709,7 +705,7 @@ import (`
 								`
 							}
 						}
-						local_string += meth.Method
+						local_string += strings.Replace(meth.Method, `&#38;`, `&`,-1)
 						if addedit {
 						 local_string +=  `
 						 return ""
@@ -796,7 +792,9 @@ import (`
 			}`
 
 		
-			local_string += `func main() {
+			local_string += `
+
+			func main() {
 				` + template.Main
 				
 					
@@ -840,7 +838,7 @@ import (`
 				meth := template.findMethod(imp.Method)
 				apiraw += ` 
 				if  path == "` + imp.Path +`" && method == strings.ToUpper("` + imp.Type +`") { 
-					` + meth.Method + `
+					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
 					callmet = true
 				}
 				` 
@@ -890,7 +888,7 @@ import (`
 			}
 		}
 
-		fmt.Println(template.Methods.Methods[0].Name)
+		//fmt.Println(template.Methods.Methods[0].Name)
 
 		for _,imp := range net_imports {
 			local_string += `
@@ -1557,7 +1555,7 @@ import (`
 						}
 
 						local_string += ` {
-									` + meth.Method
+									` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
 
 						if stripSpaces(function_map[1]) == "" {
 							local_string += ` 
@@ -1574,7 +1572,7 @@ import (`
 						func (` + objectName + ` ` + imp.Templ +`) ` +  stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") +`) ` + stripSpaces(function_map[1])
 
 							local_string += ` {
-							` + meth.Method
+							` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
 
 						local_string +=  `
 						}`
@@ -1610,7 +1608,7 @@ import (`
 								`
 							}
 						}
-						local_string += meth.Method
+						local_string += strings.Replace(meth.Method, `&#38;`, `&`,-1)
 						if addedit {
 						 local_string +=  `
 						 return ""
