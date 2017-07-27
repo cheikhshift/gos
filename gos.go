@@ -567,7 +567,7 @@ func main() {
     		
     		    os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/web", 0777 )
     			os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/tmpl",0777 )
-    			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.xml", []byte(gosTemplate), 0777)	
+    			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.gxml", []byte(gosTemplate), 0777)	
     			return
     		}
     

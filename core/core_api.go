@@ -421,7 +421,7 @@ import (`
 
 		for _,imp := range template.RootImports {
 				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".xml") {
+			if !strings.Contains(imp.Src,".gxml") {
 					if imp.Download == "true" {
 						fmt.Println("∑ Downloading Package " + imp.Src)
 						RunCmd("go get " + imp.Src)
@@ -1073,7 +1073,7 @@ import (`
 
 		for _,imp := range template.RootImports {
 				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".xml") {
+			if !strings.Contains(imp.Src,".gxml") {
 					if imp.Download == "true" {
 						fmt.Println("∑ Downloading Package " + imp.Src)
 						RunCmd("go get " + imp.Src)
@@ -1690,7 +1690,7 @@ import (`
 
 		for _,imp := range template.RootImports {
 				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".xml") {
+			if !strings.Contains(imp.Src,".gxml") {
 					if imp.Download == "true" {
 						fmt.Println("∑ Downloading Package " + imp.Src)
 						RunCmd("go get " + imp.Src)
@@ -2937,7 +2937,7 @@ func PLoadGos(path string) (*gos,*Error) {
 
 	for _,imp := range v.RootImports {
    		//fmt.Println(imp.Src)
-   		if strings.Contains(imp.Src,".xml") {
+   		if strings.Contains(imp.Src,".gxml") {
    			v.MergeWithV(GOHOME + "/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
@@ -3075,7 +3075,7 @@ func LoadGos(path string) (*gos,*Error) {
    	//process mergs
    	for _,imp := range v.RootImports {
    		//fmt.Println(imp.Src)
-   		if strings.Contains(imp.Src,".xml") {
+   		if strings.Contains(imp.Src,".gxml") {
    			v.MergeWith(GOHOME + "/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
@@ -3092,7 +3092,7 @@ func (d*gos) MergeWithV(target string) {
     } else {
     
     for _,im := range imp.RootImports {
-   	if strings.Contains(im.Src,".xml") {
+   	if strings.Contains(im.Src,".gxml") {
    			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
    			//copy files
    	} else {
@@ -3134,7 +3134,7 @@ func (d*gos) MergeWith(target string) {
     } else {
     
     for _,im := range imp.RootImports {
-   	if strings.Contains(im.Src,".xml") {
+   	if strings.Contains(im.Src,".gxml") {
    			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
    			//copy files
    	} else {
