@@ -589,7 +589,7 @@ func main() {
 		
 			core.Process(coreTemplate,GOHOME, webroot,template_root);
 
-			if coreTemplate.Type == "webapp" {
+			if coreTemplate.Type == "webapp" || coreTemplate.Type == "locale" {
 
 
 					if os.Args[1] == "run" {
@@ -602,7 +602,8 @@ func main() {
 						pk := strings.Split(strings.Trim(os.Args[2],"/"), "/")
 						fmt.Println("Use Ctrl + C to quit")
 						core.Exe_Stall("./" + pk[len(pk) - 1] )
-					}
+						
+				}	
 
 					if os.Args[1] == "export" {
 						fmt.Println("Generating Export Program")
@@ -650,10 +651,10 @@ func main() {
 						 }
 
 						 ioutil.WriteFile(plistPath, []byte(strings.Replace(string(plist), `<key>UIMainStoryboardFile</key>
-	<string>Main</string>`,`<key>UIBackgroundModes</key>
-<array>
-    <string>fetch</string>
-</array>`,-1)),0644 )
+							<string>Main</string>`,`<key>UIBackgroundModes</key>
+						<array>
+						    <string>fetch</string>
+						</array>`,-1)),0644 )
 
 						 core.RunCmd("python " + os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos/core/addFlow.py " + strings.Trim(os.Args[2],"/") +" " + os.Args[6] + " " + UpperInitial(coreTemplate.Package))
 						 //if project does not exist create it and link this framework
@@ -670,7 +671,7 @@ func main() {
 
 	} else { 
 	
-    fmt.Println("∑ Welcome to Gos v1.0")
+    fmt.Println("∑ Welcome to Gos v1.0.1")
 	fmt.Println("To begin please tell us a bit about the gos project you wish to compile");
 	fmt.Printf("We need the GoS package folder relative to your $GOPATH/src (%v)\n", GOHOME)
    	gosProject := "" 

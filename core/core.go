@@ -49,7 +49,35 @@ type gos struct {
 	 Timers Timers `xml:"timers"`
 	 Templates Templates `xml:"templates"`
 	 Endpoints Endpoints `xml:"endpoints"`
+	 FolderRoot string
 }
+
+type Pgos struct {
+	 XMLName    xml.Name `xml:"gos"`
+	 Port string `xml:"port"`
+	 Output string `xml:"output"`
+	 Type string `xml:"deploy"`
+	 Main string `xml:"main"`
+	 Variables []GlobalVariables `xml:"var"`
+	 WriteOut bool
+	 Export string `xml:"export"`
+	 Key string `xml:"key"`
+	 Session string `xml:"session"`
+	 Template_path string `xml:"templatePath"`
+	 Web_root string `xml:"webroot"`
+	 Package string `xml:"package"`
+	 Web string `xml:"web"`
+	 Tmpl string `xml:"tmpl"`
+	 RootImports []Import `xml:"import"`
+	 Init_Func string `xml:"init"`
+	 Header Header `xml:"header"`
+	 Methods Methods `xml:"methods"`
+	 Timers Timers `xml:"timers"`
+	 Templates Templates `xml:"templates"`
+	 Endpoints Endpoints `xml:"endpoints"`
+	 FolderRoot string
+}
+
 
 type GlobalVariables struct {
 	 XMLName    xml.Name `xml:"var"`
@@ -107,6 +135,14 @@ type Endpoints struct {
 /*
 	Nested values within GoS root file
 */
+
+type VGos struct {
+	XMLName    xml.Name `xml:"gos"`
+	Objects []Object `xml:"object"`
+	Structs []Struct `xml:"struct"`
+	Methods []Method  `xml:"method"`
+}
+
 type Struct struct {
 	XMLName xml.Name `xml:"struct"`
 	Name string `xml:"name,attr"`
@@ -144,6 +180,7 @@ type Template struct {
 	XMLName xml.Name `xml:"template"`
 	Name string `xml:"name,attr"`
 	TemplateFile string `xml:"tmpl,attr"`
+	Bundle string `xml:"bundle,attr"`
 	Struct string `xml:"struct,attr"`
 	ForcePath bool
 }
