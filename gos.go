@@ -486,7 +486,8 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<!--Stating the deployment type GoS should compile -->
 	<!-- Curent valid types are webapp,shell and bind -->
 	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
-	<deploy>SETTHIS</deploy>
+	<deploy>webapp</deploy>
+	<port>8080</port>
 	<package>mymobile</package>
 	
 	<!-- Using import within different tags will have different results -->
@@ -576,11 +577,16 @@ func main() {
     		
     		    os.MkdirAll( "web", 0777 )
     			os.MkdirAll( "tmpl",0777 )
-    			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)	
+    			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)
     			return
     		}
-    
+    		
+
     		GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
+    		if strings.Contains(os.Args[1],"sub") {
+    			GOHOME = "./"
+
+    		}
     		serverconfig := os.Args[3]
     		webroot = os.Args[4]
     		template_root = os.Args[5]
@@ -601,7 +607,7 @@ func main() {
 			if coreTemplate.Type == "webapp" || coreTemplate.Type == "locale" {
 
 
-					if os.Args[1] == "run" {
+					if os.Args[1] == "run" || os.Args[1] == "run-sub" {
 						os.Chdir(GOHOME)
 						fmt.Println("Invoking go-bindata");
 						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
@@ -610,11 +616,20 @@ func main() {
 						core.RunCmd("go build")
 						pk := strings.Split(strings.Trim(os.Args[2],"/"), "/")
 						fmt.Println("Use Ctrl + C to quit")
-						core.Exe_Stall("./" + pk[len(pk) - 1] )
-						
-				}	
+						if GOHOME != "./" {
+							core.Exe_Stall("./" + pk[len(pk) - 1] )
+						} else {
+							 pwd, err := os.Getwd()
+						    if err != nil {
+						        fmt.Println(err)
+						        os.Exit(1)
+						    }
+						    pk = strings.Split(strings.Trim(pwd,"/"), "/")
+							core.Exe_Stall("./" + pk[len(pk) - 1] )
+						}
+					}	
 
-					if os.Args[1] == "export" {
+					if os.Args[1] == "export" || os.Args[1] == "export-sub" {
 						fmt.Println("Generating Export Program")
 						os.Chdir(GOHOME)		
 						//create both zips
