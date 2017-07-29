@@ -464,7 +464,9 @@ import (`
 		local_string += `
 		)
 				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
-
+				type gosdummystructempty struct {
+					/* emptystruct */
+				}
 				func net_sessionGet(key string,s *sessions.Session) string {
 					return s.Values[key].(string)
 				}
@@ -1117,6 +1119,10 @@ import (`
 		)
 				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
 
+				type gosdummystructempty struct {
+					/* emptystruct */
+				}
+
 				func net_sessionGet(key string,s *sessions.Session) string {
 					return s.Values[key].(string)
 				}
@@ -1395,6 +1401,10 @@ import (`
 			fmt.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
+				if imp.Templ == "" {
+					imp.Templ = "gosdummystructempty"
+				}
+
 				available_methods = append(available_methods,imp.Name)
 				int_methods = append(int_methods,imp.Name)
 				local_string += `
@@ -1529,6 +1539,9 @@ import (`
 					}
 			}
 					for _,imp := range template.Templates.Templates {
+						if imp.Struct == "" {
+							imp.Struct = "gosdummystructempty"
+						}
 				local_string += `
 				func  net_`+ imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
