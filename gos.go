@@ -570,6 +570,15 @@ func main() {
     			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.gxml", []byte(gosTemplate), 0777)	
     			return
     		}
+
+    		if os.Args[1] == "makesublime" {
+    		//2 is project folder
+    		
+    		    os.MkdirAll( "web", 0777 )
+    			os.MkdirAll( "tmpl",0777 )
+    			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)	
+    			return
+    		}
     
     		GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
     		serverconfig := os.Args[3]
