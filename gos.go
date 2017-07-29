@@ -506,6 +506,16 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	 that will be used by the GoS application -->
 	<header> 
 			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
+
+
+
+	    <struct name="UserSpace">
+				/* Property Type */
+		</struct>
+		<object name="UserObject" struct="UserSpace">
+		    /* func|method() return_value_(if applicable) */
+			/* func|method() return_value_(if applicable) */
+		</object>
 	</header>
 	<methods>
 		<!-- Vars are defined as usual except within the var attribute for example :  -->
