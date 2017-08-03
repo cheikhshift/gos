@@ -582,7 +582,7 @@ func main() {
     			return
     		}
 
-    		if os.Args[1] == "makesublime" || if os.Args[1] == "--make" {
+    		if os.Args[1] == "makesublime" ||  os.Args[1] == "--make" {
     		//2 is project folder
     		
     		    os.MkdirAll( "web", 0777 )
