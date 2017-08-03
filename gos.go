@@ -488,7 +488,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
 	<deploy>webapp</deploy>
 	<port>8080</port>
-	<package>mymobile</package>
+	<package>if-package-is-library</package>
 	
 	<!-- Using import within different tags will have different results -->
 	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
@@ -512,9 +512,8 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	    <struct name="UserSpace">
 				/* Property Type */
 		</struct>
-		<object name="UserObject" struct="UserSpace">
-		    /* func|method() return_value_(if applicable) */
-			/* func|method() return_value_(if applicable) */
+		<object name="UserSpaceInterface" struct="UserSpace">
+		   
 		</object>
 	</header>
 	<methods>
