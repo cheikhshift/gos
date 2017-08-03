@@ -603,9 +603,16 @@ func main() {
 
     		}
 
-    		serverconfig := os.Args[3]
-    		webroot = os.Args[4]
-    		template_root = os.Args[5]
+    		
+    			if strings.Contains(os.Args[1],"--") {
+    				webroot = "web"
+    				template_root = "tmpl"
+    				serverconfig := "gos.gxml"
+    			} else {
+    				webroot = os.Args[4]
+    				template_root = os.Args[5]
+    				serverconfig := os.Args[3]
+    			}
     		fmt.Println("∑ GoS Speed compiler ");
     		coreTemplate,err := core.LoadGos( GOHOME + "/" + serverconfig ); 
 			if err != nil {
