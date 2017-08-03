@@ -641,7 +641,11 @@ func main() {
 						//time.Sleep(time.Second*100 )
 						//core.RunFile(GOHOME, coreTemplate.Output)
 						core.RunCmd("go build")
-						pk := strings.Split(strings.Trim(os.Args[2],"/"), "/")
+						if strings.Contains(os.Args[1],"--") {
+							pk = strings.Split("/gosapp", "/")
+						} else {
+							pk = strings.Split(strings.Trim(os.Args[2],"/"), "/")
+						}
 						fmt.Println("Use Ctrl + C to quit")
 						if GOHOME != "./" {
 							core.Exe_Stall("./" + pk[len(pk) - 1] )
