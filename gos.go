@@ -582,7 +582,7 @@ func main() {
     			return
     		}
 
-    		if os.Args[1] == "makesublime" {
+    		if os.Args[1] == "makesublime" || if os.Args[1] == "--make" {
     		//2 is project folder
     		
     		    os.MkdirAll( "web", 0777 )
@@ -625,7 +625,7 @@ func main() {
 
 					if os.Args[1] == "run" || os.Args[1] == "run-sub" ||  os.Args[1] == "--run" {
 					//	
-						if !strings.Contains(os.Args[1],"run-") && if !strings.Contains(os.Args[1],"--run") {
+						if !strings.Contains(os.Args[1],"run-") &&  !strings.Contains(os.Args[1],"--run") {
 						os.Chdir(GOHOME)
 						}
 						fmt.Println("Invoking go-bindata");
@@ -648,9 +648,9 @@ func main() {
 						}
 					}	
 
-					if os.Args[1] == "export" || os.Args[1] == "export-sub" || if os.Args[1] == "export" || os.Args[1] == "--export"  {
+					if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export"  {
 						fmt.Println("Generating Export Program")
-						if !strings.Contains(os.Args[1],"export-") && if !strings.Contains(os.Args[1],"--export") {
+						if !strings.Contains(os.Args[1],"export-") &&  !strings.Contains(os.Args[1],"--export") {
 						os.Chdir(GOHOME)
 						}		
 						//create both zips
