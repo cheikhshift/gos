@@ -597,6 +597,12 @@ func main() {
     			GOHOME = "./"
 
     		}
+
+    		if strings.Contains(os.Args[1],"--") {
+    			GOHOME = "./"
+
+    		}
+
     		serverconfig := os.Args[3]
     		webroot = os.Args[4]
     		template_root = os.Args[5]
@@ -617,8 +623,11 @@ func main() {
 			if coreTemplate.Type == "webapp" || coreTemplate.Type == "locale" {
 
 
-					if os.Args[1] == "run" || os.Args[1] == "run-sub" {
+					if os.Args[1] == "run" || os.Args[1] == "run-sub" ||  os.Args[1] == "--run" {
+					//	
+						if !strings.Contains(os.Args[1],"run-") && if !strings.Contains(os.Args[1],"--run") {
 						os.Chdir(GOHOME)
+						}
 						fmt.Println("Invoking go-bindata");
 						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
 						//time.Sleep(time.Second*100 )
@@ -639,9 +648,11 @@ func main() {
 						}
 					}	
 
-					if os.Args[1] == "export" || os.Args[1] == "export-sub" {
+					if os.Args[1] == "export" || os.Args[1] == "export-sub" || if os.Args[1] == "export" || os.Args[1] == "--export"  {
 						fmt.Println("Generating Export Program")
-						os.Chdir(GOHOME)		
+						if !strings.Contains(os.Args[1],"export-") && if !strings.Contains(os.Args[1],"--export") {
+						os.Chdir(GOHOME)
+						}		
 						//create both zips
 						fmt.Println("Invoking go-bindata");
 						core.RunCmd(  os.ExpandEnv("$GOPATH") + "/bin/go-bindata  " + webroot +"/... " + template_root + "/...")
