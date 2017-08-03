@@ -592,7 +592,7 @@ func main() {
     		}
     		
 
-    		GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
+    		
     		if strings.Contains(os.Args[1],"sub") {
     			GOHOME = "./"
 
@@ -601,17 +601,19 @@ func main() {
     		if strings.Contains(os.Args[1],"--") {
     			GOHOME = "./"
 
+    		} else {
+    			GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
     		}
-
+    		var serverconfig string
     		
     			if strings.Contains(os.Args[1],"--") {
     				webroot = "web"
     				template_root = "tmpl"
-    				serverconfig := "gos.gxml"
+    				serverconfig = "gos.gxml"
     			} else {
     				webroot = os.Args[4]
     				template_root = os.Args[5]
-    				serverconfig := os.Args[3]
+    				serverconfig = os.Args[3]
     			}
     		fmt.Println("∑ GoS Speed compiler ");
     		coreTemplate,err := core.LoadGos( GOHOME + "/" + serverconfig ); 
