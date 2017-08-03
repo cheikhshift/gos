@@ -2752,30 +2752,24 @@ func Exe_Stall(cmd string) {
     parts := strings.Fields(cmd)
     var out *exec.Cmd
     if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+    	out = exec.Command(parts[0],parts[1],parts[2],"2>&1")
 	} else if len(parts) == 1 {
-		out = exec.Command(parts[0])
+		out = exec.Command(parts[0],"2>&1")
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0],parts[1],"2>&1")
 	}
     stdout, err := out.StdoutPipe()
-    stderr, _ := out.StderrPipe()
+   
     if err != nil {
         fmt.Println("error occured")
         fmt.Printf("%s", err)
     }
     out.Start()
 	r := bufio.NewReader(stdout)
-	er := bufio.NewReader(stderr)
+	
 	t := false
 	for !t {
 	line, _, _ := r.ReadLine()
-	line_err,_,_ := er.ReadLine()
-
-	if string(line_err) != "" {
-    fmt.Println( "[ERROR] : " + string(line_err))
-	}
-
 	if string(line) != "" {
     fmt.Println(string(line))
 	}
