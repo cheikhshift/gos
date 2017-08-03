@@ -641,7 +641,7 @@ func main() {
 						//time.Sleep(time.Second*100 )
 						//core.RunFile(GOHOME, coreTemplate.Output)
 						core.RunCmd("go build")
-						var pk string
+						var pk []string
 						if strings.Contains(os.Args[1],"--") {
 							pk = strings.Split("/gosapp", "/")
 						} else {
