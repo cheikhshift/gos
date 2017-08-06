@@ -700,12 +700,16 @@ func main() {
 								    	//fmt.Println("%+V", inm)
 								    	lin := scanner.Text()
 								    	if inm == lnumber {
-								 
-								  color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(GetLine(serverconfig, lin) )  + " | " + strings.Join(line_part[2:]," - "))
+								 acT_line := GetLine(serverconfig, lin)
+								 if acT_line > -1 {
+								  color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line )  + " | " + strings.Join(line_part[2:]," - "))
 
 								  			break
+								    	} else {
+								    		color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
+								    		break
 								    	}
-
+								    }
 								      // fmt.Println("data : " + scanner.Text())
 								    }
 
