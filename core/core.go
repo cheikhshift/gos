@@ -30,6 +30,8 @@ type gos struct {
 	 XMLName    xml.Name `xml:"gos"`
 	 Port string `xml:"port"`
 	 Output string `xml:"output"`
+	 ErrorPage string `xml:"error"`
+	 NPage string `xml:"not_found"`
 	 Type string `xml:"deploy"`
 	 Main string `xml:"main"`
 	 Variables []GlobalVariables `xml:"var"`

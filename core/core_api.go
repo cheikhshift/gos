@@ -998,7 +998,7 @@ import (`
 
 	// if template.Type == "webapp" {
 		
-		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template", "strings", "reflect", "unsafe"}
+		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1185,7 +1185,7 @@ import (`
 					return r.FormValue(s)
 				}
 			
-				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page) {
+				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page)  bool {
 				     filename :=  tmpl  + ".tmpl"
 				    body, err := Asset(filename)
 				    session, er := store.Get(r, "session-")
@@ -1196,7 +1196,8 @@ import (`
 				    p.Session = session
 				    p.R = r
 				    if err != nil {
-				       fmt.Print(err)
+				      // fmt.Print(err)
+				    	return false
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
@@ -1204,13 +1205,15 @@ import (`
 				    outp := new(bytes.Buffer)
 				    error := t.Execute(outp, p)
 				    if error != nil {
-				    fmt.Print(error)
-				    return
-				    } 
-
+				   // fmt.Print(error)
+				    	 http.Redirect(w,r,"` + template.ErrorPage +`",301)
+				    return false
+				    }  else {
 				    p.Session.Save(r, w)
 
 				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
+				    return true
+					}
 				    }
 				}
 
@@ -1260,16 +1263,23 @@ import (`
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path , context,r,w)
 				  if err != nil {
-				  		fmt.Println(err)
-				        http.Error(w, err.Error(), http.StatusInternalServerError)
+				  	fmt.Println(err)
+				        http.Redirect(w,r,"`  + template.NPage +  `",307)
 				        return
 				  }
 
 				   w.Header().Set("Cache-Control",  "public")
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
-				  		
-				        renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
+				  		 defer func() {
+					        if n := recover(); n != nil {
+					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl")
+					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+					    }()
+				      renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
+				     
+				     // fmt.Println(w)
 				  } else {
 				  		if strings.Contains(r.URL.Path, ".css") {
 				  	  		w.Header().Add("Content-Type",  "text/css")
@@ -1568,12 +1578,18 @@ import (`
 					t := template.New("` +  imp.Name + `")
     				t = t.Funcs(` + netMa +`)
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
-			
+					
+					 defer func() {
+					        if n := recover(); n != nil {
+					           	color.Red("Error loading template in path : " + filename )
+					        }
+					    }()
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				   color.Red("Error processing template " + filename)
 				    } 
 					return html.UnescapeString(output.String())
+					
 				}`	    
 					local_string += `
 				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
@@ -1586,7 +1602,11 @@ import (`
 					t := template.New("` +  imp.Name + `")
     				t = t.Funcs(` + netMa +`)
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
-			
+				 defer func() {
+					        if n := recover(); n != nil {
+					           	color.Red("Error loading template in path : " + filename )
+					        }
+					    }()
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				    fmt.Print(error)

@@ -493,7 +493,8 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<deploy>webapp</deploy>
 	<port>8080</port>
 	<package>if-package-is-library</package>
-	
+	<not_found>/your-404-page</not_found>
+	<error>/your-500-page</error>
 	<!-- Using import within different tags will have different results -->
 	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
 	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
@@ -538,7 +539,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<templates>
  		<!-- Template libraries are useful for expediting page creation and reuse common website elements within this GoS application -->
- 		<!-- Templates are nested and customized with the template function instead of using the normal {{template "Name"}} call you can now use {{Button &{Color:"#fff"}& }}
+ 		<!-- Templates are nested and customized with the template function instead of using the normal {{template "Name"}} call you can now use {{Button /{"Color":"#fff"}/ }}
  		{{Modal &{Color:"#fff"}& }}  -->
  		<!-- *Notice that special braces are used to initialize the parameters of the struct '&{' and '}&' -->
  		
@@ -619,6 +620,8 @@ func main() {
     		    os.MkdirAll( "web", 0777 )
     			os.MkdirAll( "tmpl",0777 )
     			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)
+    			ioutil.WriteFile("web/your-404-page.tmpl", []byte("<html> </html>"), 0777)
+    			ioutil.WriteFile("web/your-500-page.tmpl", []byte("<html> </html>"), 0777)
     			return
     		}
     		
