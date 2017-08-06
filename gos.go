@@ -484,7 +484,22 @@ func writeLocalProtocol(pack string){
 	ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos/iosClasses/FlowTissue.h",[]byte(cTissueHeader), 0644)
 	ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/github.com/cheikhshift/gos/iosClasses/FlowTissue.m",[]byte(cTissueClass), 0644)
 }
+var htmlTemplate = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    	<title>Blank page</title>
+  </head>
+  <body>
+    <h1>Hello, world!</h1>
 
+    <!-- jQuery first, then Tether, then Bootstrap JS. -->
+    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
+   
+  </body>
+</html>`
 var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <gos>
 	<!--Stating the deployment type GoS should compile -->
@@ -620,8 +635,8 @@ func main() {
     		    os.MkdirAll( "web", 0777 )
     			os.MkdirAll( "tmpl",0777 )
     			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)
-    			ioutil.WriteFile("web/your-404-page.tmpl", []byte("<html> </html>"), 0777)
-    			ioutil.WriteFile("web/your-500-page.tmpl", []byte("<html> </html>"), 0777)
+    			ioutil.WriteFile("web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
+    			ioutil.WriteFile("web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
     			return
     		}
     		
@@ -707,10 +722,9 @@ func main() {
 								 if acT_line > -1 {
 								  color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line )  + " | " + strings.Join(line_part[2:]," - "))
 
-								  			break
 								    	} else {
 								    		color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
-								    		break
+								    	
 								    	}
 								    }
 								      // fmt.Println("data : " + scanner.Text())
