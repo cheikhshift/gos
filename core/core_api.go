@@ -1696,8 +1696,8 @@ import (`
            for _,imp := range template.Templates.Templates {
 
 				netMa += `,"` + imp.Name + `" : net_` + imp.Name
-				netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
-				netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
+				netMa += `,"b` + imp.Name + `" : b` + imp.Name
+				netMa += `,"c` + imp.Name + `" : c` + imp.Name
            }
            netMa += `}`
 
@@ -2477,7 +2477,10 @@ import (`
 					return html.UnescapeString(output.String())
 				}`	    
 					local_string += `
-				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
+				func net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
+					return  b`+ imp.Name + `(d)
+				}
+				func  b`+ imp.Name + `(d ` + imp.Struct +`) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
     				body, er := Asset(filename)
     				if er != nil {
@@ -2495,6 +2498,19 @@ import (`
 					return html.UnescapeString(output.String())
 				}`	    
 				local_string += `
+				func  c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+					if len(args) > 0 {
+					var jsonBlob = []byte(args[0].(string))
+					err := json.Unmarshal(jsonBlob, &d)
+					if err != nil {
+						fmt.Println("error:", err)
+						return 
+					}
+					} else {
+						d = `+ imp.Struct +`{}
+					}
+    				return
+				}
 				func  net_c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))

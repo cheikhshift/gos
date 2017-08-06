@@ -558,15 +558,16 @@ func main() {
     	//fmt.Println( os.Args)
     if len(os.Args) > 1 {
     //args := os.Args[1:]
-    		if os.Args[1] == "dependencies" {
+    		if os.Args[1] == "dependencies" || os.Args[1] == "deps" {
     			fmt.Println("∑ Getting GoS dependencies")
     			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
     			core.RunCmd("go get github.com/gorilla/sessions")
     			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-    			core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
-    			fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
-    			os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
-    			core.RunCmd("python setup.py install" )
+    			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
+    			core.RunCmd("go get github.com/asaskevich/govalidator")
+    			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
+    			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
+    			//core.RunCmd("python setup.py install" )
     			//time.Sleep(time.Second *120)
     			fmt.Println("Done")
     			return
