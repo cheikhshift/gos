@@ -7,7 +7,11 @@ import (
 	"os"
 	"strings"
 	//"time"
+	"github.com/fatih/color"
 	"unicode"
+	 "bufio"
+	 "strconv"
+
 )
 
 var webroot string
@@ -547,11 +551,37 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
       <!-- methods linked to an API call, please keep in mind that you may use w for http.ResponseWriter and r for http.Request . Additional available function variables is params and session. If a function is api listed it will not be used anywhere else.-->
       <!-- <end /> is the endpoint tag and has the variables path,method, -->
       <!-- Happy trails!!! -->
-      <!-- <end path="/index/api" method="login" type="POST" ></end> -->
+      <!-- <end path="/index/api"  type="POST" >
+      	varr := "data"
+      	fmt.Println(varr)
+      	//response is the string variable sent --> mResponse()
+      	response = varr
+      </end> -->
 	</endpoints>
 </gos>
 ` 
+func GetLine(fname string , match string )  int {
+	intx := 0
+	file, err := os.Open(fname)
+				if err != nil {
+					color.Red("Could not find a source file")
+														           		return -1
+								    }
+				defer file.Close()
 
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					intx = intx + 1
+					if strings.Contains(scanner.Text(), match ) {
+								    		
+								    		return intx
+								    	}
+
+				}
+
+
+	return -1
+}
 
 func main() {
 	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
@@ -565,6 +595,7 @@ func main() {
     			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
     			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
     			core.RunCmd("go get github.com/asaskevich/govalidator")
+    			core.RunCmd("go get github.com/fatih/color")
     			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//core.RunCmd("python setup.py install" )
@@ -641,7 +672,57 @@ func main() {
 						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
 						//time.Sleep(time.Second*100 )
 						//core.RunFile(GOHOME, coreTemplate.Output)
-						core.RunCmd("go build")
+						 log_build,err := core.RunCmdSmart("go build")
+						 if err != nil {
+						 	//fmt.Println(err.Error())
+						  color.Red("Your build failed, Here is why :>")
+						 	lines := strings.Split(log_build,"\n")
+						 	 for i, line := range lines {
+						 	 	if i > 0 {
+						        if strings.Contains(line,"imported and") {
+						        	line_part  := strings.Split(line,":")
+						        	color.Red(strings.Join(line_part[2:]," - "))
+						        } else {
+						        	if line != "" {
+						           line_part  := strings.Split(line,":")
+						           lnumber, _ := strconv.Atoi(line_part[1])
+						           file, err := os.Open(coreTemplate.Output)
+								    if err != nil {
+								        color.Red("Could not find a source file")
+														           		return
+								    }
+								    
+								    //fmt.Println(line_part[len(line_part) - 1])
+								    scanner := bufio.NewScanner(file)
+								    inm := 0
+								    for scanner.Scan() {
+								    	inm++
+								    	//fmt.Println("%+V", inm)
+								    	lin := scanner.Text()
+								    	if inm == lnumber {
+								 
+								  color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(GetLine(serverconfig, lin) )  + " | " + strings.Join(line_part[2:]," - "))
+
+								  			break
+								    	}
+
+								      // fmt.Println("data : " + scanner.Text())
+								    }
+
+								    if err := scanner.Err(); err != nil {
+								        color.Red("Could not find a source file")
+														           		return
+								    }
+						         
+						         	file.Close()
+						        }
+						    }
+						    	}
+						    }
+						   // fmt.Println(log_build)
+						    return
+						 }
+						
 						var pk []string
 						if strings.Contains(os.Args[1],"--") {
 							pk = strings.Split("/gosapp", "/")

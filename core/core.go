@@ -170,7 +170,7 @@ type Method struct {
 
 type Timer struct {
 	XMLName xml.Name `xml:"timer"`
-	Method string `xml:"method,attr"`
+	Method string `xml:",innerxml"`
 	Interval string `xml:"interval,attr"`
 	Name string `xml:"name,attr"`
 	Unit string `xml:"unit,attr"`
@@ -188,6 +188,6 @@ type Template struct {
 type Endpoint struct {
 	XMLName xml.Name `xml:"end"`
 	Path string `xml:"path,attr"`
-	Method string `xml:"method,attr"`
+	Method string `xml:",innerxml"`
 	Type string `xml:"type,attr"`
 }

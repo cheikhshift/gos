@@ -21,6 +21,7 @@ import (
 	"go/ast"
 	"go/token"
 	"path/filepath"
+	"github.com/fatih/color"
 	//"go/types"
 )
 
@@ -363,13 +364,13 @@ import (`
 		}
 		apiraw := ``
 		for _,imp := range template.Endpoints.Endpoints {
-			if !contains(api_methods, imp.Method) {
+		/*	if !contains(api_methods, imp.Method) {
 				api_methods = append(api_methods, imp.Method)
 			}
-				meth := template.findMethod(imp.Method)
+		*/	
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
-					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
+					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
 					callmet = true
 				}
 				` 
@@ -377,22 +378,22 @@ import (`
 		}
 		timeline :=  ``
 		for _,imp := range template.Timers.Timers {
-			if !contains(api_methods, imp.Method) {
+			/*if !contains(api_methods, imp.Method) {
 				api_methods = append(api_methods,imp.Method)
-			}
-			meth := template.findMethod(imp.Method)
+			} */
+			//meth := template.findMethod(imp.Method)
 			timeline += `
 			` + imp.Name +` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval +`)
 					    go func() {
 					        for _ = range ` + imp.Name +`.C {
-					           ` + strings.Replace(meth.Method, `&#38;`, `&`,-1) +`
+					           ` + strings.Replace(imp.Method, `&#38;`, `&`,-1) +`
 					        }
 					    }()
     `
 		}
 
 		
-		fmt.Printf("APi Methods %v\n",api_methods)
+		//fmt.Printf("APi Methods %v\n",api_methods)
 		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true"  {
@@ -423,7 +424,9 @@ import (`
 				//fmt.Println(imp)
 			if !strings.Contains(imp.Src,".gxml") {
 					if imp.Download == "true" {
+							color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + imp.Src)
+					
 						RunCmd("go get " + imp.Src)
 					}
 					if  !contains(net_imports, imp.Src) {
@@ -434,6 +437,7 @@ import (`
 				gosName := pathsplit[len(pathsplit) - 1]
 				pathsplit = pathsplit[:len(pathsplit)-1]
 				if imp.Download == "true" {
+					color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
 						RunCmd("go get " + strings.Join(pathsplit,"/"))
 				}
@@ -1007,22 +1011,20 @@ import (`
 		}
 		apiraw := ``
 		for _,imp := range template.Endpoints.Endpoints {
-			if !contains(api_methods, imp.Method) {
-				api_methods = append(api_methods, imp.Method)
-			}
-				meth := template.findMethod(imp.Method)
+		
+		
 				if imp.Type == "star" {
 
 				apiraw += ` 
 				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
-					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
+					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
 					callmet = true
 				}
 				`
 				} else {
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
-					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
+					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
 					callmet = true
 				}
 				`
@@ -1031,22 +1033,20 @@ import (`
 		}
 		timeline :=  ``
 		for _,imp := range template.Timers.Timers {
-			if !contains(api_methods, imp.Method) {
-				api_methods = append(api_methods,imp.Method)
-			}
-			meth := template.findMethod(imp.Method)
+			
+			
 			timeline += `
 			` + imp.Name +` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval +`)
 					    go func() {
 					        for _ = range ` + imp.Name +`.C {
-					           ` + strings.Replace(meth.Method, `&#38;`, `&`,-1) +`
+					           ` + strings.Replace(imp.Method, `&#38;`, `&`,-1) +`
 					        }
 					    }()
     `
 		}
 
 		
-		fmt.Printf("APi Methods %v\n",api_methods)
+		//fmt.Printf("APi Methods %v\n",api_methods)
 		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
            for _,imp := range available_methods {
            	if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
@@ -1077,6 +1077,7 @@ import (`
 				//fmt.Println(imp)
 			if !strings.Contains(imp.Src,".gxml") {
 					if imp.Download == "true" {
+							color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + imp.Src)
 						RunCmd("go get " + imp.Src)
 					}
@@ -1088,6 +1089,7 @@ import (`
 				gosName := pathsplit[len(pathsplit) - 1]
 				pathsplit = pathsplit[:len(pathsplit)-1]
 				if imp.Download == "true" {
+						color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
 						RunCmd("go get " + strings.Join(pathsplit,"/"))
 				}
@@ -2650,8 +2652,8 @@ func RunCmdSmart(cmd string) (string,error) {
 	fmt.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-		fmt.Println("%v", err.Error())
-		return "", err
+	//	fmt.Println("%v", err.Error())
+		return our.String(), err
 	}
 	return ou.String(),nil
 }
@@ -2725,7 +2727,7 @@ func RunCmdA(cm string) error {
  	if err != nil {
  	fmt.Println("Pipe : ",err)
  	}
- 	io.WriteString(inpipe, "MAatta94\n")
+ 	io.WriteString(inpipe, "")
 		  var out bytes.Buffer
 		var stderr bytes.Buffer
 		cmd.Stdout = &out
@@ -3107,9 +3109,27 @@ func LoadGos(path string) (*gos,*Error) {
    	for _,imp := range v.RootImports {
    		//fmt.Println(imp.Src)
    		if strings.Contains(imp.Src,".gxml") {
+   			srcP :=  strings.Split(imp.Src, "/")
+   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
+   			if _, err := os.Stat(GOHOME + "/" + dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + dir)
+			}
+   		} else {
+   			dir := GOHOME + "/" + strings.Trim(imp.Src,"/")
+   			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + imp.Src)
+			}
+   		}
+
+   		if strings.Contains(imp.Src,".gxml") {
    			v.MergeWith(GOHOME + "/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
+   		//
    	}
 
     return v,nil
@@ -3142,7 +3162,7 @@ func (d*gos) MergeWithV(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
-
+    d.Variables = append(imp.Variables, d.Variables...)
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);
     	for _,im := range imp.Templates.Templates {
@@ -3154,7 +3174,10 @@ func (d*gos) MergeWithV(target string) {
 	}
     //copy files
     d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)
-	}			
+	}
+
+	d.Init_Func = d.Init_Func + ` 
+	` + imp.Init_Func			
 }
 
 func (d*gos) MergeWith(target string) {
@@ -3165,6 +3188,23 @@ func (d*gos) MergeWith(target string) {
     } else {
     
     for _,im := range imp.RootImports {
+
+    		if strings.Contains(im.Src,".gxml") {
+   			srcP :=  strings.Split(im.Src, "/")
+   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
+   			if _, err := os.Stat(GOHOME + "/" + dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + dir)
+			}
+   		} else {
+   			dir := GOHOME + "/" + strings.Trim(im.Src,"/")
+   			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + im.Src)
+			}
+   		}
    	if strings.Contains(im.Src,".gxml") {
    			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
    			//copy files
@@ -3181,6 +3221,7 @@ func (d*gos) MergeWith(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
+    d.Variables = append(imp.Variables, d.Variables...)
 
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);
@@ -3207,6 +3248,8 @@ func (d*gos) MergeWith(target string) {
 	if d.Web == "" {
 		d.Web = "web"
 	}
+	d.Init_Func = d.Init_Func + ` 
+	` + imp.Init_Func
 
 	CopyDir(imp.FolderRoot + imp.Tmpl, GOHOME + "/" + d.FolderRoot + d.Tmpl + "/" + imp.Package + "/" )
  	CopyDir(imp.FolderRoot + imp.Web, GOHOME + "/" + d.FolderRoot + d.Web + "/" + imp.Package + "/" )
