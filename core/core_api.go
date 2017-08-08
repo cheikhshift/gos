@@ -468,7 +468,7 @@ import (`
 		local_string += `
 		)
 				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
-				type gosdummystructempty struct {
+				type NoStruct struct {
 					/* emptystruct */
 				}
 				func net_sessionGet(key string,s *sessions.Session) string {
@@ -1121,7 +1121,7 @@ import (`
 		)
 				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
 
-				type gosdummystructempty struct {
+				type NoStruct struct {
 					/* emptystruct */
 				}
 
@@ -1414,7 +1414,7 @@ import (`
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
 				if imp.Templ == "" {
-					imp.Templ = "gosdummystructempty"
+					imp.Templ = "NoStruct"
 				}
 
 				available_methods = append(available_methods,imp.Name)
@@ -1552,7 +1552,7 @@ import (`
 			}
 					for _,imp := range template.Templates.Templates {
 						if imp.Struct == "" {
-							imp.Struct = "gosdummystructempty"
+							imp.Struct = "NoStruct"
 						}
 				local_string += `
 
