@@ -570,7 +570,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
       <!-- <end path="/index/api"  type="POST" >
       	varr := "data"
       	fmt.Println(varr)
-      	//response is the string variable sent --> mResponse()
+      	//response is the string variable sent -> mResponse()
       	response = varr
       </end> -->
 	</endpoints>
