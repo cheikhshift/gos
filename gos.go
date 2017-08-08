@@ -528,7 +528,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
 
 
-
+		<!-- Required for Gos To compile \|/-->
 	    <struct name="UserSpace">
 				/* Property Type */
 		</struct>
