@@ -1555,6 +1555,8 @@ import (`
 							imp.Struct = "gosdummystructempty"
 						}
 				local_string += `
+
+
 				func  net_`+ imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
 					if len(args) > 0 {
@@ -1592,6 +1594,10 @@ import (`
 					
 				}`	    
 					local_string += `
+					func  b`+ imp.Name + `(d ` + imp.Struct +`) string {
+						return net_b` + imp.Name +`(d)
+					}
+
 				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
     				body, er := Asset(filename)
@@ -1615,6 +1621,20 @@ import (`
 				}`	    
 				local_string += `
 				func  net_c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+					if len(args) > 0 {
+					var jsonBlob = []byte(args[0].(string))
+					err := json.Unmarshal(jsonBlob, &d)
+					if err != nil {
+						fmt.Println("error:", err)
+						return 
+					}
+					} else {
+						d = `+ imp.Struct +`{}
+					}
+    				return
+				}
+
+				func  c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
