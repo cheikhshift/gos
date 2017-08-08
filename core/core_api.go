@@ -423,7 +423,8 @@ import (`
 		for _,imp := range template.RootImports {
 				//fmt.Println(imp)
 			if !strings.Contains(imp.Src,".gxml") {
-					if imp.Download == "true" {
+				dir := os.ExpandEnv("$GOPATH") + "/src/" + imp.Src
+				 if _, err := os.Stat(dir); os.IsNotExist(err) { 
 							color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + imp.Src)
 					
@@ -436,7 +437,8 @@ import (`
 				pathsplit := strings.Split(imp.Src,"/")
 				gosName := pathsplit[len(pathsplit) - 1]
 				pathsplit = pathsplit[:len(pathsplit)-1]
-				if imp.Download == "true" {
+				dir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit,"/")
+				 if _, err := os.Stat(dir); os.IsNotExist(err) { 
 					color.Red("Package not found")
 						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
 						RunCmd("go get " + strings.Join(pathsplit,"/"))
@@ -3011,7 +3013,7 @@ func PLoadGos(path string) (*gos,*Error) {
 	for _,imp := range v.RootImports {
    		//fmt.Println(imp.Src)
    		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWithV(GOHOME + "/" + strings.Trim(imp.Src,"/"))
+   			v.MergeWithV(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
    	}
@@ -3151,13 +3153,13 @@ func LoadGos(path string) (*gos,*Error) {
    		if strings.Contains(imp.Src,".gxml") {
    			srcP :=  strings.Split(imp.Src, "/")
    			dir  := strings.Join(srcP[:len(srcP)-1], "/")
-   			if _, err := os.Stat(GOHOME + "/" + dir); os.IsNotExist(err) {
+   			if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/" + dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + dir)
 			}
    		} else {
-   			dir := GOHOME + "/" + strings.Trim(imp.Src,"/")
+   			dir := os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src,"/")
    			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
@@ -3166,7 +3168,7 @@ func LoadGos(path string) (*gos,*Error) {
    		}
 
    		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWith(GOHOME + "/" + strings.Trim(imp.Src,"/"))
+   			v.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
    		//
@@ -3184,7 +3186,7 @@ func (d*gos) MergeWithV(target string) {
     
     for _,im := range imp.RootImports {
    	if strings.Contains(im.Src,".gxml") {
-   			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
+   			imp.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src,"/"))
    			//copy files
    	} else {
    		d.RootImports = append(d.RootImports, im)
@@ -3232,13 +3234,13 @@ func (d*gos) MergeWith(target string) {
     		if strings.Contains(im.Src,".gxml") {
    			srcP :=  strings.Split(im.Src, "/")
    			dir  := strings.Join(srcP[:len(srcP)-1], "/")
-   			if _, err := os.Stat(GOHOME + "/" + dir); os.IsNotExist(err) {
+   			if _, err := os.Stat(os.ExpandEnv("$GOPATH") + "/" + dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + dir)
 			}
    		} else {
-   			dir := GOHOME + "/" + strings.Trim(im.Src,"/")
+   			dir := os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src,"/")
    			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
@@ -3246,7 +3248,7 @@ func (d*gos) MergeWith(target string) {
 			}
    		}
    	if strings.Contains(im.Src,".gxml") {
-   			imp.MergeWith(GOHOME + "/" + strings.Trim(im.Src,"/"))
+   			imp.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src,"/"))
    			//copy files
    	} else {
    		d.RootImports = append(d.RootImports, im)
@@ -3291,8 +3293,8 @@ func (d*gos) MergeWith(target string) {
 	d.Init_Func = d.Init_Func + ` 
 	` + imp.Init_Func
 
-	CopyDir(imp.FolderRoot + imp.Tmpl, GOHOME + "/" + d.FolderRoot + d.Tmpl + "/" + imp.Package + "/" )
- 	CopyDir(imp.FolderRoot + imp.Web, GOHOME + "/" + d.FolderRoot + d.Web + "/" + imp.Package + "/" )
+	CopyDir(imp.FolderRoot + imp.Tmpl, os.ExpandEnv("$GOPATH") + "/" + d.FolderRoot + d.Tmpl + "/" + imp.Package + "/" )
+ 	CopyDir(imp.FolderRoot + imp.Web, os.ExpandEnv("$GOPATH") + "/" + d.FolderRoot + d.Web + "/" + imp.Package + "/" )
  
     //copy files
     d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)
