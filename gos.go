@@ -740,7 +740,8 @@ func main() {
 						    }
 						    	}
 						    }
-						   // fmt.Println(log_build)
+						    color.Red("Full compiler build log : ")
+						    fmt.Println(log_build)
 						    return
 						 }
 						
