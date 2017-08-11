@@ -1067,34 +1067,34 @@ import (`
 
           
 
-		for _,imp := range template.RootImports {
-				//fmt.Println(imp)
-			if strings.Contains(imp.Src,".gxml") {
-				
-				pathsplit := strings.Split(imp.Src,"/")
-				gosName := pathsplit[len(pathsplit) - 1]
-				pathsplit = pathsplit[:len(pathsplit)-1]
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
-						color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
-						RunCmd("go get " + strings.Join(pathsplit,"/"))
+			/*	for _,imp := range template.RootImports {
+						//fmt.Println(imp)
+					if strings.Contains(imp.Src,".gxml") {
+						
+						pathsplit := strings.Split(imp.Src,"/")
+						gosName := pathsplit[len(pathsplit) - 1]
+						pathsplit = pathsplit[:len(pathsplit)-1]
+						if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
+								color.Red("Package not found")
+								fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
+								RunCmd("go get " + strings.Join(pathsplit,"/"))
+						}
+						//split and replace last section
+						fmt.Println("∑ Processing XML Yåå ", pathsplit)
+						xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/" 
+							//copy gole with given path -
+							fmt.Println("Installing Resources into project!")
+							//delete prior to copy
+						//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
+						//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
+						//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
+						//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
+						//	template.MergeWith( xmlPackageDir + gosName)
+						//	fmt.Println(template)
+					
+					}
 				}
-				//split and replace last section
-				fmt.Println("∑ Processing XML Yåå ", pathsplit)
-				xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/" 
-					//copy gole with given path -
-					fmt.Println("Installing Resources into project!")
-					//delete prior to copy
-				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
-				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
-				//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
-				//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
-					template.MergeWith( xmlPackageDir + gosName)
-				//	fmt.Println(template)
-			
-			}
-		}
-
+		 */
 	for _,imp := range template.RootImports {
 		if !strings.Contains(imp.Src,".gxml") {
 				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
@@ -3182,7 +3182,7 @@ func LoadGos(path string) (*gos,*Error) {
    		}
 
    		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src,"/"))
+   			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src,"/"))
    			//copy files
    		}
    		//
