@@ -460,8 +460,9 @@ import (`
 					//delete prior to copy
 				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
 				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
-					CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
-					CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
+
+					//CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
+					//CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
 				} else {
 					fmt.Println("∑ Error, Couldn't import your files no package name specified")
 				}
@@ -1064,7 +1065,51 @@ import (`
            }
            int_lok := []string{}
 
-           for _,imp := range template.Header.Objects {
+          
+
+		for _,imp := range template.RootImports {
+				//fmt.Println(imp)
+			if strings.Contains(imp.Src,".gxml") {
+				
+				pathsplit := strings.Split(imp.Src,"/")
+				gosName := pathsplit[len(pathsplit) - 1]
+				pathsplit = pathsplit[:len(pathsplit)-1]
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
+						color.Red("Package not found")
+						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
+						RunCmd("go get " + strings.Join(pathsplit,"/"))
+				}
+				//split and replace last section
+				fmt.Println("∑ Processing XML Yåå ", pathsplit)
+				xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/" 
+					//copy gole with given path -
+					fmt.Println("Installing Resources into project!")
+					//delete prior to copy
+				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
+				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
+				//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
+				//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
+					template.MergeWith( xmlPackageDir + gosName)
+				//	fmt.Println(template)
+			
+			}
+		}
+
+	for _,imp := range template.RootImports {
+		if !strings.Contains(imp.Src,".gxml") {
+				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
+					if _, err := os.Stat( TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src ); os.IsNotExist(err) {
+					color.Red("Package not found")
+						fmt.Println("∑ Downloading Package " + imp.Src)
+						RunCmd("go get " + imp.Src)
+					}
+					if  !contains(net_imports, imp.Src) {
+						net_imports = append(net_imports, imp.Src)
+					}
+			}
+		}
+
+		 for _,imp := range template.Header.Objects {
 			//struct return and function
 				
 			if !contains(int_lok, imp.Name) {
@@ -1081,45 +1126,6 @@ import (`
 				netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
            }
            netMa += `}`
-
-		for _,imp := range template.RootImports {
-				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".gxml") {
-				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-					if _, err := os.Stat( TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src ); os.IsNotExist(err) {
-					color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + imp.Src)
-						RunCmd("go get " + imp.Src)
-					}
-					if  !contains(net_imports, imp.Src) {
-						net_imports = append(net_imports, imp.Src)
-					}
-			} else {
-				pathsplit := strings.Split(imp.Src,"/")
-				gosName := pathsplit[len(pathsplit) - 1]
-				pathsplit = pathsplit[:len(pathsplit)-1]
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
-						color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
-						RunCmd("go get " + strings.Join(pathsplit,"/"))
-				}
-				//split and replace last section
-				fmt.Println("∑ Processing XML Yåå ", pathsplit)
-				xmlPackageDir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit,"/") + "/" 
-				xml_iter,_ := LoadGos( xmlPackageDir + gosName  )
-				if xml_iter.Package != "" {
-					//copy gole with given path -
-					fmt.Println("Installing Resources into project!")
-					//delete prior to copy
-				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
-				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
-					CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
-					CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
-				} else {
-					fmt.Println("∑ Error, Couldn't import your files no package name specified")
-				}
-			}
-		}
 
 	//	fmt.Println(template.Methods.Methods[0].Name)
 
@@ -3300,9 +3306,12 @@ func (d*gos) MergeWith(target string) {
 	}
 	d.Init_Func = d.Init_Func + ` 
 	` + imp.Init_Func
-
-	CopyDir(imp.FolderRoot + imp.Tmpl, os.ExpandEnv("$GOPATH") + "/" + d.FolderRoot + d.Tmpl + "/" + imp.Package + "/" )
- 	CopyDir(imp.FolderRoot + imp.Web, os.ExpandEnv("$GOPATH") + "/" + d.FolderRoot + d.Web + "/" + imp.Package + "/" )
+	d.Main = d.Main + ` 
+	` + imp.Main
+	os.MkdirAll( d.Tmpl + "/" + imp.Package, 0777)
+	os.MkdirAll( d.Web + "/" + imp.Package, 0777)
+	CopyDir(imp.FolderRoot + imp.Tmpl,   d.Tmpl + "/" + imp.Package  )
+ 	CopyDir(imp.FolderRoot + imp.Web,  d.Web + "/" + imp.Package  )
  
     //copy files
     d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)

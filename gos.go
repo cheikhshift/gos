@@ -504,16 +504,16 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <gos>
 	<!--Stating the deployment type GoS should compile -->
 	<!-- Curent valid types are webapp,shell and bind -->
-	<!-- webapp or package -->
+	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
 	<deploy>webapp</deploy>
 	<port>8080</port>
-	<package>if-package-library</package>
+	<package>if-package-is-library</package>
 	<not_found>/your-404-page</not_found>
 	<error>/your-500-page</error>
 	<!-- Using import within different tags will have different results -->
 	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
 	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
-	<!-- To be less dramatic, GoS will skip packages that it has already imported -->
+	<!-- To be less dramating, GoS will skip packages that it has already imported -->
 	
 	<!-- Go File output name -->
 	<output>server_out.go</output>
