@@ -516,7 +516,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<!-- To be less dramating, GoS will skip packages that it has already imported -->
 	
 	<!-- Go File output name -->
-	<output>server_out.go</output>
+	<output>application.go</output>
 	<!-- exported session fields available to Session -->
 
 
