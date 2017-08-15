@@ -1125,7 +1125,7 @@ import (`
 				netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
 				netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
            }
-           netMa += `}`
+         
 
 	//	fmt.Println(template.Methods.Methods[0].Name)
 
@@ -1133,6 +1133,26 @@ import (`
 			local_string += `
 			"` + imp + `"`
 		}
+		var structs_string string
+		//Lets Do structs
+		structs_string = ``
+		for _,imp := range template.Header.Structs {
+			if !contains(arch.objects, imp.Name) {
+			fmt.Println("Processing Struct : " + imp.Name)
+			arch.objects = append(arch.objects, imp.Name)
+			structs_string += `
+			type ` + imp.Name + ` struct {`
+			structs_string += imp.Attributes
+			structs_string += `
+			}
+			func net_struct` + imp.Name + `() *` + imp.Name + `{ return &` + imp.Name +`{} }`
+			netMa += `,"` + imp.Name + `" : net_struct` + imp.Name
+
+			}
+		}
+
+		  netMa += `}`
+
 		local_string += `
 		)
 				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
@@ -1289,7 +1309,7 @@ import (`
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		 defer func() {
 					        if n := recover(); n != nil {
-					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl")
+					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" , n)
 					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
 					        }
 					    }()
@@ -1402,20 +1422,10 @@ import (`
 
 		}
 
-		//Lets Do structs
-		for _,imp := range template.Header.Structs {
-			if !contains(arch.objects, imp.Name) {
-			fmt.Println("Processing Struct : " + imp.Name)
-			arch.objects = append(arch.objects, imp.Name)
-			local_string += `
-			type ` + imp.Name + ` struct {`
-			local_string += imp.Attributes
-			local_string += `
-			}`
-			}
-		}
+
 		
 
+		local_string += structs_string
 
 		for _,imp := range template.Header.Objects {
 			local_string += `
@@ -2695,7 +2705,7 @@ func RunCmdSmartB(cmd string) ([]byte,error) {
 
 func RunCmdSmart(cmd string) (string,error) {
 	 parts := strings.Fields(cmd)
-  	fmt.Println(parts[0],parts[1:])
+  //	fmt.Println(parts[0],parts[1:])
     var out *exec.Cmd
   
     out = exec.Command(parts[0],parts[1:]...)	
@@ -2822,7 +2832,7 @@ func exe_cmd(cmd string) {
 }
 
 func Exe_Stall(cmd string) {
-    fmt.Println(cmd)
+    //fmt.Println(cmd)
     parts := strings.Fields(cmd)
     var out *exec.Cmd
     if len(parts) > 2 {
