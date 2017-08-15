@@ -1309,7 +1309,8 @@ import (`
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		 defer func() {
 					        if n := recover(); n != nil {
-					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" , n)
+					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
+					           	 fmt.Println(n)
 					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
 					        }
 					    }()
