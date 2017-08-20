@@ -1008,7 +1008,7 @@ import (`
 
 	// if template.Type == "webapp" {
 		
-		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe"}
+		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","errors","github.com/cheikhshift/db","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1145,8 +1145,26 @@ import (`
 			structs_string += imp.Attributes
 			structs_string += `
 			}
+
+			func  net_cast` + imp.Name + `(args ...interface{}) *` + imp.Name +`  {
+				
+				s := `+ imp.Name + `{}
+				mapp := args[0].(db.O)
+				if _, ok := mapp["_id"]; ok {
+					mapp["Id"] = mapp["_id"]
+				}
+				data,_ := json.Marshal(&mapp)
+				
+				err := json.Unmarshal(data, &s) 
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				
+				return &s
+			}
 			func net_struct` + imp.Name + `() *` + imp.Name + `{ return &` + imp.Name +`{} }`
 			netMa += `,"` + imp.Name + `" : net_struct` + imp.Name
+			netMa += `,"is` + imp.Name + `" : net_cast` + imp.Name
 
 			}
 		}
@@ -1294,7 +1312,28 @@ import (`
 					}
 					return false
 				}
+				func SetField(obj interface{}, name string, value interface{}) error {
+					structValue := reflect.ValueOf(obj).Elem()
+					structFieldValue := structValue.FieldByName(name)
 
+					if !structFieldValue.IsValid() {
+						return fmt.Errorf("No such field: %s in obj", name)
+					}
+
+					if !structFieldValue.CanSet() {
+						return fmt.Errorf("Cannot set %s field value", name)
+					}
+
+					structFieldType := structFieldValue.Type()
+					val := reflect.ValueOf(value)
+					if structFieldType != val.Type() {
+						invalidTypeError := errors.New("Provided value type didn't match obj field type")
+						return invalidTypeError
+					}
+
+					structFieldValue.Set(val)
+					return nil
+				}
 			func handler(w http.ResponseWriter, r *http.Request, context string) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path , context,r,w)

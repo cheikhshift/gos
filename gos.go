@@ -516,7 +516,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<!-- To be less dramating, GoS will skip packages that it has already imported -->
 	
 	<!-- Go File output name -->
-	<output>application.go</output>
+	<output>server_out.go</output>
 	<!-- exported session fields available to Session -->
 
 
@@ -612,6 +612,7 @@ func main() {
     			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
     			core.RunCmd("go get github.com/asaskevich/govalidator")
     			core.RunCmd("go get github.com/fatih/color")
+    			core.RunCmd("go get github.com/cheikhshift/db")
     			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//core.RunCmd("python setup.py install" )
