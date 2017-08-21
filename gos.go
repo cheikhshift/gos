@@ -554,8 +554,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<templates>
  		<!-- Template libraries are useful for expediting page creation and reuse common website elements within this GoS application -->
- 		<!-- Templates are nested and customized with the template function instead of using the normal {{template "Name"}} call you can now use {{Button /{"Color":"#fff"}/ }}
- 		{{Modal &{Color:"#fff"}& }}  -->
+
  		<!-- *Notice that special braces are used to initialize the parameters of the struct '&{' and '}&' -->
  		
  		<!-- <template name="Bootstrap_alert" tmpl="bootstrap/alert" struct="Bootstrap_alert" /> -->
