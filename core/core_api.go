@@ -2735,10 +2735,11 @@ func RunCmdSmartB(cmd string) ([]byte,error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	fmt.Println(our.String())
+	
 	err := out.Run()
+	fmt.Println(our.String())
 	if err != nil {
-		return nil, err
+		return our.Bytes(), err
 	}
 	return ou.Bytes(),nil
 }
@@ -2760,6 +2761,27 @@ func RunCmdSmart(cmd string) (string,error) {
 	if err != nil {
 	//	fmt.Println("%v", err.Error())
 		return our.String(), err
+	}
+	return ou.String(),nil
+}
+
+func RunCmdSmartZ(cmd string) (string,error) {
+	 parts := strings.Fields(cmd)
+  //	fmt.Println(parts[0],parts[1:])
+    var out *exec.Cmd
+  
+    out = exec.Command(parts[0],parts[1] )	
+   
+    
+	var ou ,our bytes.Buffer
+	out.Stdout = &ou
+	out.Stderr = &our
+
+	fmt.Println(BytesToString(our.Bytes()))
+	err := out.Run()
+	if err != nil {
+	//	fmt.Println("%v", err.Error())
+		return  ou.String() + our.String(), err
 	}
 	return ou.String(),nil
 }
@@ -2810,7 +2832,7 @@ func RunCmdB(cmd string) {
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0],parts[1], "2>&1")
 	}
     
 	var ou bytes.Buffer

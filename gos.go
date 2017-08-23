@@ -575,6 +575,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	</endpoints>
 </gos>
 ` 
+
 func GetLine(fname string , match string )  int {
 	intx := 0
 	file, err := os.Open(fname)
@@ -596,6 +597,208 @@ func GetLine(fname string , match string )  int {
 
 
 	return -1
+}
+
+func Vmd(){
+
+	fmt.Println(">>")
+	var args_c string
+	scanner := bufio.NewScanner(os.Stdin)
+    scanner.Scan() // use `for scanner.Scan()` to keep reading
+    cmd := scanner.Text()
+	cmd_set := strings.Split(cmd, " ")
+	
+
+	if len(cmd_set) < 2 {
+
+		color.Red("List of commands : ")
+		color.Red("Test a GoS method (func) : m <method name> args...(Can use golang statements as well)")
+		color.Red("Test a template : t <template name> <json_of_interface(optional)>")
+		color.Red("Test a server path (API | page) : p </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+		color.Red("Test a func in current main package : f <func name> args...(Use golang statements as well)")
+						
+		color.Green("Help needed with Event keys.")			
+		Vmd()
+		return
+	}
+
+	if len(cmd_set) > 2 {
+			args_c = strings.Join( cmd_set[2:] ,",")
+	} else {
+			args_c = ``
+	}
+
+
+	if cmd_set[0] == "m" {
+		//[2:]
+		
+
+		templat := `package main
+
+			import "testing"
+
+			func Testnet_` + cmd_set[1] + `(t *testing.T){
+				usr := net_` + cmd_set[1] + ` (` + args_c +`)
+				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		 log_build,err := core.RunCmdSmartZ("go test")
+						 if err != nil {
+						 		color.Red("Test failed!")
+						 	} else {
+						 		color.Green("Success")
+
+						 	}
+			fmt.Println(log_build)
+			os.Remove("test_internal_test.go")
+		
+
+	} else if cmd_set[0] == "f" {
+		//[2:]
+		
+
+		templat := `package main
+
+			import "testing"
+
+			func Test` + cmd_set[1] + `(t *testing.T){
+				usr := ` + cmd_set[1] + ` (` + args_c +`)
+				if ` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		 log_build,err := core.RunCmdSmartZ("go test")
+						 if err != nil {
+						 		color.Red("Test failed!")
+						 	} else {
+						 		color.Green("Success")
+
+						 	}
+			fmt.Println(log_build)
+			os.Remove("test_internal_test.go")
+		
+
+	} else if cmd_set[0] == "t" {
+
+			if args_c != "" {
+				args_c = `"` + args_c + `"`
+			}
+
+			templat := `package main
+
+			import "testing"
+
+			func Testnet_` + cmd_set[1] + `(t *testing.T){
+				usr := net_` + cmd_set[1] + ` (` + args_c +`)
+				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		 log_build,err := core.RunCmdSmartZ("go test")
+						 if err != nil {
+						 		color.Red("Test failed!")
+						 	} else {
+						 		color.Green("Success")
+
+						 	}
+			fmt.Println(log_build)
+			os.Remove("test_internal_test.go")
+
+	} else if cmd_set[0] == "p" {
+
+		var method = "GET"
+		var path = cmd_set[1]
+		var params = "nil"
+
+		 if len(cmd_set) > 3 {
+			method = cmd_set[3]
+		 }
+
+		templat := `
+			package main
+
+			import (
+			    "net/http"
+			    "net/http/httptest"
+			    "testing"`
+
+			    if len(cmd_set) > 2 {
+					templat += `"bytes"`
+					params = `bytes.NewReader( []byte("` + cmd_set[2] +`") )`
+				}
+
+			   templat += `
+			)
+
+		
+
+			func Test(t *testing.T) {
+			    // Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+			    // pass 'nil' as the third parameter.
+			    req, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        t.Fatal(err)
+			    }
+
+			      reqtwo, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        t.Fatal(err)
+			    }
+
+			    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+			    rr := httptest.NewRecorder()
+			    handle := http.HandlerFunc(makeHandler(handler))
+
+			    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
+			    // directly and pass in our Request and ResponseRecorder.
+			 
+			   		rrtwo := httptest.NewRecorder()
+			   		handle.ServeHTTP(rrtwo, reqtwo) 
+			   		expected := rrtwo.Body.String()
+			   	
+
+			   	handle.ServeHTTP(rr, req)
+
+			    // Check the status code is what we expect.
+			    if status := rr.Code; status != http.StatusOK {
+			        t.Errorf("handler returned wrong status code: got %v want %v",
+			            status, http.StatusOK)
+			    }
+
+			    // Check the response body is what we expect.
+			 
+			  
+			    if rr.Body.String() != expected {
+			        t.Errorf("handler returned unexpected body: got %v want %v",
+			            rr.Body.String(), expected)
+			    }
+			}`
+
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		 log_build,err := core.RunCmdSmartZ("go test")
+						 if err != nil {
+						 		color.Red("Test failed! " + err.Error())
+						 	} else {
+						 		color.Green("Success")
+
+						 	}
+			fmt.Println(log_build)
+			os.Remove("test_internal_test.go")
+
+	}
+
+
+
+
+	Vmd()
 }
 
 func main() {
@@ -764,6 +967,20 @@ func main() {
 							core.Exe_Stall("./" + pk[len(pk) - 1] )
 						}
 					}	
+					if os.Args[1] == "--test"  {
+						//test console
+						fmt.Println("Invoking go-bindata");
+						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
+						color.Magenta("Welcome to the Gopher Sauce test console.")
+						color.Red("List of commands : ")
+						color.Red("Test a GoS method (func) : m <method name> args...(Can use golang statements as well)")
+						color.Red("Test a template : t <template name> <json_of_interface(optional)>")
+						color.Red("Test a server path (API | page) : p </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+						color.Red("Test a func in current main package : f <func name> args...(Use golang statements as well)")
+						
+						color.Green("Help needed with Event keys.")
+						Vmd()
+					}
 
 					if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export"  {
 						fmt.Println("Generating Export Program")
