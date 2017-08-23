@@ -889,7 +889,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 			`
 		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
-		color.Magenta("Running test...")
+		color.Magenta("Running benchmark...")
 		 log_build,err := core.RunCmdSmartP("go test -bench=.")
 						 if err != nil {
 						 		color.Red("Test failed!")
@@ -926,7 +926,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 			`
 		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
-		color.Magenta("Running test...")
+		color.Magenta("Running benchmark...")
 		 log_build,err := core.RunCmdSmartP("go test -bench=.")
 						 if err != nil {
 						 		color.Red("Test failed!")
@@ -1010,7 +1010,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			}`
 
 		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
-		color.Magenta("Running test...")
+		color.Magenta("Running benchmark...")
 		 log_build,err := core.RunCmdSmartP("go test -bench=.")
 						 if err != nil {
 						 		color.Red("Test failed! " + err.Error())
