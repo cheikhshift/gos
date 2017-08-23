@@ -2791,7 +2791,7 @@ func RunCmdSmartP(cmd string) (string,error) {
   //	fmt.Println(parts[0],parts[1:])
     var out *exec.Cmd
   
-    out = exec.Command(parts[0],parts[1] ,parts[2])	
+    out = exec.Command(parts[0],parts[1] ,parts[2], "-benchmem")	
    
     
 	var ou ,our bytes.Buffer
