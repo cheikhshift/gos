@@ -2786,6 +2786,27 @@ func RunCmdSmartZ(cmd string) (string,error) {
 	return ou.String(),nil
 }
 
+func RunCmdSmartP(cmd string) (string,error) {
+	 parts := strings.Fields(cmd)
+  //	fmt.Println(parts[0],parts[1:])
+    var out *exec.Cmd
+  
+    out = exec.Command(parts[0],parts[1] ,parts[2])	
+   
+    
+	var ou ,our bytes.Buffer
+	out.Stdout = &ou
+	out.Stderr = &our
+
+	fmt.Println(BytesToString(our.Bytes()))
+	err := out.Run()
+	if err != nil {
+	//	fmt.Println("%v", err.Error())
+		return  ou.String() + our.String(), err
+	}
+	return ou.String(),nil
+}
+
 func RunCmdSmartCmb(cmd string) (string,error) {
 	 parts := strings.Fields(cmd)
   	fmt.Println(parts[0],parts[1:])
