@@ -511,9 +511,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<output>application.go</output>
 	
-	<main>
-		/* golang statements */
-	</main>
+
 
 	<key>a very very very very secret key</key>
 	
@@ -1024,6 +1022,7 @@ func main() {
     			core.RunCmd("go get github.com/asaskevich/govalidator")
     			core.RunCmd("go get github.com/fatih/color")
     			core.RunCmd("go get github.com/cheikhshift/db")
+    			core.RunCmd("go get gopkg.in/ldap.v2")
     			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
     			//core.RunCmd("python setup.py install" )
