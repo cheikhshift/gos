@@ -1031,6 +1031,14 @@ import (`
 					callmet = true
 				}
 				`
+				} else if imp.Type == "f" {
+
+				apiraw += ` 
+				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
+					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
+					
+				}
+				`
 				} else {
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 

@@ -502,30 +502,21 @@ var htmlTemplate = `<!DOCTYPE html>
 </html>`
 var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <gos>
-	<!--Stating the deployment type GoS should compile -->
-	<!-- Curent valid types are webapp,shell and bind -->
-	<!-- Shell = cli, sort of a GoS(Ghost) in the Shell -->
+	<!-- xml Schema : https://github.com/cheikhshift/Gopher-Sauce/wiki/XML-tags#xml-schema -->
 	<deploy>webapp</deploy>
 	<port>8080</port>
 	<package>if-package-is-library</package>
 	<not_found>/your-404-page</not_found>
 	<error>/your-500-page</error>
-	<!-- Using import within different tags will have different results -->
-	<!-- We going to make the goPkg Mongo Db Driver available to our application -->
-	<!-- Using <import/> within the <go/> tag is similar to using the import call within a .go file -->
-	<!-- To be less dramating, GoS will skip packages that it has already imported -->
+
+	<output>application.go</output>
 	
-	<!-- Go File output name -->
-	<output>server_out.go</output>
-	<!-- exported session fields available to Session -->
 
 
 	<key>a very very very very secret key</key>
-	<!-- Declare global variables -->
-	<!-- Contains interfaces and structs
-	 that will be used by the GoS application -->
+	
 	<header> 
-			<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
+		<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
 
 
 		<!-- Required for Gos To compile \|/-->
@@ -537,19 +528,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 		</object>
 	</header>
 	<methods>
-		<!-- Vars are defined as usual except within the var attribute for example :  -->
-		<!-- If there is a basic go function : func hackfmt(data string, data2 string) -->
-		<!-- the attribute names would be called as such var="data string,data2 string" -->
-		<!-- Similar to a go function decleration-->
-		<!--  if a method matches the criteria for an  interface it will be used as an interface method -->
-		<!-- To prevent that use the autoface attribute and set it to "false" By default it is true -->
-		<!-- Use the keep-local="true" attribute to limit a method within a Go file -->	
-		<!-- Sometimes your method will return data  -->
-		<!-- And to do so we will need to add a return var list by using the return attribute  -->
-		<!-- Sometimes the autointerface will reuse the wrong the function, or your interface methods need a bit more distinction -->
-		<!-- Vis a  vis which object types are used in generating these mutating methods -->
-		<!--Use the limit attribute to narrow down the applicable structs for this method -->
-		<!-- Use the object attribute to determine the name of the local variable name to be mutated within the function. By default GoS will assume object is the variable name  -->
+		
 	</methods>
 
 	<templates>
