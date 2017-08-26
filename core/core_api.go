@@ -254,6 +254,10 @@ func CopyDir(source string, dest string) (err error) {
         sfp := source + "/" + entry.Name()
         dfp := dest + "/" + entry.Name()
         if entry.IsDir() {
+        	err = os.MkdirAll(dfp, fi.Mode())
+        	if err != nil {
+                log.Println(err)
+            }
             err = CopyDir(sfp, dfp)
             if err != nil {
                 log.Println(err)
@@ -3319,7 +3323,7 @@ func (d*gos) MergeWithV(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
-    d.Variables = append(imp.Variables, d.Variables...)
+    //d.Variables = append(imp.Variables, d.Variables...)
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);
     	for _,im := range imp.Templates.Templates {
@@ -3378,7 +3382,7 @@ func (d*gos) MergeWith(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
-    d.Variables = append(imp.Variables, d.Variables...)
+     d.Variables = append(imp.Variables, d.Variables...)
 
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);
