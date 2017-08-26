@@ -511,7 +511,9 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<output>application.go</output>
 	
-
+	<main>
+		/* golang statements */
+	</main>
 
 	<key>a very very very very secret key</key>
 	
