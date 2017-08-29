@@ -1012,7 +1012,7 @@ import (`
 
 	// if template.Type == "webapp" {
 		
-		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","errors","github.com/cheikhshift/db","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe"}
+		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","errors","github.com/cheikhshift/db","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe","os","bufio"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1031,7 +1031,7 @@ import (`
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request failed at line :\n", lastLine)
+					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"`  + `, lastLine)
 					          fmt.Println("Reason : ",n)
 					          http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
 					        }
@@ -1694,6 +1694,29 @@ import (`
 				    }
 				    return false;
 				 }
+
+				 func GetLine(fname string , match string )  int {
+					intx := 0
+					file, err := os.Open(fname)
+								if err != nil {
+									color.Red("Could not find a source file")
+																		           		return -1
+												    }
+								defer file.Close()
+
+								scanner := bufio.NewScanner(file)
+								for scanner.Scan() {
+									intx = intx + 1
+									if strings.Contains(scanner.Text(), match ) {
+												    		
+												    		return intx
+												    	}
+
+								}
+
+
+					return -1
+				}
 				 func netgte(x,v float64) bool {
 				    if x >= v {
 				        return true;
@@ -1871,7 +1894,7 @@ import (`
 							lastLine := ""
 							defer func() {
 							       if n := recover(); n != nil {
-							          fmt.Println("Pipeline failed at line :\n", lastLine)
+							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"`  + `, lastLine)
 							          fmt.Println("Reason : ",n)
 							         
 							        }

@@ -1013,7 +1013,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 
 func JBuild(path string,out string){
-
+	
 	fmt.Println("Invoking go-bindata");
 						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
 						//time.Sleep(time.Second*100 )
@@ -1147,7 +1147,7 @@ func Build(path string){
 
 			//fmt.Println(coreTemplate.Methods.Methods)
 	coreTemplate.WriteOut = false
-
+	coreTemplate.Name = path
 	//fmt.Println(coreTemplate)
 	if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export"  {
 		coreTemplate.Prod = true			

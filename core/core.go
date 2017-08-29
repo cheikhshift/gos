@@ -51,7 +51,7 @@ type gos struct {
 	 Timers Timers `xml:"timers"`
 	 Templates Templates `xml:"templates"`
 	 Endpoints Endpoints `xml:"endpoints"`
-	 FolderRoot string
+	 FolderRoot,Name string
 	 Prod bool
 }
 
