@@ -1025,13 +1025,33 @@ import (`
 		}
 		apiraw := ``
 		for _,imp := range template.Endpoints.Endpoints {
-		
-		
+			 	est := ``
+				if !template.Prod {
+					est = `	
+					lastLine := ""
+					defer func() {
+					       if n := recover(); n != nil {
+					          fmt.Println("Web request failed at line :\n", lastLine)
+					          fmt.Println("Reason : ",n)
+					          http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+						}()`
+					setv := strings.Split(imp.Method, "\n")
+					for _, line := range setv {
+						est += `
+						lastLine = ` + "`" + line +"`" + `
+						` + line
+					}
+
+				} else {
+					est = strings.Replace(imp.Method, `&#38;`, `&`,-1)
+				}
 				if imp.Type == "star" {
 
 				apiraw += ` 
 				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
-					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
+					` + est + `
+					
 					callmet = true
 				}
 				`
@@ -1039,14 +1059,16 @@ import (`
 
 				apiraw += ` 
 				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
-					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
+					` + est + `
+				
 					
 				}
 				`
 				} else {
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
-					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
+					` + est + `
+					
 					callmet = true
 				}
 				`
@@ -1842,7 +1864,31 @@ import (`
 								`
 							}
 						}
-						local_string += strings.Replace(meth.Method, `&#38;`, `&`,-1)
+
+						est := ``
+						if !template.Prod {
+							est = `	
+							lastLine := ""
+							defer func() {
+							       if n := recover(); n != nil {
+							          fmt.Println("Pipeline failed at line :\n", lastLine)
+							          fmt.Println("Reason : ",n)
+							         
+							        }
+								}()`
+							setv := strings.Split(meth.Method, "\n")
+							for _, line := range setv {
+								if len(line) > 4 {
+								est += `
+								lastLine = ` + "`" + line +"`" + `
+								` + line
+								}
+							}
+
+						} else {
+							est = strings.Replace(meth.Method, `&#38;`, `&`,-1)
+						}
+						local_string += est
 						if addedit {
 						 local_string +=  `
 						 return ""

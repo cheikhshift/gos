@@ -1149,7 +1149,9 @@ func Build(path string){
 	coreTemplate.WriteOut = false
 
 	//fmt.Println(coreTemplate)
-	
+	if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export"  {
+		coreTemplate.Prod = true			
+	}
 	core.Process(coreTemplate,GOHOME, webroot,template_root)
 	if os.Args[1] == "--t" {
 		return

@@ -52,6 +52,7 @@ type gos struct {
 	 Templates Templates `xml:"templates"`
 	 Endpoints Endpoints `xml:"endpoints"`
 	 FolderRoot string
+	 Prod bool
 }
 
 type Pgos struct {
