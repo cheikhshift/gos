@@ -1471,9 +1471,9 @@ import (`
 					linestring := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					           	fmt.Println()
-					           	// fmt.Println(n)
-					           			fmt.Println("Error on line :", lastline + 1,linestring)  
+					         
+					           			fmt.Println("Error on line :", lastline + 1,linestring) 
+					           			fmt.Println(n)
 					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
 					        }
 					    }()	
