@@ -1252,7 +1252,16 @@ import (`
 				}
 			
 				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page)  bool {
-				     filename :=  tmpl  + ".tmpl"
+				     defer func() {
+					        if n := recover(); n != nil {
+					           	 color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
+					           	 fmt.Println(n)
+					           	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
+					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+					    }()
+
+				    filename :=  tmpl  + ".tmpl"
 				    body, err := Asset(filename)
 				    session, er := store.Get(r, "session-")
 
@@ -1271,7 +1280,8 @@ import (`
 				    outp := new(bytes.Buffer)
 				    error := t.Execute(outp, p)
 				    if error != nil {
-				   // fmt.Print(error)
+				    fmt.Println(error.Error())
+				    	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
 				    	 http.Redirect(w,r,"` + template.ErrorPage +`",301)
 				    return false
 				    }  else {
@@ -1346,6 +1356,219 @@ import (`
 					structFieldValue.Set(val)
 					return nil
 				}
+				func DebugTemplate(w http.ResponseWriter,r *http.Request,tmpl string){
+					lastline := 0
+					linestring := ""
+					defer func() {
+					       if n := recover(); n != nil {
+					           	fmt.Println()
+					           	// fmt.Println(n)
+					           			fmt.Println("Error on line :", lastline + 1,linestring)  
+					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+					    }()	
+
+					p,err := loadPage(r.URL.Path , "",r,w)
+					filename :=  tmpl  + ".tmpl"
+				    body, err := Asset(filename)
+				    session, er := store.Get(r, "session-")
+
+				 	if er != nil {
+				           session,er = store.New(r,"session-")
+				    }
+				    p.Session = session
+				    p.R = r
+				    if err != nil {
+				       	fmt.Print(err)
+				    	
+				    } else {
+				    
+				  
+				   
+				    lines := strings.Split(string(body), "\n")
+				   // fmt.Println( lines )
+				    linebuffer := ""
+				    waitend := false
+				    open := 0
+				    for i, line := range lines {
+				    	
+				    	
+
+				   
+
+				    	if waitend {
+				    		linebuffer += line
+
+				    		endstr := ""
+				    		for i := 0; i < open; i++ {
+				    			endstr += "{{end}}"
+				    		}
+				    		//exec
+				    		outp := new(bytes.Buffer)  
+					    	t := template.New("PageWrapper")
+					    	t = t.Funcs(` + netMa + `)
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	lastline = i
+					    	linestring =  line
+					    	error := t.Execute(outp, p)
+						    if error != nil {
+						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						    } 
+
+				    	}
+
+				    if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
+				    		linebuffer += line
+				    		waitend = true
+				    		open++;
+				    		endstr := ""
+				    		for i := 0; i < open; i++ {
+				    			endstr += "{{end}}"
+				    		}
+				    		//exec
+				    		outp := new(bytes.Buffer)  
+					    	t := template.New("PageWrapper")
+					    	t = t.Funcs(` + netMa + `)
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	lastline = i
+					    	linestring =  line
+					    	error := t.Execute(outp, p)
+						    if error != nil {
+						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						    } 
+				    	}
+
+				    	if !waitend {
+				    	outp := new(bytes.Buffer)  
+				    	t := template.New("PageWrapper")
+				    	t = t.Funcs(` + netMa + `)
+				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    	lastline = i
+				    	linestring = line
+				    	error := t.Execute(outp, p)
+					    if error != nil {
+					   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+					    }  
+						}
+
+						if  strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") {
+							open--
+
+							if open == 0 {
+							waitend = false
+				    		
+							}
+				    	}
+				    }
+				    
+					
+				    }
+
+				}
+
+			func DebugTemplatePath(tmpl string, intrf interface{}){
+					lastline := 0
+					linestring := ""
+					defer func() {
+					       if n := recover(); n != nil {
+					           	fmt.Println()
+					           	// fmt.Println(n)
+					           			fmt.Println("Error on line :", lastline + 1,linestring)  
+					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+					    }()	
+
+				
+					filename :=  tmpl  
+				    body, err := Asset(filename)
+				   
+				    if err != nil {
+				       	fmt.Print(err)
+				    	
+				    } else {
+				    
+				  
+				   
+				    lines := strings.Split(string(body), "\n")
+				   // fmt.Println( lines )
+				    linebuffer := ""
+				    waitend := false
+				    open := 0
+				    for i, line := range lines {
+				    	
+				    	
+
+				   
+
+				    	if waitend {
+				    		linebuffer += line
+
+				    		endstr := ""
+				    		for i := 0; i < open; i++ {
+				    			endstr += "{{end}}"
+				    		}
+				    		//exec
+				    		outp := new(bytes.Buffer)  
+					    	t := template.New("PageWrapper")
+					    	t = t.Funcs(` + netMa + `)
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	lastline = i
+					    	linestring =  line
+					    	error := t.Execute(outp, intrf)
+						    if error != nil {
+						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						    } 
+
+				    	}
+
+				    	if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
+				    		linebuffer += line
+				    		waitend = true
+				    		open++;
+				    		endstr := ""
+				    		for i := 0; i < open; i++ {
+				    			endstr += "{{end}}"
+				    		}
+				    		//exec
+				    		outp := new(bytes.Buffer)  
+					    	t := template.New("PageWrapper")
+					    	t = t.Funcs(` + netMa + `)
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	lastline = i
+					    	linestring =  line
+					    	error := t.Execute(outp, intrf)
+						    if error != nil {
+						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						    } 
+				    	}
+
+				    	if !waitend {
+				    	outp := new(bytes.Buffer)  
+				    	t := template.New("PageWrapper")
+				    	t = t.Funcs(` + netMa + `)
+				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    	lastline = i
+				    	linestring = line
+				    	error := t.Execute(outp, intrf)
+					    if error != nil {
+					   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+					    }  
+						}
+
+						if  strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}"){
+							open--
+
+							if open == 0 {
+							waitend = false
+				    		
+							}
+				    	}
+				    }
+				    
+					
+				    }
+
+				}
 			func handler(w http.ResponseWriter, r *http.Request, context string) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path , context,r,w)
@@ -1358,14 +1581,15 @@ import (`
 				   w.Header().Set("Cache-Control",  "public")
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
-				  		 defer func() {
-					        if n := recover(); n != nil {
-					           	color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
+				  		    defer func() {
+					       if n := recover(); n != nil {
+					           	 color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
 					           	 fmt.Println(n)
+					           	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
 					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
 					        }
-					    }()
-				      renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
+					    }()	
+				      	renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
 				     
 				     // fmt.Println(w)
 				  } else {
@@ -1637,6 +1861,15 @@ import (`
 
 				func  net_`+ imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
+					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
+						defer func() {
+					       if n := recover(); n != nil {
+					           	   color.Red("Error loading template in path : " + filename )
+					           	// fmt.Println(n)
+					           		DebugTemplatePath(filename, &d)	
+					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					        }
+					    }()	
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -1649,7 +1882,7 @@ import (`
 						d = ` + imp.Struct +`{}
 					}
 
-					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
+					
     				body, er := Asset(filename)
     				if er != nil {
     					return ""
@@ -1659,14 +1892,11 @@ import (`
     				t = t.Funcs(` + netMa +`)
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
 					
-					 defer func() {
-					        if n := recover(); n != nil {
-					           	color.Red("Error loading template in path : " + filename )
-					        }
-					    }()
+					
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				   color.Red("Error processing template " + filename)
+				   DebugTemplatePath(filename, &d)	
 				    } 
 					return html.UnescapeString(output.String())
 					
@@ -1678,6 +1908,7 @@ import (`
 
 				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
+					
     				body, er := Asset(filename)
     				if er != nil {
     					return ""
@@ -1689,6 +1920,7 @@ import (`
 				 defer func() {
 					        if n := recover(); n != nil {
 					           	color.Red("Error loading template in path : " + filename )
+					           	DebugTemplatePath(filename, &d)	
 					        }
 					    }()
 				    error := t.Execute(output, &d)
@@ -2947,18 +3179,22 @@ func Exe_Stall(cmd string, chn chan bool) {
 	r := bufio.NewReader(stdout)
 	
 	t := false
-	for  !t {
+
+	
+		
+	
+	go func(){ for  !t {
 		line, _, _ := r.ReadLine()
 		if string(line) != "" {
-	    fmt.Println(string(line))
+	    log.Println(string(line))
 		}
-
-		tch, m := <-chn
-		if m {
-		t = tch
+	
+    } }()
+    tch, m := <-chn
+		if m  && tch {
+			t = tch
 		}
-    }
-
+		log.Println("Restarting service.")
      if err := out.Process.Kill(); err != nil {
         log.Fatal("failed to kill: ", err)
     }

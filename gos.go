@@ -1090,7 +1090,7 @@ func JBuild(path string,out string){
 						
 						process := make(chan bool)
 						done := make(chan bool)
-			
+				//	log_console := make(chan string)
 						
 						
 			//always delete add on folders prior
@@ -1102,20 +1102,23 @@ func JBuild(path string,out string){
 					
 						
 						reloading := false
+						//brokep := false
 						// Process events
 						go func() {
 							for {
 								select {
 								case ev := <-watcher.Event:
+
 								if !reloading {
 										log.Println("event:", ev)
 										//Build( GOHOME + "/" + serverconfig )
 										reloading = true
 										process <- true
 									//	done <- true	
-										core.RunCmd("gos --t")
-									done <- true
-								} 
+											
+										done <- true
+								}
+
 								}
 							}
 						}()
@@ -1125,10 +1128,11 @@ func JBuild(path string,out string){
 							log.Fatal(err)
 						}
 						fmt.Println("Ready!")
-						core.Exe_Stall("./" + pk[len(pk) - 1],process )
+						go core.Exe_Stall("./" + pk[len(pk) - 1],process )
 						<-done
 						watcher.RemoveWatch(path)
 						watcher.Close()
+						core.RunCmd("gos --t")
 						JBuild(path,out)
 }
 	
@@ -1234,7 +1238,7 @@ func Build(path string){
 						
 						process := make(chan bool)
 						done := make(chan bool)
-			
+				  		//log_console := make(chan string)
 						
 						
 			//always delete add on folders prior
@@ -1244,26 +1248,27 @@ func Build(path string){
 						}
 
 					
-						brokep := false
+						//brokep := false
 						reloading := false
 						// Process events
 						go func() {
 							for {
 								select {
+								
 								case ev := <-watcher.Event:
 								if !reloading {
 										log.Println("event:", ev)
 										//Build( GOHOME + "/" + serverconfig )
 										reloading = true
 										process <- true
-									//	done <- true	
-								} else if !brokep {
-									brokep = true
-									core.RunCmd("gos --t")
-									done <- true
-
-						 			}
-								}
+									//	done <- true
+										
+										done <- true	
+									
+									} /* else if !brokep {
+										
+									}*/
+								} 
 							}
 						}()
 
@@ -1272,11 +1277,15 @@ func Build(path string){
 							log.Fatal(err)
 						}
 						fmt.Println("Ready!")
-						core.Exe_Stall("./" + pk[len(pk) - 1],process )
+						go core.Exe_Stall("./" + pk[len(pk) - 1],process )
+						//process <- false
 						<-done
+
+						close(process)
+						close(done)
 						watcher.RemoveWatch(path)
 						watcher.Close()
-			
+						core.RunCmd("gos --t")
 						JBuild(path,coreTemplate.Output)
 										
 						
