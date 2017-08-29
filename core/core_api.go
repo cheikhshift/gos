@@ -254,6 +254,10 @@ func CopyDir(source string, dest string) (err error) {
         sfp := source + "/" + entry.Name()
         dfp := dest + "/" + entry.Name()
         if entry.IsDir() {
+        	err = os.MkdirAll(dfp, fi.Mode())
+        	if err != nil {
+                log.Println(err)
+            }
             err = CopyDir(sfp, dfp)
             if err != nil {
                 log.Println(err)
@@ -2922,8 +2926,8 @@ func exe_cmd(cmd string) {
 	fmt.Printf("%s\n", stdoutStderr)
 }
 
-func Exe_Stall(cmd string) {
-    //fmt.Println(cmd)
+func Exe_Stall(cmd string, chn chan bool) {
+    fmt.Println(cmd)
     parts := strings.Fields(cmd)
     var out *exec.Cmd
     if len(parts) > 2 {
@@ -2943,12 +2947,53 @@ func Exe_Stall(cmd string) {
 	r := bufio.NewReader(stdout)
 	
 	t := false
-	for !t {
-	line, _, _ := r.ReadLine()
-	if string(line) != "" {
-    fmt.Println(string(line))
-	}
+	for  !t {
+		line, _, _ := r.ReadLine()
+		if string(line) != "" {
+	    fmt.Println(string(line))
+		}
+
+		tch, m := <-chn
+		if m {
+		t = tch
+		}
     }
+
+     if err := out.Process.Kill(); err != nil {
+        log.Fatal("failed to kill: ", err)
+    }
+}
+
+func Exe_Stalll(cmd string) {
+    fmt.Println(cmd)
+    parts := strings.Fields(cmd)
+    var out *exec.Cmd
+    if len(parts) > 2 {
+    	out = exec.Command(parts[0],parts[1],parts[2],"2>&1")
+	} else if len(parts) == 1 {
+		out = exec.Command(parts[0],"2>&1")
+	} else {
+		out = exec.Command(parts[0],parts[1],"2>&1")
+	}
+    stdout, err := out.StdoutPipe()
+   
+    if err != nil {
+        fmt.Println("error occured")
+        fmt.Printf("%s", err)
+    }
+    out.Start()
+	r := bufio.NewReader(stdout)
+	
+	t := false
+	for  !t {
+		line, _, _ := r.ReadLine()
+		if string(line) != "" {
+	    fmt.Println(string(line))
+		}
+		
+    }
+
+    
 }
 
 func Exe_BG(cmd string) {
@@ -3240,9 +3285,63 @@ func (d*gos) Set(attr,value string) {
 	}
 }
 
+
+
+func VLoadGos(path string) (gos,*Error) {
+	fmt.Println("∑ loading " + path)
+	v := gos{}
+	 body, err := ioutil.ReadFile(path)
+    if err != nil {
+    	return v, &Error{code: 404,reason:"file not found! @ " + path}
+    }
+
+ 	//obj := Error{}
+ 	//fmt.Println(obj);
+    d := xml.NewDecoder(bytes.NewReader(body))
+    d.Strict = false;
+    err = d.Decode(&v)
+    if err != nil {
+        fmt.Printf("error: %v", err)
+        return v,nil
+    }
+
+    if v.FolderRoot == "" {
+    	ab :=  strings.Split(path, "/")
+    	v.FolderRoot = strings.Join(ab[:len(ab) - 1],"/") + "/"
+    }
+   	//process mergs
+   	for _,imp := range v.RootImports {
+   		//fmt.Println(imp.Src)
+   		if strings.Contains(imp.Src,".gxml") {
+   			srcP :=  strings.Split(imp.Src, "/")
+   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
+   			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + dir)
+			}
+   		} else {
+   			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Trim(imp.Src,"/")
+   			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				// path/to/whatever does not exist
+				//fmt.Println("")
+				RunCmd("go get " + imp.Src)
+			}
+   		}
+
+   		if strings.Contains(imp.Src,".gxml") {
+   			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src,"/"))
+   			//copy files
+   		}
+   		//
+   	}
+
+    return v,nil
+}
+
 func LoadGos(path string) (*gos,*Error) {
 	fmt.Println("∑ loading " + path)
-	v := &gos{}
+	v := gos{}
 	 body, err := ioutil.ReadFile(path)
     if err != nil {
     	return nil, &Error{code: 404,reason:"file not found! @ " + path}
@@ -3289,7 +3388,7 @@ func LoadGos(path string) (*gos,*Error) {
    		//
    	}
 
-    return v,nil
+    return &v,nil
 }
 
 func (d*gos) MergeWithV(target string) {
@@ -3319,7 +3418,7 @@ func (d*gos) MergeWithV(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
-    d.Variables = append(imp.Variables, d.Variables...)
+    //d.Variables = append(imp.Variables, d.Variables...)
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);
     	for _,im := range imp.Templates.Templates {
@@ -3378,7 +3477,7 @@ func (d*gos) MergeWith(target string) {
     d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
     d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
     //Specialize method for templates
-    d.Variables = append(imp.Variables, d.Variables...)
+     d.Variables = append(imp.Variables, d.Variables...)
 
     if imp.Package != "" && imp.Type == "package" {
     		fmt.Println("Parsing Prefixes for " + imp.Package);

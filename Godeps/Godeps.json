@@ -1,12 +1,17 @@
 {
 	"ImportPath": "github.com/cheikhshift/gos",
-	"GoVersion": "go1.5",
+	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Deps": [
 		{
 			"ImportPath": "github.com/fatih/color",
 			"Comment": "v1.5.0-4-g67c513e",
 			"Rev": "67c513e5729f918f5e69786686770c27141a4490"
+		},
+		{
+			"ImportPath": "github.com/howeyc/fsnotify",
+			"Comment": "v0.9.0-16-gf0c08ee",
+			"Rev": "f0c08ee9c60704c1879025f2ae0ff3e000082c13"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",

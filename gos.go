@@ -9,15 +9,18 @@ import (
 	//"time"
 	"github.com/fatih/color"
 	"unicode"
-	 "bufio"
-	 "strconv"
-
+	"bufio"
+	"strconv"
+	"log"
+	"github.com/howeyc/fsnotify"
 )
 
 var webroot string
 var template_root string
 var gos_root string
 var GOHOME string
+var serverconfig string
+
 
 
 func LowerInitial(str string) string {
@@ -1008,92 +1011,151 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 	VmP()
 }
 
-func main() {
-	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
-    	//fmt.Println( os.Args)
-    if len(os.Args) > 1 {
-    //args := os.Args[1:]
-    		if os.Args[1] == "dependencies" || os.Args[1] == "deps" {
-    			fmt.Println("∑ Getting GoS dependencies")
-    			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
-    			core.RunCmd("go get github.com/gorilla/sessions")
-    			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-    			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
-    			core.RunCmd("go get github.com/asaskevich/govalidator")
-    			core.RunCmd("go get github.com/fatih/color")
-    			core.RunCmd("go get github.com/cheikhshift/db")
-    			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
-    			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
-    			//core.RunCmd("python setup.py install" )
-    			//time.Sleep(time.Second *120)
-    			fmt.Println("Done")
-    			return
-    		}
 
-    		if os.Args[1] == "make" {
-    		//2 is project folder
-    		
-    		    os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/web", 0777 )
-    			os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/tmpl",0777 )
-    			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.gxml", []byte(gosTemplate), 0777)	
-    			return
-    		}
+func JBuild(path string,out string){
 
-    		if os.Args[1] == "makesublime" ||  os.Args[1] == "--make" {
-    		//2 is project folder
-    		
-    		    os.MkdirAll( "web", 0777 )
-    			os.MkdirAll( "tmpl",0777 )
-    			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)
-    			ioutil.WriteFile("web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
-    			ioutil.WriteFile("web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
-    			return
-    		}
-    		
+	fmt.Println("Invoking go-bindata");
+						core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
+						//time.Sleep(time.Second*100 )
+						//core.RunFile(GOHOME, coreTemplate.Output)
+						 log_build,err := core.RunCmdSmart("go build")
+						 if err != nil {
+						 	//fmt.Println(err.Error())
+						  color.Red("Your build failed, Here is why :>")
+						 	lines := strings.Split(log_build,"\n")
+						 	 for i, line := range lines {
+						 	 	if i > 0 {
+						        if strings.Contains(line,"imported and") {
+						        	line_part  := strings.Split(line,":")
+						        	color.Red(strings.Join(line_part[2:]," - "))
+						        } else {
+						        	if line != "" {
+						           line_part  := strings.Split(line,":")
+						           lnumber, _ := strconv.Atoi(line_part[1])
+						           file, err := os.Open(out)
+								    if err != nil {
+								        color.Red("Could not find a source file")
+														           		return
+								    }
+								    
+								    //fmt.Println(line_part[len(line_part) - 1])
+								    scanner := bufio.NewScanner(file)
+								    inm := 0
+								    for scanner.Scan() {
+								    	inm++
+								    	//fmt.Println("%+V", inm)
+								    	lin := scanner.Text()
+								    	if inm == lnumber {
+								 acT_line := GetLine(serverconfig, lin)
+								 if acT_line > -1 {
+								  color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line )  + " | " + strings.Join(line_part[2:]," - "))
 
-    		
-    		if strings.Contains(os.Args[1],"sub") {
-    			GOHOME = "./"
+								    	} else {
+								    		color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
+								    	
+								    	}
+								    }
+								      // fmt.Println("data : " + scanner.Text())
+								    }
 
-    		}
+								    if err := scanner.Err(); err != nil {
+								        color.Red("Could not find a source file")
+														           		return
+								    }
+						         
+						         	file.Close()
+						        }
+						    }
+						    	}
+						    }
+						    color.Red("Full compiler build log : ")
+						    fmt.Println(log_build)
+						   
+						    return
+						 }
+						
+						var pk []string
+						if strings.Contains(os.Args[1],"--") {
+								pwd, err := os.Getwd()
+						    if err != nil {
+						        fmt.Println(err)
+						        os.Exit(1)
+						    }
+							pk = strings.Split(strings.Trim(pwd,"/"), "/")
+						
+						} else {
+							pk = strings.Split(strings.Trim(os.Args[2],"/"), "/")
+						}
+						fmt.Println("Use Ctrl + C to quit")
+						
+						process := make(chan bool)
+						done := make(chan bool)
+			
+						
+						
+			//always delete add on folders prior
+					 watcher, err := fsnotify.NewWatcher()
+						if err != nil {
+							log.Fatal(err)
+						}
 
-    		if strings.Contains(os.Args[1],"--") {
-    			GOHOME = "./"
+					
+						
+						reloading := false
+						// Process events
+						go func() {
+							for {
+								select {
+								case ev := <-watcher.Event:
+								if !reloading {
+										log.Println("event:", ev)
+										//Build( GOHOME + "/" + serverconfig )
+										reloading = true
+										process <- true
+									//	done <- true	
+										core.RunCmd("gos --t")
+									done <- true
+								} 
+								}
+							}
+						}()
 
-    		} else {
-    			GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
-    		}
-    		var serverconfig string
-    		
-    			if strings.Contains(os.Args[1],"--") {
-    				webroot = "web"
-    				template_root = "tmpl"
-    				serverconfig = "gos.gxml"
-    			} else {
-    				webroot = os.Args[4]
-    				template_root = os.Args[5]
-    				serverconfig = os.Args[3]
-    			}
-    		fmt.Println("∑ GoS Speed compiler ");
-    		coreTemplate,err := core.LoadGos( GOHOME + "/" + serverconfig ); 
+						err = watcher.Watch(GOHOME + "/" + serverconfig)
+						if err != nil {
+							log.Fatal(err)
+						}
+						fmt.Println("Ready!")
+						core.Exe_Stall("./" + pk[len(pk) - 1],process )
+						<-done
+						watcher.RemoveWatch(path)
+						watcher.Close()
+						JBuild(path,out)
+}
+	
+func Build(path string){
+
+	color.Magenta("Loading project!")
+	coreTemplate,err := core.LoadGos(path); 
 			if err != nil {
 				fmt.Println(err)
 				return 
 			}
 
 			//fmt.Println(coreTemplate.Methods.Methods)
-			coreTemplate.WriteOut = false
+	coreTemplate.WriteOut = false
 
-			//always delete add on folders prior
-		
-			core.Process(coreTemplate,GOHOME, webroot,template_root);
-
+	//fmt.Println(coreTemplate)
+	
+	core.Process(coreTemplate,GOHOME, webroot,template_root)
+	if os.Args[1] == "--t" {
+		return
+	}
 			if coreTemplate.Type == "webapp" || coreTemplate.Type == "locale" {
 
 
-					if os.Args[1] == "run" || os.Args[1] == "run-sub" ||  os.Args[1] == "--run" {
+					if os.Args[1] == "run" || os.Args[1] == "run-sub" ||  os.Args[1] == "--run"  || os.Args[1] == "--serv" {
 					//	
-						if !strings.Contains(os.Args[1],"run-") &&  !strings.Contains(os.Args[1],"--run") {
+						if !strings.Contains(os.Args[1],"run-") &&  !strings.Contains(os.Args[1],"--") {
 						os.Chdir(GOHOME)
 						}
 						fmt.Println("Invoking go-bindata");
@@ -1152,28 +1214,77 @@ func main() {
 						    }
 						    color.Red("Full compiler build log : ")
 						    fmt.Println(log_build)
+						   
 						    return
 						 }
 						
 						var pk []string
 						if strings.Contains(os.Args[1],"--") {
-							pk = strings.Split("/gosapp", "/")
-						} else {
-							pk = strings.Split(strings.Trim(os.Args[2],"/"), "/")
-						}
-						fmt.Println("Use Ctrl + C to quit")
-						if GOHOME != "./" {
-							core.Exe_Stall("./" + pk[len(pk) - 1] )
-						} else {
-							 pwd, err := os.Getwd()
+								pwd, err := os.Getwd()
 						    if err != nil {
 						        fmt.Println(err)
 						        os.Exit(1)
 						    }
-						    pk = strings.Split(strings.Trim(pwd,"/"), "/")
-							core.Exe_Stall("./" + pk[len(pk) - 1] )
+							pk = strings.Split(strings.Trim(pwd,"/"), "/")
+						
+						} else {
+							pk = strings.Split(strings.Trim(os.Args[2],"/"), "/")
 						}
-					}	
+						fmt.Println("Use Ctrl + C to quit")
+						
+						process := make(chan bool)
+						done := make(chan bool)
+			
+						
+						
+			//always delete add on folders prior
+					 watcher, err := fsnotify.NewWatcher()
+						if err != nil {
+							log.Fatal(err)
+						}
+
+					
+						brokep := false
+						reloading := false
+						// Process events
+						go func() {
+							for {
+								select {
+								case ev := <-watcher.Event:
+								if !reloading {
+										log.Println("event:", ev)
+										//Build( GOHOME + "/" + serverconfig )
+										reloading = true
+										process <- true
+									//	done <- true	
+								} else if !brokep {
+									brokep = true
+									core.RunCmd("gos --t")
+									done <- true
+
+						 			}
+								}
+							}
+						}()
+
+						err = watcher.Watch(GOHOME + "/" + serverconfig)
+						if err != nil {
+							log.Fatal(err)
+						}
+						fmt.Println("Ready!")
+						core.Exe_Stall("./" + pk[len(pk) - 1],process )
+						<-done
+						watcher.RemoveWatch(path)
+						watcher.Close()
+			
+						JBuild(path,coreTemplate.Output)
+										
+						
+						}
+					
+						
+
+						
 					if os.Args[1] == "--test"  {
 						//test console
 						fmt.Println("Invoking go-bindata");
@@ -1266,13 +1377,85 @@ func main() {
 					}
 
 			}
+}
 
+func main() {
+	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
+    	//fmt.Println( os.Args)
+    if len(os.Args) > 1 {
+    //args := os.Args[1:]
+    		if os.Args[1] == "dependencies" || os.Args[1] == "deps" {
+    			fmt.Println("∑ Getting GoS dependencies")
+    			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
+    			core.RunCmd("go get github.com/gorilla/sessions")
+    			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
+    			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
+    			core.RunCmd("go get github.com/asaskevich/govalidator")
+    			core.RunCmd("go get github.com/fatih/color")
+    			core.RunCmd("go get github.com/cheikhshift/db")
+    			core.RunCmd("go get gopkg.in/ldap.v2")
+    			//core.RunCmd("")
+    			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
+    			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
+    			//core.RunCmd("python setup.py install" )
+    			//time.Sleep(time.Second *120)
+    			fmt.Println("Done")
+    			return
+    		}
+
+    		if os.Args[1] == "make" {
+    		//2 is project folder
+    		
+    		    os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/web", 0777 )
+    			os.MkdirAll(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/tmpl",0777 )
+    			ioutil.WriteFile(os.ExpandEnv("$GOPATH") + "/src/" + strings.Trim(os.Args[2], "/") + "/gos.gxml", []byte(gosTemplate), 0777)	
+    			return
+    		}
+
+    		if os.Args[1] == "makesublime" ||  os.Args[1] == "--make" {
+    		//2 is project folder
+    		
+    		    os.MkdirAll( "web", 0777 )
+    			os.MkdirAll( "tmpl",0777 )
+    			ioutil.WriteFile("gos.gxml", []byte(gosTemplate), 0777)
+    			ioutil.WriteFile("web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
+    			ioutil.WriteFile("web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
+    			return
+    		}
+    		
+
+    		
+    		if strings.Contains(os.Args[1],"sub") {
+    			GOHOME = "./"
+
+    		}
+
+    		if strings.Contains(os.Args[1],"--") {
+    			GOHOME = "./"
+
+    		} else {
+    			GOHOME = GOHOME   + strings.Trim(os.Args[2],"/")
+    		}
+    		
+    		
+    			if strings.Contains(os.Args[1],"--") {
+    				webroot = "web"
+    				template_root = "tmpl"
+    				serverconfig = "gos.gxml"
+    			} else {
+    				webroot = os.Args[4]
+    				template_root = os.Args[5]
+    				serverconfig = os.Args[3]
+    			}
+
+    			 
+						Build(GOHOME + "/" + serverconfig)
+					
 
     	
 
-	} else { 
+	} /* else { 
 	
-    fmt.Println("∑ Welcome to Gos v1.0.1")
 	fmt.Println("To begin please tell us a bit about the gos project you wish to compile");
 	fmt.Printf("We need the GoS package folder relative to your $GOPATH/src (%v)\n", GOHOME)
    	gosProject := "" 
@@ -1384,6 +1567,6 @@ func main() {
 		} else {
 			fmt.Println("Operation Cancelled!!")
 		}
-	}
+	} */
 
 }
