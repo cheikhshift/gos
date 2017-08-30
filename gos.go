@@ -1127,6 +1127,16 @@ func Build(path string) {
 		coreTemplate.Prod = true
 	}
 	core.Process(coreTemplate, GOHOME, webroot, template_root)
+
+	cwd, er := os.Getwd()
+	if er != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
+
+	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+
 	if os.Args[1] == "--t" {
 		return
 	}
