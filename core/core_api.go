@@ -3049,7 +3049,7 @@ func RunCmdSmartCmb(cmd string) (string, error) {
 
 	ou, err := out.CombinedOutput()
 	if err != nil {
-		fmt.Println( err.Error())
+		fmt.Println(err.Error())
 		return "", err
 	}
 	return string(ou), nil
