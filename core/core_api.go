@@ -17,11 +17,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
-	"unsafe"
 	//"go/types"
 )
 
@@ -203,8 +201,8 @@ func CopyFile(source string, dest string) (err error) {
 	defer df.Close()
 	_, err = io.Copy(df, sf)
 	if err == nil {
-		si, err := os.Stat(source)
-		if err != nil {
+		si, er := os.Stat(source)
+		if er != nil {
 			err = os.Chmod(dest, si.Mode())
 		}
 
@@ -3051,16 +3049,14 @@ func RunCmdSmartCmb(cmd string) (string, error) {
 
 	ou, err := out.CombinedOutput()
 	if err != nil {
-		fmt.Println("%v", err.Error())
+		fmt.Println( err.Error())
 		return "", err
 	}
 	return string(ou), nil
 }
 
 func BytesToString(b []byte) string {
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	sh := reflect.StringHeader{bh.Data, bh.Len}
-	return *(*string)(unsafe.Pointer(&sh))
+	return string(b)
 }
 
 func RunCmdB(cmd string) {
@@ -3093,7 +3089,7 @@ func RunCmdB(cmd string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("%v", ou.String())
+	fmt.Println(ou.String())
 }
 
 func RunCmdA(cm string) error {
@@ -3159,7 +3155,7 @@ func Exe_Stall(cmd string, chn chan bool) {
 	stdout, err := out.StdoutPipe()
 
 	if err != nil {
-		fmt.Println("error occured")
+		fmt.Println("error occurred")
 		fmt.Printf("%s", err)
 	}
 	out.Start()
@@ -3200,7 +3196,7 @@ func Exe_Stalll(cmd string) {
 	stdout, err := out.StdoutPipe()
 
 	if err != nil {
-		fmt.Println("error occured")
+		fmt.Println("error occurred")
 		fmt.Printf("%s", err)
 	}
 	out.Start()
@@ -3230,7 +3226,7 @@ func Exe_BG(cmd string) {
 	}
 	stdout, err := out.StdoutPipe()
 	if err != nil {
-		fmt.Println("error occured")
+		fmt.Println("error occurred")
 		fmt.Printf("%s", err)
 	}
 	out.Start()
