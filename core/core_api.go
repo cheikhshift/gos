@@ -1,102 +1,99 @@
 package core
 
 import (
+	"bufio"
+	"bytes"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/xml"
 	"fmt"
-	"log"
+	"github.com/fatih/color"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"io/ioutil"
-	"encoding/xml"
-	"bytes"
+	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
-	"unsafe"
+	"strconv"
 	"strings"
 	"unicode"
-	"strconv"
-	"os/exec"
-	"bufio"
-	"encoding/base64"
-	"crypto/rand"
-	"go/parser"
-	"go/ast"
-	"go/token"
-	"path/filepath"
-	"github.com/fatih/color"
+	"unsafe"
 	//"go/types"
 )
 
-
 const (
-	StdLen = 16
+	StdLen  = 16
 	UUIDLen = 20
 )
 
 var primitives = []string{"Bool",
-        "Int",
-        "Int8",
-        "Int16",
-        "Int32",
-        "Int64",
-        "Uint",
-        "Uint8",
-       "Uint16",
-        "Uint32",
-        "Uint64",
-        "Uintptr",
-        "Float32",
-        "Float64",
-        "Complex64",
-        "Complex128",
-        "String",
-        "UnsafePointer",
-        "UntypedBool",
-        "UntypedInt",
-        "UntypedRune",
-        "UntypedFloat",
-        "UntypedComplex",
-        "UntypedString",
-        "UntypedNil",
-        "Byte",
-        "Rune"}
+	"Int",
+	"Int8",
+	"Int16",
+	"Int32",
+	"Int64",
+	"Uint",
+	"Uint8",
+	"Uint16",
+	"Uint32",
+	"Uint64",
+	"Uintptr",
+	"Float32",
+	"Float64",
+	"Complex64",
+	"Complex128",
+	"String",
+	"UnsafePointer",
+	"UntypedBool",
+	"UntypedInt",
+	"UntypedRune",
+	"UntypedFloat",
+	"UntypedComplex",
+	"UntypedString",
+	"UntypedNil",
+	"Byte",
+	"Rune"}
 
 var GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
 var available_methods []string
-var	int_methods  []string
-var	api_methods  []string
-var	int_mappings []string
+var int_methods []string
+var api_methods []string
+var int_mappings []string
 var StdChars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
 var StdNums = []byte("OYZ0123456789")
 var DAMP = "&&"
 var AMP = "&"
 
 func RemoveContents(dir string) error {
-    d, err := os.Open(dir)
-    if err != nil {
-        return err
-    }
-    defer d.Close()
-    names, err := d.Readdirnames(-1)
-    if err != nil {
-        return err
-    }
-    for _, name := range names {
-        err = os.RemoveAll(filepath.Join(dir, name))
-        if err != nil {
-            return err
-        }
-    }
-    return nil
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 //Local DEBUG tools of Gos
 
+func IsInImports(imports []*ast.ImportSpec, unfoundvar string) bool {
 
-
-func IsInImports(imports []*ast.ImportSpec, unfoundvar string ) bool {
-
-	for _,v := range imports {
-		ab := strings.Split(strings.Replace(v.Path.Value,"\"","",2 ) ,"/" )
-		if ab[len(ab) -1] == unfoundvar  {
+	for _, v := range imports {
+		ab := strings.Split(strings.Replace(v.Path.Value, "\"", "", 2), "/")
+		if ab[len(ab)-1] == unfoundvar {
 			return true
 		}
 
@@ -107,7 +104,7 @@ func IsInImports(imports []*ast.ImportSpec, unfoundvar string ) bool {
 
 func isBuiltin(pkgj string) bool {
 
-	for _,v := range primitives {
+	for _, v := range primitives {
 		if v == pkgj || pkgj == strings.ToLower(v) {
 			return true
 		}
@@ -116,7 +113,7 @@ func isBuiltin(pkgj string) bool {
 }
 
 func IsInSlice(qry string, slic []string) bool {
-	for _,j := range slic {
+	for _, j := range slic {
 		if j == qry {
 			return true
 		}
@@ -125,23 +122,21 @@ func IsInSlice(qry string, slic []string) bool {
 }
 
 func ReadLines(path string) ([]string, error) {
-  file, err := os.Open(path)
-  if err != nil {
-    return nil, err
-  }
-  defer file.Close()
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-  var lines []string
-  scanner := bufio.NewScanner(file)
-  for scanner.Scan() {
-    lines = append(lines, scanner.Text())
-  }
-  return lines, scanner.Err()
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
 }
 
-
-
-func CheckFile(source string) (file,line,reason string) {
+func CheckFile(source string) (file, line, reason string) {
 	fset := token.NewFileSet() // positions are relative to fset
 
 	// Parse the file containing this very example
@@ -151,27 +146,27 @@ func CheckFile(source string) (file,line,reason string) {
 	if err != nil {
 		eb := strings.Split(err.Error(), ":")
 		if len(eb) > 3 {
-		file = eb[0]
-		line = eb[1]
-		reason = eb[3]
+			file = eb[0]
+			line = eb[1]
+			reason = eb[3]
 		}
 		return
 
 	}
-		
+
 	if len(o.Unresolved) > 0 {
 		file = "UR"
 		line = "UR"
 		nset := []string{}
 
-		for _,v := range o.Unresolved {
-			if !IsInImports(o.Imports,v.Name) && !IsInSlice(v.Name, nset) && !isBuiltin(v.Name) {
-			nset = append(nset,v.Name)
+		for _, v := range o.Unresolved {
+			if !IsInImports(o.Imports, v.Name) && !IsInSlice(v.Name, nset) && !isBuiltin(v.Name) {
+				nset = append(nset, v.Name)
 			}
 		}
 
-		reason = strings.Join(nset,",")
-		
+		reason = strings.Join(nset, ",")
+
 		/* if len(nset) == 0 {
 
 			file = "COMP"
@@ -195,93 +190,91 @@ func CheckFile(source string) (file,line,reason string) {
 	return
 }
 
-
 func CopyFile(source string, dest string) (err error) {
-    sf, err := os.Open(source)
-    if err != nil {
-        return err
-    }
-    defer sf.Close()
-    df, err := os.Create(dest)
-    if err != nil {
-        return err
-    }
-    defer df.Close()
-    _, err = io.Copy(df, sf)
-    if err == nil {
-        si, err := os.Stat(source)
-        if err != nil {
-            err = os.Chmod(dest, si.Mode())
-        }
+	sf, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer sf.Close()
+	df, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer df.Close()
+	_, err = io.Copy(df, sf)
+	if err == nil {
+		si, err := os.Stat(source)
+		if err != nil {
+			err = os.Chmod(dest, si.Mode())
+		}
 
-    }
+	}
 
-    return
+	return
 }
+
 //updates
-// Recursively copies a directory tree, attempting to preserve permissions. 
-// Source directory must exist, destination directory must *not* exist. 
+// Recursively copies a directory tree, attempting to preserve permissions.
+// Source directory must exist, destination directory must *not* exist.
 func CopyDir(source string, dest string) (err error) {
 
-    // get properties of source dir
-    fi, err := os.Stat(source)
-    if err != nil {
-        return err
-    }
+	// get properties of source dir
+	fi, err := os.Stat(source)
+	if err != nil {
+		return err
+	}
 
-    if !fi.IsDir() {
-        return &CustomError{"Source is not a directory"}
-    }
+	if !fi.IsDir() {
+		return &CustomError{"Source is not a directory"}
+	}
 
-    // ensure dest dir does not already exist
+	// ensure dest dir does not already exist
 
-    _, err = os.Open(dest)
-    if !os.IsNotExist(err) {
-         err = os.MkdirAll(dest, fi.Mode())
-	    if err != nil {
-	        return err
-	    }
-    }
+	_, err = os.Open(dest)
+	if !os.IsNotExist(err) {
+		err = os.MkdirAll(dest, fi.Mode())
+		if err != nil {
+			return err
+		}
+	}
 
-    // create dest dir
+	// create dest dir
 
-  
+	entries, err := ioutil.ReadDir(source)
 
-    entries, err := ioutil.ReadDir(source)
+	for _, entry := range entries {
 
-    for _, entry := range entries {
+		sfp := source + "/" + entry.Name()
+		dfp := dest + "/" + entry.Name()
+		if entry.IsDir() {
+			err = os.MkdirAll(dfp, fi.Mode())
+			if err != nil {
+				log.Println(err)
+			}
+			err = CopyDir(sfp, dfp)
+			if err != nil {
+				log.Println(err)
+			}
+		} else {
+			// perform copy
+			err = CopyFile(sfp, dfp)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 
-        sfp := source + "/" + entry.Name()
-        dfp := dest + "/" + entry.Name()
-        if entry.IsDir() {
-        	err = os.MkdirAll(dfp, fi.Mode())
-        	if err != nil {
-                log.Println(err)
-            }
-            err = CopyDir(sfp, dfp)
-            if err != nil {
-                log.Println(err)
-            }
-        } else {
-            // perform copy         
-            err = CopyFile(sfp, dfp)
-            if err != nil {
-                log.Println(err)
-            }
-        }
-
-    }
-    return
+	}
+	return
 }
 
 // A struct for returning custom error messages
 type CustomError struct {
-    What string
+	What string
 }
 
 // Returns the error message defined in What as a string
 func (e *CustomError) Error() string {
-    return e.What
+	return e.What
 }
 
 func NewLen(length int) string {
@@ -289,10 +282,10 @@ func NewLen(length int) string {
 }
 
 func TrimSuffix(s, suffix string) string {
-    if strings.HasSuffix(s, suffix) {
-        s = s[:len(s)-len(suffix)]
-    }
-    return s
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
 }
 
 func NewID(length int) string {
@@ -332,7 +325,7 @@ func NewLenChars(length int, chars []byte) string {
 	}
 }
 
-func Process(template *gos,r string, web string, tmpl string) (local_string string) {
+func Process(template *gos, r string, web string, tmpl string) (local_string string) {
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
 
@@ -356,114 +349,111 @@ func Process(template *gos,r string, web string, tmpl string) (local_string stri
 
 	`
 
-		if template.Type == "locale" {
-	local_string = `package main 
+	if template.Type == "locale" {
+		local_string = `package main 
 import (`
 
-	// if template.Type == "webapp" {
-		
-		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","bytes","encoding/json" ,"fmt","html",  "html/template", "strings","net/http/httptest", "reflect","os", "unsafe"}
+		// if template.Type == "webapp" {
+
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "bytes", "encoding/json", "fmt", "html", "html/template", "strings", "net/http/httptest", "reflect", "os", "unsafe"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
-	
 
-		for _,imp := range template.Methods.Methods {
+		for _, imp := range template.Methods.Methods {
 			if !contains(available_methods, imp.Name) {
 				available_methods = append(available_methods, imp.Name)
 			}
 		}
 		apiraw := ``
-		for _,imp := range template.Endpoints.Endpoints {
-		/*	if !contains(api_methods, imp.Method) {
-				api_methods = append(api_methods, imp.Method)
-			}
-		*/	
-				apiraw += ` 
-				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
-					` + strings.Replace(imp.Method, `&#38;`, `&`,-1) + `
+		for _, imp := range template.Endpoints.Endpoints {
+			/*	if !contains(api_methods, imp.Method) {
+					api_methods = append(api_methods, imp.Method)
+				}
+			*/
+			apiraw += ` 
+				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
+					` + strings.Replace(imp.Method, `&#38;`, `&`, -1) + `
 					callmet = true
 				}
-				` 
-			
+				`
+
 		}
-		timeline :=  ``
-		for _,imp := range template.Timers.Timers {
+		timeline := ``
+		for _, imp := range template.Timers.Timers {
 			/*if !contains(api_methods, imp.Method) {
 				api_methods = append(api_methods,imp.Method)
 			} */
 			//meth := template.findMethod(imp.Method)
 			timeline += `
-			` + imp.Name +` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval +`)
+			` + imp.Name + ` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval + `)
 					    go func() {
-					        for _ = range ` + imp.Name +`.C {
-					           ` + strings.Replace(imp.Method, `&#38;`, `&`,-1) +`
+					        for _ = range ` + imp.Name + `.C {
+					           ` + strings.Replace(imp.Method, `&#38;`, `&`, -1) + `
 					        }
 					    }()
     `
 		}
 
-		
 		//fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
-           for _,imp := range available_methods {
-           	if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true"  {
-          		netMa += `,"` + imp + `" : net_` + imp
-      		}
-           }
-           int_lok := []string{}
+		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		for _, imp := range available_methods {
+			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
+				netMa += `,"` + imp + `" : net_` + imp
+			}
+		}
+		int_lok := []string{}
 
-           for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			//struct return and function
-				
+
 			if !contains(int_lok, imp.Name) {
-				int_lok = append(int_lok,imp.Name)
-			 	netMa += `,"` + imp.Name + `" : net_` + imp.Name
-			}
-			}
-
-
-           for _,imp := range template.Templates.Templates {
-
+				int_lok = append(int_lok, imp.Name)
 				netMa += `,"` + imp.Name + `" : net_` + imp.Name
-				netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
-				netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
-           }
-           netMa += `}`
+			}
+		}
 
-		for _,imp := range template.RootImports {
-				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".gxml") {
+		for _, imp := range template.Templates.Templates {
+
+			netMa += `,"` + imp.Name + `" : net_` + imp.Name
+			netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
+			netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
+		}
+		netMa += `}`
+
+		for _, imp := range template.RootImports {
+			//fmt.Println(imp)
+			if !strings.Contains(imp.Src, ".gxml") {
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + imp.Src
-				 if _, err := os.Stat(dir); os.IsNotExist(err) { 
-							color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + imp.Src)
-					
-						RunCmd("go get " + imp.Src)
-					}
-					if  !contains(net_imports, imp.Src) {
-						net_imports = append(net_imports, imp.Src)
-					}
-			} else {
-				pathsplit := strings.Split(imp.Src,"/")
-				gosName := pathsplit[len(pathsplit) - 1]
-				pathsplit = pathsplit[:len(pathsplit)-1]
-				dir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit,"/")
-				 if _, err := os.Stat(dir); os.IsNotExist(err) { 
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
 					color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
-						RunCmd("go get " + strings.Join(pathsplit,"/"))
+					fmt.Println("∑ Downloading Package " + imp.Src)
+
+					RunCmd("go get " + imp.Src)
+				}
+				if !contains(net_imports, imp.Src) {
+					net_imports = append(net_imports, imp.Src)
+				}
+			} else {
+				pathsplit := strings.Split(imp.Src, "/")
+				gosName := pathsplit[len(pathsplit)-1]
+				pathsplit = pathsplit[:len(pathsplit)-1]
+				dir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit, "/")
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
+					color.Red("Package not found")
+					fmt.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
+					RunCmd("go get " + strings.Join(pathsplit, "/"))
 				}
 				//split and replace last section
 				fmt.Println("∑ Processing XML Yåå ", pathsplit)
-				xmlPackageDir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit,"/") + "/" 
-				xml_iter,_ := LoadGos( xmlPackageDir + gosName  )
+				xmlPackageDir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit, "/") + "/"
+				xml_iter, _ := LoadGos(xmlPackageDir + gosName)
 				if xml_iter.Package != "" {
 					//copy gole with given path -
 					fmt.Println("Installing Resources into project!")
 					//delete prior to copy
-				//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
-				//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
+					//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
+					//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
 
 					//CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
 					//CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
@@ -473,15 +463,15 @@ import (`
 			}
 		}
 
-	//	fmt.Println(template.Methods.Methods[0].Name)
+		//	fmt.Println(template.Methods.Methods[0].Name)
 
-		for _,imp := range net_imports {
+		for _, imp := range net_imports {
 			local_string += `
 			"` + imp + `"`
 		}
 		local_string += `
 		)
-				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
+				var store = sessions.NewCookieStore([]byte("` + template.Key + `"))
 				type NoStruct struct {
 					/* emptystruct */
 				}
@@ -516,7 +506,7 @@ import (`
 					return false
 				}
 
-				`  + mathFuncs + `
+				` + mathFuncs + `
 
 				func net_sessionGetInt(key string,s *sessions.Session) interface{} {
 					return s.Values[key]
@@ -560,7 +550,7 @@ import (`
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
-				    t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				    outp := new(bytes.Buffer)
 				    error := t.Execute(outp, p)
 				    if error != nil {
@@ -629,7 +619,7 @@ import (`
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		
-				        renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
+				        renderTemplate(w, r,  "` + web + `" + r.URL.Path, p)
 				  } else {
 				  	  	if strings.Contains(r.URL.Path, ".css") {
 				  	  		w.Header().Add("Content-Type",  "text/css")
@@ -644,7 +634,7 @@ import (`
 				}
 
 				func loadPage(title string, servlet string,r *http.Request,w http.ResponseWriter) (*Page,error) {
-				    filename :=  "` +  web + `" + title + ".tmpl" 
+				    filename :=  "` + web + `" + title + ".tmpl" 
 				    body, err := Asset(filename)
 				    if err != nil {
 				      filename = "` + web + `" + title + ".html"
@@ -720,10 +710,10 @@ import (`
 					    R *http.Request
 					    Session *sessions.Session
 					}`
-					for _,imp := range template.Variables {
-						local_string += `
-						var ` + imp.Name + ` ` + imp.Type 
-					}
+		for _, imp := range template.Variables {
+			local_string += `
+						var ` + imp.Name + ` ` + imp.Type
+		}
 		if template.Init_Func != "" {
 			local_string += `
 			func init(){
@@ -733,36 +723,33 @@ import (`
 		}
 
 		//Lets Do structs
-		for _,imp := range template.Header.Structs {
+		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-			fmt.Println("Processing Struct : " + imp.Name)
-			arch.objects = append(arch.objects, imp.Name)
-			local_string += `
+				fmt.Println("Processing Struct : " + imp.Name)
+				arch.objects = append(arch.objects, imp.Name)
+				local_string += `
 			type ` + imp.Name + ` struct {`
-			local_string += imp.Attributes
-			local_string += `
+				local_string += imp.Attributes
+				local_string += `
 			}`
 			}
 		}
-		
 
-
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			local_string += `
 			type ` + imp.Name + ` ` + imp.Templ
 		}
-		
 
 		//Create an object map
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			//struct return and function
 			fmt.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
-				available_methods = append(available_methods,imp.Name)
-				int_methods = append(int_methods,imp.Name)
+				available_methods = append(available_methods, imp.Name)
+				int_methods = append(int_methods, imp.Name)
 				local_string += `
-				func  net_`+ imp.Name + `(args ...interface{}) (d ` + imp.Templ +`){
+				func  net_` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -773,128 +760,120 @@ import (`
 					}
 					return
 					} else {
-						d = ` + imp.Templ +`{} 
+						d = ` + imp.Templ + `{} 
 						return
 					}
-				}`	    
+				}`
 
 			}
 
-			delegateMethods := strings.Split(imp.Methods,"\n")
+			delegateMethods := strings.Split(imp.Methods, "\n")
 
-			for _,im := range delegateMethods {
-				
+			for _, im := range delegateMethods {
+
 				if stripSpaces(im) != "" {
-				fmt.Println(imp.Name + "->" + im)
-				function_map := strings.Split(im, ")")
+					fmt.Println(imp.Name + "->" + im)
+					function_map := strings.Split(im, ")")
 
-				
+					if !contains(int_mappings, function_map[0]+imp.Templ) {
+						int_mappings = append(int_mappings, function_map[0]+imp.Templ)
+						funcsp := strings.Split(function_map[0], "(")
+						meth := template.findMethod(stripSpaces(funcsp[0]))
 
-				if !contains(int_mappings, function_map[0] + imp.Templ) {
-					int_mappings = append(int_mappings,function_map[0] + imp.Templ)
-					funcsp := strings.Split(function_map[0],"(")
-					meth := template.findMethod(stripSpaces(funcsp[0]))
+						//process limits and keep local deritives
+						if meth.Autoface == "" || meth.Autoface == "true" {
 
-					//process limits and keep local deritives
-					if meth.Autoface == "" || meth.Autoface == "true"  {
-						
-						/*
-							
-						*/
-						procc_funcs := true
-						fmt.Println( )
+							/*
 
-						if meth.Limit != "" {
-							if !contains(strings.Split(meth.Limit,","), imp.Name ){
-								procc_funcs = false 
+							 */
+							procc_funcs := true
+							fmt.Println()
+
+							if meth.Limit != "" {
+								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
+									procc_funcs = false
+								}
+							}
+
+							if contains(api_methods, meth.Name) {
+								procc_funcs = false
+							}
+
+							objectName := meth.Object
+							if objectName == "" {
+								objectName = "object"
+							}
+							if procc_funcs {
+								if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
+									int_methods = append(int_methods, stripSpaces(funcsp[0]))
+								}
+								local_string += `
+					  	func  net_` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` string`
+								}
+
+								local_string += ` {
+									` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` 
+								return ""
+							`
+								}
+								local_string += ` 
+						}`
+
+								if meth.Keeplocal == "false" || meth.Keeplocal == "" {
+									local_string += `
+						func (` + objectName + ` ` + imp.Templ + `) ` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") + `) ` + stripSpaces(function_map[1])
+
+									local_string += ` {
+							` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+									local_string += `
+						}`
+								}
 							}
 						}
 
-						if contains(api_methods, meth.Name){
-							procc_funcs = false
-						}
-						
-						objectName := meth.Object
-						if objectName == "" {
-							objectName = "object"
-						}
-						if procc_funcs {	
-							if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
-						int_methods = append(int_methods,stripSpaces(funcsp[0]))
-						}
-					  	local_string += `
-					  	func  net_`+ stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1] + `, ` + objectName + ` ` +imp.Templ, ",") +`) ` + stripSpaces(function_map[1])
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` string`
-						}
-
-						local_string += ` {
-									` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` 
-								return ""
-							`
-						}
-						local_string += ` 
-						}`
-
-
-
-						if meth.Keeplocal == "false" || meth.Keeplocal == "" {
-						local_string += `
-						func (` + objectName + ` ` + imp.Templ +`) ` +  stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") +`) ` + stripSpaces(function_map[1])
-
-							local_string += ` {
-							` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						local_string +=  `
-						}`
-						}
-						}
 					}
-
-
-
-
-
-				}
 				}
 			}
 
 			//create Unused methods methods
 			fmt.Println(int_methods)
-			for _,imp := range available_methods {
-				if !contains(int_methods,imp) && !contains(api_methods, imp)  {
+			for _, imp := range available_methods {
+				if !contains(int_methods, imp) && !contains(api_methods, imp) {
 					fmt.Println("Processing : " + imp)
-						meth := template.findMethod(imp)
-						addedit := false
-						if meth.Returntype == "" {
-							meth.Returntype = "string"
-							addedit = true
-						}
-						local_string += `
+					meth := template.findMethod(imp)
+					addedit := false
+					if meth.Returntype == "" {
+						meth.Returntype = "string"
+						addedit = true
+					}
+					local_string += `
 						func net_` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
 							`
-						for k,nam := range strings.Split(meth.Variables,","){
-							if nam != "" {
-								local_string +=  nam + ` := ` + `args[` + strconv.Itoa(k) + `]
+					for k, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							local_string += nam + ` := ` + `args[` + strconv.Itoa(k) + `]
 								`
-							}
 						}
-						local_string += strings.Replace(meth.Method, `&#38;`, `&`,-1)
-						if addedit {
-						 local_string +=  `
+					}
+					local_string += strings.Replace(meth.Method, `&#38;`, `&`, -1)
+					if addedit {
+						local_string += `
 						 return ""
 						 `
-						}
-						local_string += `
-						}` 
 					}
+					local_string += `
+						}`
+				}
 			}
-					for _,imp := range template.Templates.Templates {
+			for _, imp := range template.Templates.Templates {
 				local_string += `
-				func  net_`+ imp.Name + `(args ...interface{}) string {
+				func  net_` + imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
 					if len(args) > 0 {
 					jso := args[0].(string)
@@ -905,7 +884,7 @@ import (`
 						return ""
 					}
 					} else {
-						d = ` + imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
 
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
@@ -914,36 +893,36 @@ import (`
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				    fmt.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
-				}`	    
-					local_string += `
-				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
+				}`
+				local_string += `
+				func  net_b` + imp.Name + `(d ` + imp.Struct + `) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
     				body, er := Asset(filename)
     				if er != nil {
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				    fmt.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
-				}`	    
+				}`
 				local_string += `
-				func  net_c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+				func  net_c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -952,15 +931,13 @@ import (`
 						return 
 					}
 					} else {
-						d = `+ imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
     				return
-				}`	    
+				}`
 			}
 
-     
 			//Methods have been added
-
 
 			local_string += `
 			func dummy_timer(){
@@ -968,15 +945,13 @@ import (`
 				fmt.Println(dg)
 			}`
 
-		
 			local_string += `
 
 			func main() {
 				` + template.Main
-				
-					
-					 local_string += `
-					 ` + timeline +`
+
+			local_string += `
+					 ` + timeline + `
 					path := os.Args[1]
 				var params []byte 
 
@@ -997,192 +972,183 @@ import (`
 
 				fmt.Printf("%s", w.Body.String())
 			}`
-					
-		
-			
-				fmt.Println("Saving file to " + r + "/" + template.Output)
-				 d1 := []byte(local_string)
-             _ = ioutil.WriteFile(r + "/" + template.Output, d1,0644)
-		    
+
+			fmt.Println("Saving file to " + r + "/" + template.Output)
+			d1 := []byte(local_string)
+			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
+
 		}
 
-	}	else if template.Type == "webapp" {
-	local_string = `package main 
+	} else if template.Type == "webapp" {
+		local_string = `package main 
 import (`
 
-	// if template.Type == "webapp" {
-		
-		net_imports := []string{"net/http", "time","github.com/gorilla/sessions","errors","github.com/cheikhshift/db","github.com/elazarl/go-bindata-assetfs","bytes","encoding/json" ,"fmt","html",  "html/template","github.com/fatih/color", "strings", "reflect", "unsafe","os","bufio"}
+		// if template.Type == "webapp" {
+
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
-	
 
-		for _,imp := range template.Methods.Methods {
+		for _, imp := range template.Methods.Methods {
 			if !contains(available_methods, imp.Name) {
 				available_methods = append(available_methods, imp.Name)
 			}
 		}
 		apiraw := ``
-		for _,imp := range template.Endpoints.Endpoints {
-			 	est := ``
-				if !template.Prod {
-					est = `	
+		for _, imp := range template.Endpoints.Endpoints {
+			est := ``
+			if !template.Prod {
+				est = `	
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"`  + `, lastLine)
+					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
 					          fmt.Println("Reason : ",n)
-					          http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 						}()`
-					setv := strings.Split(imp.Method, "\n")
-					for _, line := range setv {
-						est += `
-						lastLine = ` + "`" + line +"`" + `
+				setv := strings.Split(imp.Method, "\n")
+				for _, line := range setv {
+					est += `
+						lastLine = ` + "`" + line + "`" + `
 						` + line
-					}
-
-				} else {
-					est = strings.Replace(imp.Method, `&#38;`, `&`,-1)
 				}
-				if imp.Type == "star" {
+
+			} else {
+				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
+			}
+			if imp.Type == "star" {
 
 				apiraw += ` 
-				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
+				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
 					
 					callmet = true
 				}
 				`
-				} else if imp.Type == "f" {
+			} else if imp.Type == "f" {
 
 				apiraw += ` 
-				if   strings.Contains(r.URL.Path, "` + imp.Path +`")  { 
+				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
 				
 					
 				}
 				`
-				} else {
+			} else {
 				apiraw += ` 
-				if  r.URL.Path == "` + imp.Path +`" && r.Method == strings.ToUpper("` + imp.Type +`") { 
+				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
 					` + est + `
 					
 					callmet = true
 				}
 				`
-				}
-			
+			}
+
 		}
-		timeline :=  ``
-		for _,imp := range template.Timers.Timers {
-			
-			
+		timeline := ``
+		for _, imp := range template.Timers.Timers {
+
 			timeline += `
-			` + imp.Name +` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval +`)
+			` + imp.Name + ` := time.NewTicker(time.` + imp.Unit + ` * ` + imp.Interval + `)
 					    go func() {
-					        for _ = range ` + imp.Name +`.C {
-					           ` + strings.Replace(imp.Method, `&#38;`, `&`,-1) +`
+					        for _ = range ` + imp.Name + `.C {
+					           ` + strings.Replace(imp.Method, `&#38;`, `&`, -1) + `
 					        }
 					    }()
     `
 		}
 
-		
 		//fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
-           for _,imp := range available_methods {
-           	if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-          		netMa += `,"` + imp + `" : net_` + imp
-      		}
-           }
-           int_lok := []string{}
+		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		for _, imp := range available_methods {
+			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
+				netMa += `,"` + imp + `" : net_` + imp
+			}
+		}
+		int_lok := []string{}
 
-          
+		/*	for _,imp := range template.RootImports {
+					//fmt.Println(imp)
+				if strings.Contains(imp.Src,".gxml") {
 
-			/*	for _,imp := range template.RootImports {
-						//fmt.Println(imp)
-					if strings.Contains(imp.Src,".gxml") {
-						
-						pathsplit := strings.Split(imp.Src,"/")
-						gosName := pathsplit[len(pathsplit) - 1]
-						pathsplit = pathsplit[:len(pathsplit)-1]
-						if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
-								color.Red("Package not found")
-								fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
-								RunCmd("go get " + strings.Join(pathsplit,"/"))
-						}
-						//split and replace last section
-						fmt.Println("∑ Processing XML Yåå ", pathsplit)
-						xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/" 
-							//copy gole with given path -
-							fmt.Println("Installing Resources into project!")
-							//delete prior to copy
-						//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
-						//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
-						//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
-						//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
-						//	template.MergeWith( xmlPackageDir + gosName)
-						//	fmt.Println(template)
-					
+					pathsplit := strings.Split(imp.Src,"/")
+					gosName := pathsplit[len(pathsplit) - 1]
+					pathsplit = pathsplit[:len(pathsplit)-1]
+					if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
+							color.Red("Package not found")
+							fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
+							RunCmd("go get " + strings.Join(pathsplit,"/"))
 					}
+					//split and replace last section
+					fmt.Println("∑ Processing XML Yåå ", pathsplit)
+					xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/"
+						//copy gole with given path -
+						fmt.Println("Installing Resources into project!")
+						//delete prior to copy
+					//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
+					//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
+					//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
+					//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
+					//	template.MergeWith( xmlPackageDir + gosName)
+					//	fmt.Println(template)
+
 				}
-		 */
-	for _,imp := range template.RootImports {
-		if !strings.Contains(imp.Src,".gxml") {
+			}
+		*/
+		for _, imp := range template.RootImports {
+			if !strings.Contains(imp.Src, ".gxml") {
 				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-					if _, err := os.Stat( TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src ); os.IsNotExist(err) {
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + imp.Src); os.IsNotExist(err) {
 					color.Red("Package not found")
-						fmt.Println("∑ Downloading Package " + imp.Src)
-						RunCmd("go get " + imp.Src)
-					}
-					if  !contains(net_imports, imp.Src) {
-						net_imports = append(net_imports, imp.Src)
-					}
+					fmt.Println("∑ Downloading Package " + imp.Src)
+					RunCmd("go get " + imp.Src)
+				}
+				if !contains(net_imports, imp.Src) {
+					net_imports = append(net_imports, imp.Src)
+				}
 			}
 		}
 
-		 for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			//struct return and function
-				
+
 			if !contains(int_lok, imp.Name) {
-				int_lok = append(int_lok,imp.Name)
-			 	netMa += `,"` + imp.Name + `" : net_` + imp.Name
-			}
-			}
-
-
-           for _,imp := range template.Templates.Templates {
-
+				int_lok = append(int_lok, imp.Name)
 				netMa += `,"` + imp.Name + `" : net_` + imp.Name
-				netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
-				netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
-           }
-         
+			}
+		}
 
-	//	fmt.Println(template.Methods.Methods[0].Name)
+		for _, imp := range template.Templates.Templates {
 
-		for _,imp := range net_imports {
+			netMa += `,"` + imp.Name + `" : net_` + imp.Name
+			netMa += `,"b` + imp.Name + `" : net_b` + imp.Name
+			netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
+		}
+
+		//	fmt.Println(template.Methods.Methods[0].Name)
+
+		for _, imp := range net_imports {
 			local_string += `
 			"` + imp + `"`
 		}
 		var structs_string string
 		//Lets Do structs
 		structs_string = ``
-		for _,imp := range template.Header.Structs {
+		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-			fmt.Println("Processing Struct : " + imp.Name)
-			arch.objects = append(arch.objects, imp.Name)
-			structs_string += `
+				fmt.Println("Processing Struct : " + imp.Name)
+				arch.objects = append(arch.objects, imp.Name)
+				structs_string += `
 			type ` + imp.Name + ` struct {`
-			structs_string += imp.Attributes
-			structs_string += `
+				structs_string += imp.Attributes
+				structs_string += `
 			}
 
-			func  net_cast` + imp.Name + `(args ...interface{}) *` + imp.Name +`  {
+			func  net_cast` + imp.Name + `(args ...interface{}) *` + imp.Name + `  {
 				
-				s := `+ imp.Name + `{}
+				s := ` + imp.Name + `{}
 				mapp := args[0].(db.O)
 				if _, ok := mapp["_id"]; ok {
 					mapp["Id"] = mapp["_id"]
@@ -1196,18 +1162,18 @@ import (`
 				
 				return &s
 			}
-			func net_struct` + imp.Name + `() *` + imp.Name + `{ return &` + imp.Name +`{} }`
-			netMa += `,"` + imp.Name + `" : net_struct` + imp.Name
-			netMa += `,"is` + imp.Name + `" : net_cast` + imp.Name
+			func net_struct` + imp.Name + `() *` + imp.Name + `{ return &` + imp.Name + `{} }`
+				netMa += `,"` + imp.Name + `" : net_struct` + imp.Name
+				netMa += `,"is` + imp.Name + `" : net_cast` + imp.Name
 
 			}
 		}
 
-		  netMa += `}`
+		netMa += `}`
 
 		local_string += `
 		)
-				var store = sessions.NewCookieStore([]byte("` + template.Key +`"))
+				var store = sessions.NewCookieStore([]byte("` + template.Key + `"))
 
 				type NoStruct struct {
 					/* emptystruct */
@@ -1244,7 +1210,7 @@ import (`
 					return false
 				}
 
-				`  + mathFuncs + `
+				` + mathFuncs + `
 
 				func net_sessionGetInt(key string,s *sessions.Session) interface{} {
 					return s.Values[key]
@@ -1276,10 +1242,10 @@ import (`
 				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page)  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
-					           	 color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
+					           	 color.Red("Error loading template in path : ` + web + `" + r.URL.Path + ".tmpl reason :" )
 					           	 fmt.Println(n)
-					           	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
-					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
+					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()
 
@@ -1298,13 +1264,13 @@ import (`
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
-				    t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				    outp := new(bytes.Buffer)
 				    error := t.Execute(outp, p)
 				    if error != nil {
 				    fmt.Println(error.Error())
-				    	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
-				    	 http.Redirect(w,r,"` + template.ErrorPage +`",301)
+				    	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
+				    	 http.Redirect(w,r,"` + template.ErrorPage + `",301)
 				    return false
 				    }  else {
 				    p.Session.Save(r, w)
@@ -1386,7 +1352,7 @@ import (`
 					           	fmt.Println()
 					           	// fmt.Println(n)
 					           			fmt.Println("Error on line :", lastline + 1,linestring)  
-					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
 
@@ -1429,7 +1395,7 @@ import (`
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(` + netMa + `)
-					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 					    	lastline = i
 					    	linestring =  line
 					    	error := t.Execute(outp, p)
@@ -1451,7 +1417,7 @@ import (`
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(` + netMa + `)
-					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 					    	lastline = i
 					    	linestring =  line
 					    	error := t.Execute(outp, p)
@@ -1464,7 +1430,7 @@ import (`
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(` + netMa + `)
-				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				    	lastline = i
 				    	linestring = line
 				    	error := t.Execute(outp, p)
@@ -1496,7 +1462,7 @@ import (`
 					         
 					           			fmt.Println("Error on line :", lastline + 1,linestring) 
 					           			fmt.Println(n)
-					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
 
@@ -1533,7 +1499,7 @@ import (`
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(` + netMa + `)
-					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 					    	lastline = i
 					    	linestring =  line
 					    	error := t.Execute(outp, intrf)
@@ -1555,7 +1521,7 @@ import (`
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(` + netMa + `)
-					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 					    	lastline = i
 					    	linestring =  line
 					    	error := t.Execute(outp, intrf)
@@ -1568,7 +1534,7 @@ import (`
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(` + netMa + `)
-				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(line, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				    	lastline = i
 				    	linestring = line
 				    	error := t.Execute(outp, intrf)
@@ -1596,7 +1562,7 @@ import (`
 				  p,err := loadPage(r.URL.Path , context,r,w)
 				  if err != nil {
 				  	fmt.Println(err)
-				        http.Redirect(w,r,"`  + template.NPage +  `",307)
+				        http.Redirect(w,r,"` + template.NPage + `",307)
 				        return
 				  }
 
@@ -1605,13 +1571,13 @@ import (`
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		    defer func() {
 					       if n := recover(); n != nil {
-					           	 color.Red("Error loading template in path : ` + web +`" + r.URL.Path + ".tmpl reason :" )
+					           	 color.Red("Error loading template in path : ` + web + `" + r.URL.Path + ".tmpl reason :" )
 					           	 fmt.Println(n)
-					           	 DebugTemplate( w,r ,"` + web +`" + r.URL.Path)
-					           	 http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
+					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
-				      	renderTemplate(w, r,  "` + web +`" + r.URL.Path, p)
+				      	renderTemplate(w, r,  "` + web + `" + r.URL.Path, p)
 				     
 				     // fmt.Println(w)
 				  } else {
@@ -1629,7 +1595,7 @@ import (`
 				}
 
 				func loadPage(title string, servlet string,r *http.Request,w http.ResponseWriter) (*Page,error) {
-				    filename :=  "` +  web + `" + title + ".tmpl"
+				    filename :=  "` + web + `" + title + ".tmpl"
 				    if title == "/" {
 				      http.Redirect(w,r,"/index",302)
 				    }
@@ -1731,10 +1697,10 @@ import (`
 					    R *http.Request
 					    Session *sessions.Session
 					}`
-					for _,imp := range template.Variables {
-						local_string += `
-						var ` + imp.Name + ` ` + imp.Type 
-					}
+		for _, imp := range template.Variables {
+			local_string += `
+						var ` + imp.Name + ` ` + imp.Type
+		}
 		if template.Init_Func != "" {
 			local_string += `
 			func init(){
@@ -1743,19 +1709,15 @@ import (`
 
 		}
 
-
-		
-
 		local_string += structs_string
 
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			local_string += `
 			type ` + imp.Name + ` ` + imp.Templ
 		}
-		
 
 		//Create an object map
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			//struct return and function
 			fmt.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
@@ -1764,10 +1726,10 @@ import (`
 					imp.Templ = "NoStruct"
 				}
 
-				available_methods = append(available_methods,imp.Name)
-				int_methods = append(int_methods,imp.Name)
+				available_methods = append(available_methods, imp.Name)
+				int_methods = append(int_methods, imp.Name)
 				local_string += `
-				func  net_`+ imp.Name + `(args ...interface{}) (d ` + imp.Templ +`){
+				func  net_` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -1778,157 +1740,149 @@ import (`
 					}
 					return
 					} else {
-						d = ` + imp.Templ +`{} 
+						d = ` + imp.Templ + `{} 
 						return
 					}
-				}`	    
+				}`
 
 			}
 
-			delegateMethods := strings.Split(imp.Methods,"\n")
+			delegateMethods := strings.Split(imp.Methods, "\n")
 
-			for _,im := range delegateMethods {
-				
+			for _, im := range delegateMethods {
+
 				if stripSpaces(im) != "" {
-				fmt.Println(imp.Name + "->" + im)
-				function_map := strings.Split(im, ")")
+					fmt.Println(imp.Name + "->" + im)
+					function_map := strings.Split(im, ")")
 
-				
+					if !contains(int_mappings, function_map[0]+imp.Templ) {
+						int_mappings = append(int_mappings, function_map[0]+imp.Templ)
+						funcsp := strings.Split(function_map[0], "(")
+						meth := template.findMethod(stripSpaces(funcsp[0]))
 
-				if !contains(int_mappings, function_map[0] + imp.Templ) {
-					int_mappings = append(int_mappings,function_map[0] + imp.Templ)
-					funcsp := strings.Split(function_map[0],"(")
-					meth := template.findMethod(stripSpaces(funcsp[0]))
+						//process limits and keep local deritives
+						if meth.Autoface == "" || meth.Autoface == "true" {
 
-					//process limits and keep local deritives
-					if meth.Autoface == "" || meth.Autoface == "true"  {
-						
-						/*
-							
-						*/
-						procc_funcs := true
-						fmt.Println( )
+							/*
 
-						if meth.Limit != "" {
-							if !contains(strings.Split(meth.Limit,","), imp.Name ){
-								procc_funcs = false 
+							 */
+							procc_funcs := true
+							fmt.Println()
+
+							if meth.Limit != "" {
+								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
+									procc_funcs = false
+								}
+							}
+
+							if contains(api_methods, meth.Name) {
+								procc_funcs = false
+							}
+
+							objectName := meth.Object
+							if objectName == "" {
+								objectName = "object"
+							}
+							if procc_funcs {
+								if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
+									int_methods = append(int_methods, stripSpaces(funcsp[0]))
+								}
+								local_string += `
+					  	func  net_` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` string`
+								}
+
+								local_string += ` {
+									` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` 
+								return ""
+							`
+								}
+								local_string += ` 
+						}`
+
+								if meth.Keeplocal == "false" || meth.Keeplocal == "" {
+									local_string += `
+						func (` + objectName + ` ` + imp.Templ + `) ` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") + `) ` + stripSpaces(function_map[1])
+
+									local_string += ` {
+							` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+									local_string += `
+						}`
+								}
 							}
 						}
 
-						if contains(api_methods, meth.Name){
-							procc_funcs = false
-						}
-						
-						objectName := meth.Object
-						if objectName == "" {
-							objectName = "object"
-						}
-						if procc_funcs {	
-							if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
-						int_methods = append(int_methods,stripSpaces(funcsp[0]))
-						}
-					  	local_string += `
-					  	func  net_`+ stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1] + `, ` + objectName + ` ` +imp.Templ, ",") +`) ` + stripSpaces(function_map[1])
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` string`
-						}
-
-						local_string += ` {
-									` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` 
-								return ""
-							`
-						}
-						local_string += ` 
-						}`
-
-
-
-						if meth.Keeplocal == "false" || meth.Keeplocal == "" {
-						local_string += `
-						func (` + objectName + ` ` + imp.Templ +`) ` +  stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") +`) ` + stripSpaces(function_map[1])
-
-							local_string += ` {
-							` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						local_string +=  `
-						}`
-						}
-						}
 					}
-
-
-
-
-
-				}
 				}
 			}
 
 			//create Unused methods methods
 			fmt.Println(int_methods)
-			for _,imp := range available_methods {
-				if !contains(int_methods,imp) && !contains(api_methods, imp)  {
+			for _, imp := range available_methods {
+				if !contains(int_methods, imp) && !contains(api_methods, imp) {
 					fmt.Println("Processing : " + imp)
-						meth := template.findMethod(imp)
-						addedit := false
-						if meth.Returntype == "" {
-							meth.Returntype = "string"
-							addedit = true
-						}
-						local_string += `
+					meth := template.findMethod(imp)
+					addedit := false
+					if meth.Returntype == "" {
+						meth.Returntype = "string"
+						addedit = true
+					}
+					local_string += `
 						func net_` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
 							`
-						for k,nam := range strings.Split(meth.Variables,","){
-							if nam != "" {
-								local_string +=  nam + ` := ` + `args[` + strconv.Itoa(k) + `]
+					for k, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							local_string += nam + ` := ` + `args[` + strconv.Itoa(k) + `]
 								`
-							}
 						}
+					}
 
-						est := ``
-						if !template.Prod {
-							est = `	
+					est := ``
+					if !template.Prod {
+						est = `	
 							lastLine := ""
 							defer func() {
 							       if n := recover(); n != nil {
-							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"`  + `, lastLine)
+							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
 							          fmt.Println("Reason : ",n)
 							         
 							        }
 								}()`
-							setv := strings.Split(meth.Method, "\n")
-							for _, line := range setv {
-								if len(line) > 4 {
+						setv := strings.Split(meth.Method, "\n")
+						for _, line := range setv {
+							if len(line) > 4 {
 								est += `
-								lastLine = ` + "`" + line +"`" + `
+								lastLine = ` + "`" + line + "`" + `
 								` + line
-								}
 							}
-
-						} else {
-							est = strings.Replace(meth.Method, `&#38;`, `&`,-1)
 						}
-						local_string += est
-						if addedit {
-						 local_string +=  `
+
+					} else {
+						est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
+					}
+					local_string += est
+					if addedit {
+						local_string += `
 						 return ""
 						 `
-						}
-						local_string += `
-						}` 
 					}
+					local_string += `
+						}`
+				}
 			}
-					for _,imp := range template.Templates.Templates {
-						if imp.Struct == "" {
-							imp.Struct = "NoStruct"
-						}
+			for _, imp := range template.Templates.Templates {
+				if imp.Struct == "" {
+					imp.Struct = "NoStruct"
+				}
 				local_string += `
 
 
-				func  net_`+ imp.Name + `(args ...interface{}) string {
+				func  net_` + imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
 						defer func() {
@@ -1936,7 +1890,7 @@ import (`
 					           	   color.Red("Error loading template in path : " + filename )
 					           	// fmt.Println(n)
 					           		DebugTemplatePath(filename, &d)	
-					           	 //http.Redirect(w,r,"`  + template.ErrorPage +  `",307)
+					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
 					if len(args) > 0 {
@@ -1948,7 +1902,7 @@ import (`
 						return ""
 					}
 					} else {
-						d = ` + imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
 
 					
@@ -1957,9 +1911,9 @@ import (`
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 					
 					
 				    error := t.Execute(output, &d)
@@ -1969,13 +1923,13 @@ import (`
 				    } 
 					return html.UnescapeString(output.String())
 					
-				}`	    
-					local_string += `
-					func  b`+ imp.Name + `(d ` + imp.Struct +`) string {
-						return net_b` + imp.Name +`(d)
+				}`
+				local_string += `
+					func  b` + imp.Name + `(d ` + imp.Struct + `) string {
+						return net_b` + imp.Name + `(d)
 					}
 
-				func  net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
+				func  net_b` + imp.Name + `(d ` + imp.Struct + `) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
 					
     				body, er := Asset(filename)
@@ -1983,9 +1937,9 @@ import (`
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				 defer func() {
 					        if n := recover(); n != nil {
 					           	color.Red("Error loading template in path : " + filename )
@@ -1997,9 +1951,9 @@ import (`
 				    fmt.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
-				}`	    
+				}`
 				local_string += `
-				func  net_c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+				func  net_c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -2008,12 +1962,12 @@ import (`
 						return 
 					}
 					} else {
-						d = `+ imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
     				return
 				}
 
-				func  c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+				func  c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -2022,15 +1976,13 @@ import (`
 						return 
 					}
 					} else {
-						d = `+ imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
     				return
-				}`	    
+				}`
 			}
 
-     
 			//Methods have been added
-
 
 			local_string += `
 			func dummy_timer(){
@@ -2038,27 +1990,23 @@ import (`
 				fmt.Println(dg)
 			}`
 
-		
 			local_string += `
 
 			func main() {
 				` + template.Main
-				
-					
-					 local_string += `
-					 ` + timeline +`
-					 fmt.Printf("Listenning on Port %v\n", "` + template.Port +`")
+
+			local_string += `
+					 ` + timeline + `
+					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
-					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web +`"}))
-					 http.ListenAndServe(":`+ template.Port +`", nil)
+					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web + `"}))
+					 http.ListenAndServe(":` + template.Port + `", nil)
 					 }`
-					
-		
-			
-				fmt.Println("Saving file to " + r + "/" + template.Output)
-				 d1 := []byte(local_string)
-             _ = ioutil.WriteFile(r + "/" + template.Output, d1,0644)
-		    
+
+			fmt.Println("Saving file to " + r + "/" + template.Output)
+			d1 := []byte(local_string)
+			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
+
 		}
 
 	} else if template.Type == "bind" {
@@ -2066,78 +2014,78 @@ import (`
 				
 	import (`
 
-				net_imports := []string{"time","os","bytes","encoding/json","fmt","html","html/template","io/ioutil","strings","reflect","unsafe","crypto/aes","crypto/cipher","crypto/rand","io","encoding/base64","errors"}
+		net_imports := []string{"time", "os", "bytes", "encoding/json", "fmt", "html", "html/template", "io/ioutil", "strings", "reflect", "unsafe", "crypto/aes", "crypto/cipher", "crypto/rand", "io", "encoding/base64", "errors"}
 
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
-		
-		for _,imp := range template.Methods.Methods {
+
+		for _, imp := range template.Methods.Methods {
 			if !contains(available_methods, imp.Name) {
 				available_methods = append(available_methods, imp.Name)
 			}
 		}
 		apiraw := ``
-		for _,imp := range template.Endpoints.Endpoints {
+		for _, imp := range template.Endpoints.Endpoints {
 			if !contains(api_methods, imp.Method) {
 				api_methods = append(api_methods, imp.Method)
 			}
-				meth := template.findMethod(imp.Method)
-				apiraw += ` 
-				if  path == "` + imp.Path +`" && method == strings.ToUpper("` + imp.Type +`") { 
-					` + strings.Replace(meth.Method, `&#38;`, `&`,-1) + `
+			meth := template.findMethod(imp.Method)
+			apiraw += ` 
+				if  path == "` + imp.Path + `" && method == strings.ToUpper("` + imp.Type + `") { 
+					` + strings.Replace(meth.Method, `&#38;`, `&`, -1) + `
 					callmet = true
 				}
-				` 
-			
+				`
+
 		}
-	
-		fmt.Printf("APi Methods %v\n",api_methods)
-		     netMa := 	`template.FuncMap{"GetLocation": net_supportGetLocation,"Run": net_supportRunjs,"PlaySound" : net_supportSoundPlay,"StopSound" : net_supportSoundStop,"SetVolume" : net_supportSoundSetVolume,"GetVolume" : net_supportSoundGetVolume, "isPlaying" : net_supportSoundisPlaying,"trackMotion": net_supportMotionStart,"stopMotion" : net_supportMotionStop,"ShowLoad" : net_supportShowload, "HideLoad" : net_supportHideLoad, "Device": net_supportDevice,"TakePicture" : net_supportTakePicture, "Notify" : net_supportNotify,"AbsolutePath" : net_supportFileAbsPath,"Download" : net_supportFileDownload,"Download_lg" : net_supportFileDownloadLarge,"Base64" : net_supportBase64,"DeleteRes" : net_supportDeleteFile , "Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
-           for _,imp := range available_methods {
-           	if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-          		netMa += `,"` + imp + `" : net_` + imp
-      		}
-           }
-           int_lok := []string{}
 
-           for _,imp := range template.Header.Objects {
+		fmt.Printf("APi Methods %v\n", api_methods)
+		netMa := `template.FuncMap{"GetLocation": net_supportGetLocation,"Run": net_supportRunjs,"PlaySound" : net_supportSoundPlay,"StopSound" : net_supportSoundStop,"SetVolume" : net_supportSoundSetVolume,"GetVolume" : net_supportSoundGetVolume, "isPlaying" : net_supportSoundisPlaying,"trackMotion": net_supportMotionStart,"stopMotion" : net_supportMotionStop,"ShowLoad" : net_supportShowload, "HideLoad" : net_supportHideLoad, "Device": net_supportDevice,"TakePicture" : net_supportTakePicture, "Notify" : net_supportNotify,"AbsolutePath" : net_supportFileAbsPath,"Download" : net_supportFileDownload,"Download_lg" : net_supportFileDownloadLarge,"Base64" : net_supportBase64,"DeleteRes" : net_supportDeleteFile , "Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		for _, imp := range available_methods {
+			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
+				netMa += `,"` + imp + `" : net_` + imp
+			}
+		}
+		int_lok := []string{}
+
+		for _, imp := range template.Header.Objects {
 			//struct return and function
-				
+
 			if !contains(int_lok, imp.Name) {
-				int_lok = append(int_lok,imp.Name)
-			 	netMa += `,"` + imp.Name + `" : net_` + imp.Name
-			}
-			}
-
-			for _,imp := range template.Header.Structs {
-				netMa += `,"is` + imp.Name + `":net_is` + imp.Name
-			}
-
-           for _,imp := range template.Templates.Templates {
-
+				int_lok = append(int_lok, imp.Name)
 				netMa += `,"` + imp.Name + `" : net_` + imp.Name
-				netMa += `,"b` + imp.Name + `" : b` + imp.Name
-				netMa += `,"c` + imp.Name + `" : c` + imp.Name
-           }
-           netMa += `}`
+			}
+		}
 
-		for _,imp := range template.RootImports {
-				//fmt.Println(imp)
-			if !strings.Contains(imp.Src,".gxml") {
-					if imp.Download == "true" {
-						fmt.Println("∑ Downloading Package " + imp.Src)
-						RunCmd("go get " + imp.Src)
-					}
-					if  !contains(net_imports, imp.Src) {
-						net_imports = append(net_imports, imp.Src)
-					}
+		for _, imp := range template.Header.Structs {
+			netMa += `,"is` + imp.Name + `":net_is` + imp.Name
+		}
+
+		for _, imp := range template.Templates.Templates {
+
+			netMa += `,"` + imp.Name + `" : net_` + imp.Name
+			netMa += `,"b` + imp.Name + `" : b` + imp.Name
+			netMa += `,"c` + imp.Name + `" : c` + imp.Name
+		}
+		netMa += `}`
+
+		for _, imp := range template.RootImports {
+			//fmt.Println(imp)
+			if !strings.Contains(imp.Src, ".gxml") {
+				if imp.Download == "true" {
+					fmt.Println("∑ Downloading Package " + imp.Src)
+					RunCmd("go get " + imp.Src)
+				}
+				if !contains(net_imports, imp.Src) {
+					net_imports = append(net_imports, imp.Src)
+				}
 			}
 		}
 
 		//fmt.Println(template.Methods.Methods[0].Name)
 
-		for _,imp := range net_imports {
+		for _, imp := range net_imports {
 			local_string += `
 			"` + imp + `"`
 		}
@@ -2317,7 +2265,7 @@ import (`
          			return ""
          		}
 				
-				var key = []byte("` + template.Key +`")
+				var key = []byte("` + template.Key + `")
 
 				func net_importcss(s string) string {
 					return "<link rel=\"stylesheet\" href=\"" + s + "\" /> "
@@ -2564,7 +2512,7 @@ import (`
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
-				      t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+				      t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				   
 				    error := t.Execute(outp, f)
 				    if error != nil {
@@ -2687,10 +2635,10 @@ import (`
 				    return false;
 				 }
 				`
-					for _,imp := range template.Variables {
-						local_string += `
-						var ` + imp.Name + ` ` + imp.Type 
-					}
+		for _, imp := range template.Variables {
+			local_string += `
+						var ` + imp.Name + ` ` + imp.Type
+		}
 		if template.Init_Func != "" {
 			local_string += `
 			func init(){
@@ -2700,42 +2648,39 @@ import (`
 		}
 
 		//Lets Do structs
-		for _,imp := range template.Header.Structs {
+		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-			fmt.Println("Processing Struct : " + imp.Name)
-			arch.objects = append(arch.objects, imp.Name)
-			local_string += `
+				fmt.Println("Processing Struct : " + imp.Name)
+				arch.objects = append(arch.objects, imp.Name)
+				local_string += `
 			type ` + imp.Name + ` struct {`
-			local_string += imp.Attributes
-			local_string += `
+				local_string += imp.Attributes
+				local_string += `
 			}`
 
-			local_string += `
+				local_string += `
 			func net_is` + imp.Name + ` (arg interface{}) ` + imp.Name + ` {`
-			local_string += `
-				return arg.(` + imp.Name +`)
+				local_string += `
+				return arg.(` + imp.Name + `)
 			}`
 			}
 		}
-		
 
-
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			local_string += `
 			type ` + imp.Name + ` ` + imp.Templ
 		}
-		
 
 		//Create an object map
-		for _,imp := range template.Header.Objects {
+		for _, imp := range template.Header.Objects {
 			//struct return and function
 			fmt.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
-				available_methods = append(available_methods,imp.Name)
-				int_methods = append(int_methods,imp.Name)
+				available_methods = append(available_methods, imp.Name)
+				int_methods = append(int_methods, imp.Name)
 				local_string += `
-				func  net_`+ imp.Name + `(args ...interface{}) (d ` + imp.Templ +`){
+				func  net_` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -2746,128 +2691,120 @@ import (`
 					}
 					return
 					} else {
-						d = ` + imp.Templ +`{} 
+						d = ` + imp.Templ + `{} 
 						return
 					}
-				}`	    
+				}`
 
 			}
 
-			delegateMethods := strings.Split(imp.Methods,"\n")
+			delegateMethods := strings.Split(imp.Methods, "\n")
 
-			for _,im := range delegateMethods {
-				
+			for _, im := range delegateMethods {
+
 				if stripSpaces(im) != "" {
-				fmt.Println(imp.Name + "->" + im)
-				function_map := strings.Split(im, ")")
+					fmt.Println(imp.Name + "->" + im)
+					function_map := strings.Split(im, ")")
 
-				
+					if !contains(int_mappings, function_map[0]+imp.Templ) {
+						int_mappings = append(int_mappings, function_map[0]+imp.Templ)
+						funcsp := strings.Split(function_map[0], "(")
+						meth := template.findMethod(stripSpaces(funcsp[0]))
 
-				if !contains(int_mappings, function_map[0] + imp.Templ) {
-					int_mappings = append(int_mappings,function_map[0] + imp.Templ)
-					funcsp := strings.Split(function_map[0],"(")
-					meth := template.findMethod(stripSpaces(funcsp[0]))
+						//process limits and keep local deritives
+						if meth.Autoface == "" || meth.Autoface == "true" {
 
-					//process limits and keep local deritives
-					if meth.Autoface == "" || meth.Autoface == "true"  {
-						
-						/*
-							
-						*/
-						procc_funcs := true
-						fmt.Println( )
+							/*
 
-						if meth.Limit != "" {
-							if !contains(strings.Split(meth.Limit,","), imp.Name ){
-								procc_funcs = false 
+							 */
+							procc_funcs := true
+							fmt.Println()
+
+							if meth.Limit != "" {
+								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
+									procc_funcs = false
+								}
+							}
+
+							if contains(api_methods, meth.Name) {
+								procc_funcs = false
+							}
+
+							objectName := meth.Object
+							if objectName == "" {
+								objectName = "object"
+							}
+							if procc_funcs {
+								if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
+									int_methods = append(int_methods, stripSpaces(funcsp[0]))
+								}
+								local_string += `
+					  	func  net_` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` string`
+								}
+
+								local_string += ` {
+									` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+								if stripSpaces(function_map[1]) == "" {
+									local_string += ` 
+								return ""
+							`
+								}
+								local_string += ` 
+						}`
+
+								if meth.Keeplocal == "false" || meth.Keeplocal == "" {
+									local_string += `
+						func (` + objectName + ` ` + imp.Templ + `) ` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") + `) ` + stripSpaces(function_map[1])
+
+									local_string += ` {
+							` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
+
+									local_string += `
+						}`
+								}
 							}
 						}
 
-						if contains(api_methods, meth.Name){
-							procc_funcs = false
-						}
-						
-						objectName := meth.Object
-						if objectName == "" {
-							objectName = "object"
-						}
-						if procc_funcs {	
-							if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
-						int_methods = append(int_methods,stripSpaces(funcsp[0]))
-						}
-					  	local_string += `
-					  	func  net_`+ stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1] + `, ` + objectName + ` ` +imp.Templ, ",") +`) ` + stripSpaces(function_map[1])
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` string`
-						}
-
-						local_string += ` {
-									` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						if stripSpaces(function_map[1]) == "" {
-							local_string += ` 
-								return ""
-							`
-						}
-						local_string += ` 
-						}`
-
-
-
-						if meth.Keeplocal == "false" || meth.Keeplocal == "" {
-						local_string += `
-						func (` + objectName + ` ` + imp.Templ +`) ` +  stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") +`) ` + stripSpaces(function_map[1])
-
-							local_string += ` {
-							` + strings.Replace(meth.Method, `&#38;`, `&`,-1)
-
-						local_string +=  `
-						}`
-						}
-						}
 					}
-
-
-
-
-
-				}
 				}
 			}
 
 			//create Unused methods methods
 			fmt.Println(int_methods)
-			for _,imp := range available_methods {
-				if !contains(int_methods,imp) && !contains(api_methods, imp)  {
+			for _, imp := range available_methods {
+				if !contains(int_methods, imp) && !contains(api_methods, imp) {
 					fmt.Println("Processing : " + imp)
-						meth := template.findMethod(imp)
-						addedit := false
-						if meth.Returntype == "" {
-							meth.Returntype = "string"
-							addedit = true
-						}
-						local_string += `
+					meth := template.findMethod(imp)
+					addedit := false
+					if meth.Returntype == "" {
+						meth.Returntype = "string"
+						addedit = true
+					}
+					local_string += `
 						func net_` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
 							`
-						for k,nam := range strings.Split(meth.Variables,","){
-							if nam != "" {
-								local_string +=  nam + ` := ` + `args[` + strconv.Itoa(k) + `]
+					for k, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							local_string += nam + ` := ` + `args[` + strconv.Itoa(k) + `]
 								`
-							}
 						}
-						local_string += strings.Replace(meth.Method, `&#38;`, `&`,-1)
-						if addedit {
-						 local_string +=  `
+					}
+					local_string += strings.Replace(meth.Method, `&#38;`, `&`, -1)
+					if addedit {
+						local_string += `
 						 return ""
 						 `
-						}
-						local_string += `
-						}` 
 					}
+					local_string += `
+						}`
+				}
 			}
-					for _,imp := range template.Templates.Templates {
+			for _, imp := range template.Templates.Templates {
 				local_string += `
-				func  net_`+ imp.Name + `(args ...interface{}) string {
+				func  net_` + imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
 					if len(args) > 0 {
 					jso := args[0].(string)
@@ -2878,7 +2815,7 @@ import (`
 						return ""
 					}
 					} else {
-						d = ` + imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
 
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
@@ -2887,39 +2824,39 @@ import (`
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				    fmt.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
-				}`	    
-					local_string += `
-				func net_b`+ imp.Name + `(d ` + imp.Struct +`) string {
-					return  b`+ imp.Name + `(d)
+				}`
+				local_string += `
+				func net_b` + imp.Name + `(d ` + imp.Struct + `) string {
+					return  b` + imp.Name + `(d)
 				}
-				func  b`+ imp.Name + `(d ` + imp.Struct +`) string {
+				func  b` + imp.Name + `(d ` + imp.Struct + `) string {
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
     				body, er := Asset(filename)
     				if er != nil {
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("` +  imp.Name + `")
-    				t = t.Funcs(` + netMa +`)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" +` ,-1) )
+					t := template.New("` + imp.Name + `")
+    				t = t.Funcs(` + netMa + `)
+				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
 				    fmt.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
-				}`	    
+				}`
 				local_string += `
-				func  c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+				func  c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -2928,11 +2865,11 @@ import (`
 						return 
 					}
 					} else {
-						d = `+ imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
     				return
 				}
-				func  net_c`+ imp.Name + `(args ...interface{}) (d ` + imp.Struct +`) {
+				func  net_c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -2941,63 +2878,53 @@ import (`
 						return 
 					}
 					} else {
-						d = `+ imp.Struct +`{}
+						d = ` + imp.Struct + `{}
 					}
     				return
-				}`	    
+				}`
 			}
 
-     
 			//Methods have been added
 
+			fmt.Println("Saving file to " + r + "/" + template.Output)
+			d1 := []byte(local_string)
+			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
 
-			
-
-	
-
-
-
-			
-				fmt.Println("Saving file to " + r + "/" + template.Output)
-				 d1 := []byte(local_string)
-             _ = ioutil.WriteFile(r + "/" + template.Output, d1,0644)
-		    
 		}
 	}
-
 
 	return
 }
 
-func RunFile(root string,file string){
-	fmt.Println("∑ Running " + root + "/" + file );
-	exe_cmd("go run " + root + "/" +  file )
+func RunFile(root string, file string) {
+	fmt.Println("∑ Running " + root + "/" + file)
+	exe_cmd("go run " + root + "/" + file)
 }
 
-func RunCmd(cmd string){
+func RunCmd(cmd string) {
 	exe_cmd(cmd)
 }
 
 func RunCmdString(cmd string) string {
-	 parts := strings.Fields(cmd)
-  	fmt.Println(cmd)
-    var out *exec.Cmd
-    if len(parts) == 5 {
-    	fmt.Println("Match")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4])	
-    } else if len(parts) == 9 {
-    	fmt.Println("Match GPGl")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4],parts[5],parts[6],parts[7],parts[8])	
-    } else if len(parts) == 4 {
-    		out = exec.Command(parts[0],parts[1],parts[2],parts[3])	
-    }else if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+	parts := strings.Fields(cmd)
+	fmt.Println(cmd)
+	var out *exec.Cmd
+	if len(parts) == 5 {
+		fmt.Println("Match")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
+	} else if len(parts) == 9 {
+		fmt.Println("Match GPGl")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
+	} else if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2])
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0], parts[1])
 	}
-    
+
 	var ou bytes.Buffer
 	out.Stdout = &ou
 	err := out.Run()
@@ -3008,25 +2935,25 @@ func RunCmdString(cmd string) string {
 }
 
 func RunCmdByte(cmd string) []byte {
-	 parts := strings.Fields(cmd)
-  	fmt.Println(cmd)
-    var out *exec.Cmd
-    if len(parts) == 5 {
-    	fmt.Println("Match")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4])	
-    } else if len(parts) == 9 {
-    	fmt.Println("Match GPGl")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4],parts[5],parts[6],parts[7],parts[8])	
-    } else if len(parts) == 4 {
-    		out = exec.Command(parts[0],parts[1],parts[2],parts[3])	
-    }else if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+	parts := strings.Fields(cmd)
+	fmt.Println(cmd)
+	var out *exec.Cmd
+	if len(parts) == 5 {
+		fmt.Println("Match")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
+	} else if len(parts) == 9 {
+		fmt.Println("Match GPGl")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
+	} else if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2])
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0], parts[1])
 	}
-    
+
 	var ou bytes.Buffer
 	out.Stdout = &ou
 	err := out.Run()
@@ -3036,139 +2963,130 @@ func RunCmdByte(cmd string) []byte {
 	return ou.Bytes()
 }
 
-func RunCmdSmartB(cmd string) ([]byte,error) {
-	 parts := strings.Fields(cmd)
-  	fmt.Println(parts[0],parts[1:])
-    var out *exec.Cmd
-  
-    out = exec.Command(parts[0],parts[1:]...)	
-   
-    
-	var ou,our bytes.Buffer
+func RunCmdSmartB(cmd string) ([]byte, error) {
+	parts := strings.Fields(cmd)
+	fmt.Println(parts[0], parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1:]...)
+
+	var ou, our bytes.Buffer
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	
 	err := out.Run()
 	fmt.Println(our.String())
 	if err != nil {
 		return our.Bytes(), err
 	}
-	return ou.Bytes(),nil
+	return ou.Bytes(), nil
 }
 
-func RunCmdSmart(cmd string) (string,error) {
-	 parts := strings.Fields(cmd)
-  //	fmt.Println(parts[0],parts[1:])
-    var out *exec.Cmd
-  
-    out = exec.Command(parts[0],parts[1:]...)	
-   
-    
-	var ou ,our bytes.Buffer
+func RunCmdSmart(cmd string) (string, error) {
+	parts := strings.Fields(cmd)
+	//	fmt.Println(parts[0],parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1:]...)
+
+	var ou, our bytes.Buffer
 	out.Stdout = &ou
 	out.Stderr = &our
 
 	fmt.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-	//	fmt.Println("%v", err.Error())
+		//	fmt.Println("%v", err.Error())
 		return our.String(), err
 	}
-	return ou.String(),nil
+	return ou.String(), nil
 }
 
-func RunCmdSmartZ(cmd string) (string,error) {
-	 parts := strings.Fields(cmd)
-  //	fmt.Println(parts[0],parts[1:])
-    var out *exec.Cmd
-  
-    out = exec.Command(parts[0],parts[1] )	
-   
-    
-	var ou ,our bytes.Buffer
+func RunCmdSmartZ(cmd string) (string, error) {
+	parts := strings.Fields(cmd)
+	//	fmt.Println(parts[0],parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1])
+
+	var ou, our bytes.Buffer
 	out.Stdout = &ou
 	out.Stderr = &our
 
 	fmt.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-	//	fmt.Println("%v", err.Error())
-		return  ou.String() + our.String(), err
+		//	fmt.Println("%v", err.Error())
+		return ou.String() + our.String(), err
 	}
-	return ou.String(),nil
+	return ou.String(), nil
 }
 
-func RunCmdSmartP(cmd string) (string,error) {
-	 parts := strings.Fields(cmd)
-  //	fmt.Println(parts[0],parts[1:])
-    var out *exec.Cmd
-  
-    out = exec.Command(parts[0],parts[1] ,parts[2], "-benchmem")	
-   
-    
-	var ou ,our bytes.Buffer
+func RunCmdSmartP(cmd string) (string, error) {
+	parts := strings.Fields(cmd)
+	//	fmt.Println(parts[0],parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1], parts[2], "-benchmem")
+
+	var ou, our bytes.Buffer
 	out.Stdout = &ou
 	out.Stderr = &our
 
 	fmt.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-	//	fmt.Println("%v", err.Error())
-		return  ou.String() + our.String(), err
+		//	fmt.Println("%v", err.Error())
+		return ou.String() + our.String(), err
 	}
-	return ou.String(),nil
+	return ou.String(), nil
 }
 
-func RunCmdSmartCmb(cmd string) (string,error) {
-	 parts := strings.Fields(cmd)
-  	fmt.Println(parts[0],parts[1:])
-    var out *exec.Cmd
-  
-    out = exec.Command(parts[0],parts[1:]...)	
-   
-    
-	
-	ou,err := out.CombinedOutput()
+func RunCmdSmartCmb(cmd string) (string, error) {
+	parts := strings.Fields(cmd)
+	fmt.Println(parts[0], parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1:]...)
+
+	ou, err := out.CombinedOutput()
 	if err != nil {
 		fmt.Println("%v", err.Error())
 		return "", err
 	}
-	return string(ou),nil
+	return string(ou), nil
 }
 
 func BytesToString(b []byte) string {
-				    bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-				    sh := reflect.StringHeader{bh.Data, bh.Len}
-				    return *(*string)(unsafe.Pointer(&sh))
-				}
-
+	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
+	sh := reflect.StringHeader{bh.Data, bh.Len}
+	return *(*string)(unsafe.Pointer(&sh))
+}
 
 func RunCmdB(cmd string) {
-	 parts := strings.Fields(cmd)
-  	fmt.Println(cmd)
-    var out *exec.Cmd
-    if len(parts) == 5 {
-    	fmt.Println("Match")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4])	
-    } else if len(parts) == 9 {
-    	fmt.Println("Match GPGl")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4],parts[5],parts[6],parts[7],parts[8])	
-    } else if len(parts) == 8 {
-    	fmt.Println("Match decrypt GPGl")
-    		out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4],parts[5],parts[6],parts[7],"pass")
-    	
-    	
-    } else if len(parts) == 4 {
-    		out = exec.Command(parts[0],parts[1],parts[2],parts[3])	
-    }else if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+	parts := strings.Fields(cmd)
+	fmt.Println(cmd)
+	var out *exec.Cmd
+	if len(parts) == 5 {
+		fmt.Println("Match")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
+	} else if len(parts) == 9 {
+		fmt.Println("Match GPGl")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
+	} else if len(parts) == 8 {
+		fmt.Println("Match decrypt GPGl")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], "pass")
+
+	} else if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2])
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1], "2>&1")
+		out = exec.Command(parts[0], parts[1], "2>&1")
 	}
-    
+
 	var ou bytes.Buffer
 	out.Stdout = &ou
 	err := out.Run()
@@ -3179,48 +3097,48 @@ func RunCmdB(cmd string) {
 }
 
 func RunCmdA(cm string) error {
-  
-    parts := strings.Fields(cm)
-  	fmt.Println(parts)
-    var cmd *exec.Cmd
-   	fmt.Println("Match decrypt GPGl")
-    cmd = exec.Command(parts[0],parts[1],parts[2],"--no-tty",parts[3],parts[4],parts[5],parts[6])
- 	inpipe,err := cmd.StdinPipe()
- 	if err != nil {
- 	fmt.Println("Pipe : ",err)
- 	}
- 	io.WriteString(inpipe, "")
-		  var out bytes.Buffer
-		var stderr bytes.Buffer
-		cmd.Stdout = &out
-		cmd.Stderr = &stderr
-		err = cmd.Run()
-		if err != nil {
-		    fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
-		    return err
-		}
-		fmt.Println("Result: " + out.String())
-    return nil
+
+	parts := strings.Fields(cm)
+	fmt.Println(parts)
+	var cmd *exec.Cmd
+	fmt.Println("Match decrypt GPGl")
+	cmd = exec.Command(parts[0], parts[1], parts[2], "--no-tty", parts[3], parts[4], parts[5], parts[6])
+	inpipe, err := cmd.StdinPipe()
+	if err != nil {
+		fmt.Println("Pipe : ", err)
+	}
+	io.WriteString(inpipe, "")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return err
+	}
+	fmt.Println("Result: " + out.String())
+	return nil
 }
 
 func exe_cmd(cmd string) {
-  
-    parts := strings.Fields(cmd)
-  	fmt.Println(cmd)
-    var out *exec.Cmd
-    if len(parts) == 5 {
-    	fmt.Println("Match")
-    	out = exec.Command(parts[0],parts[1],parts[2],parts[3],parts[4])	
-    } else if len(parts) == 4 {
-    		out = exec.Command(parts[0],parts[1],parts[2],parts[3])	
-    }else if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+
+	parts := strings.Fields(cmd)
+	fmt.Println(cmd)
+	var out *exec.Cmd
+	if len(parts) == 5 {
+		fmt.Println("Match")
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
+	} else if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2])
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0], parts[1])
 	}
-    stdoutStderr, err := out.CombinedOutput()
+	stdoutStderr, err := out.CombinedOutput()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -3228,153 +3146,150 @@ func exe_cmd(cmd string) {
 }
 
 func Exe_Stall(cmd string, chn chan bool) {
-    fmt.Println(cmd)
-    parts := strings.Fields(cmd)
-    var out *exec.Cmd
-    if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2],"2>&1")
+	fmt.Println(cmd)
+	parts := strings.Fields(cmd)
+	var out *exec.Cmd
+	if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2], "2>&1")
 	} else if len(parts) == 1 {
-		out = exec.Command(parts[0],"2>&1")
+		out = exec.Command(parts[0], "2>&1")
 	} else {
-		out = exec.Command(parts[0],parts[1],"2>&1")
+		out = exec.Command(parts[0], parts[1], "2>&1")
 	}
-    stdout, err := out.StdoutPipe()
-   
-    if err != nil {
-        fmt.Println("error occured")
-        fmt.Printf("%s", err)
-    }
-    out.Start()
+	stdout, err := out.StdoutPipe()
+
+	if err != nil {
+		fmt.Println("error occured")
+		fmt.Printf("%s", err)
+	}
+	out.Start()
 	r := bufio.NewReader(stdout)
-	
+
 	t := false
 
-	
-		
-	
-	go func(){ for  !t {
-		line, _, _ := r.ReadLine()
-		if string(line) != "" {
-	    log.Println(string(line))
+	go func() {
+		for !t {
+			line, _, _ := r.ReadLine()
+			if string(line) != "" {
+				log.Println(string(line))
+			}
+
 		}
-	
-    } }()
-    tch, m := <-chn
-		if m  && tch {
-			t = tch
-		}
-		log.Println("Restarting service.")
-     if err := out.Process.Kill(); err != nil {
-        log.Fatal("failed to kill: ", err)
-    }
+	}()
+	tch, m := <-chn
+	if m && tch {
+		t = tch
+	}
+	log.Println("Restarting service.")
+	if err := out.Process.Kill(); err != nil {
+		log.Fatal("failed to kill: ", err)
+	}
 }
 
 func Exe_Stalll(cmd string) {
-    fmt.Println(cmd)
-    parts := strings.Fields(cmd)
-    var out *exec.Cmd
-    if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2],"2>&1")
+	fmt.Println(cmd)
+	parts := strings.Fields(cmd)
+	var out *exec.Cmd
+	if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2], "2>&1")
 	} else if len(parts) == 1 {
-		out = exec.Command(parts[0],"2>&1")
+		out = exec.Command(parts[0], "2>&1")
 	} else {
-		out = exec.Command(parts[0],parts[1],"2>&1")
+		out = exec.Command(parts[0], parts[1], "2>&1")
 	}
-    stdout, err := out.StdoutPipe()
-   
-    if err != nil {
-        fmt.Println("error occured")
-        fmt.Printf("%s", err)
-    }
-    out.Start()
+	stdout, err := out.StdoutPipe()
+
+	if err != nil {
+		fmt.Println("error occured")
+		fmt.Printf("%s", err)
+	}
+	out.Start()
 	r := bufio.NewReader(stdout)
-	
+
 	t := false
-	for  !t {
+	for !t {
 		line, _, _ := r.ReadLine()
 		if string(line) != "" {
-	    fmt.Println(string(line))
+			fmt.Println(string(line))
 		}
-		
-    }
 
-    
+	}
+
 }
 
 func Exe_BG(cmd string) {
-    fmt.Println(cmd)
-    parts := strings.Fields(cmd)
-    var out *exec.Cmd
-    if len(parts) > 2 {
-    	out = exec.Command(parts[0],parts[1],parts[2])
+	fmt.Println(cmd)
+	parts := strings.Fields(cmd)
+	var out *exec.Cmd
+	if len(parts) > 2 {
+		out = exec.Command(parts[0], parts[1], parts[2])
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0])
 	} else {
-		out = exec.Command(parts[0],parts[1])
+		out = exec.Command(parts[0], parts[1])
 	}
-    stdout, err := out.StdoutPipe()
-    if err != nil {
-        fmt.Println("error occured")
-        fmt.Printf("%s", err)
-    }
-    out.Start()
+	stdout, err := out.StdoutPipe()
+	if err != nil {
+		fmt.Println("error occured")
+		fmt.Printf("%s", err)
+	}
+	out.Start()
 	r := bufio.NewReader(stdout)
 	t := false
 	for !t {
-	line, _, _ := r.ReadLine()
-	if string(line) != "" {
-    fmt.Println(string(line))
+		line, _, _ := r.ReadLine()
+		if string(line) != "" {
+			fmt.Println(string(line))
+		}
 	}
-    }
 }
 
 func stripSpaces(str string) string {
-    return strings.Map(func(r rune) rune {
-        if unicode.IsSpace(r) {
-            // if the character is a space, drop it
-            return -1
-        }
-        // else keep it in the string
-        return r
-    }, str)
+	return strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			// if the character is a space, drop it
+			return -1
+		}
+		// else keep it in the string
+		return r
+	}, str)
 }
 
-
-func (d*gos) findStruct(name string) Struct {
+func (d *gos) findStruct(name string) Struct {
 	for _, imp := range d.Header.Structs {
 		if imp.Name == name {
 			return imp
 		}
 	}
-	return Struct{Name:"000"}
+	return Struct{Name: "000"}
 }
 
-func (d*gos) findMethod(name string) Method {
+func (d *gos) findMethod(name string) Method {
 	for _, imp := range d.Methods.Methods {
 		if imp.Name == name {
 			return imp
 		}
 	}
-	return Method{Name:"000"}
+	return Method{Name: "000"}
 }
 
-func (d*gos) PSaveGos(path string){
-	b,_ := xml.Marshal(d)
-	ioutil.WriteFile(path,b,0644)
+func (d *gos) PSaveGos(path string) {
+	b, _ := xml.Marshal(d)
+	ioutil.WriteFile(path, b, 0644)
 }
 
-func (d*gos) Delete(typ,id string){
+func (d *gos) Delete(typ, id string) {
 	if typ == "var" {
 		temp := []GlobalVariables{}
-		for  _,v := range d.Variables {
+		for _, v := range d.Variables {
 			if v.Name != id {
 				temp = append(temp, v)
 			}
 		}
-		d.Variables = temp;
+		d.Variables = temp
 	} else if typ == "import" {
 		temp := []Import{}
-		for  _,v := range d.RootImports {
+		for _, v := range d.RootImports {
 			if v.Src != id {
 				temp = append(temp, v)
 			}
@@ -3383,7 +3298,7 @@ func (d*gos) Delete(typ,id string){
 	} else if typ == "timer" {
 
 		temp := []Timer{}
-		for  _,v := range d.Timers.Timers {
+		for _, v := range d.Timers.Timers {
 			if v.Name != id {
 				temp = append(temp, v)
 			}
@@ -3392,195 +3307,190 @@ func (d*gos) Delete(typ,id string){
 
 	} else if typ == "end" {
 		temp := []Endpoint{}
-		for  _,v := range d.Endpoints.Endpoints {
+		for _, v := range d.Endpoints.Endpoints {
 			if v.Path != id {
 				temp = append(temp, v)
 			}
 		}
 		d.Endpoints.Endpoints = temp
-	} else if typ == "template" {	
-	
+	} else if typ == "template" {
+
 		temp := []Template{}
-		for  _,v := range d.Templates.Templates {
+		for _, v := range d.Templates.Templates {
 			if v.Name != id {
 				temp = append(temp, v)
 			}
 		}
 		d.Templates.Templates = temp
 
-	}  else if typ == "bundle" {	
-	
+	} else if typ == "bundle" {
+
 		temp := []Template{}
-		for  _,v := range d.Templates.Templates {
+		for _, v := range d.Templates.Templates {
 			if v.Bundle != id {
 				temp = append(temp, v)
 			}
 		}
 		d.Templates.Templates = temp
-		
-	}
 
+	}
 
 }
 
-func CreateVGos(path string)(*VGos){
+func CreateVGos(path string) *VGos {
 	v := &VGos{}
 
 	body, err := ioutil.ReadFile(path)
-    if err != nil {
-    	return nil
-    }
+	if err != nil {
+		return nil
+	}
 
 	d := xml.NewDecoder(bytes.NewReader(body))
-    d.Entity = map[string]string{
-        "&": "&",
-    }
-    err = d.Decode(&v)
-    if err != nil {
-        fmt.Printf("error: %v", err)
-        return nil 
-     }
+	d.Entity = map[string]string{
+		"&": "&",
+	}
+	err = d.Decode(&v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return nil
+	}
 	return v
 }
 
-func (d*gos) MStructs(ne []Struct){
+func (d *gos) MStructs(ne []Struct) {
 	d.Header.Structs = ne
 }
 
-func (d*gos) MObjects(ne []Object){
+func (d *gos) MObjects(ne []Object) {
 	d.Header.Objects = ne
 }
 
-func (d*gos) MMethod(ne []Method){
+func (d *gos) MMethod(ne []Method) {
 	d.Methods.Methods = ne
 }
 
-
-
-func PLoadGos(path string) (*gos,*Error) {
+func PLoadGos(path string) (*gos, *Error) {
 	fmt.Println("∑ loading " + path)
 	v := &gos{}
-	 body, err := ioutil.ReadFile(path)
-    if err != nil {
-    	return nil, &Error{code: 404,reason:"file not found! @ " + path}
-    }
+	body, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, &Error{code: 404, reason: "file not found! @ " + path}
+	}
 
- 	//obj := Error{}
- 	//fmt.Println(obj);
-    d := xml.NewDecoder(bytes.NewReader(body))
-    d.Strict = false;
-    err = d.Decode(&v)
-    if err != nil {
-        fmt.Printf("error: %v", err)
-        return nil,nil
-    }
+	//obj := Error{}
+	//fmt.Println(obj);
+	d := xml.NewDecoder(bytes.NewReader(body))
+	d.Strict = false
+	err = d.Decode(&v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return nil, nil
+	}
 
-	for _,imp := range v.RootImports {
-   		//fmt.Println(imp.Src)
-   		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWithV(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src,"/"))
-   			//copy files
-   		}
-   	}
+	for _, imp := range v.RootImports {
+		//fmt.Println(imp.Src)
+		if strings.Contains(imp.Src, ".gxml") {
+			v.MergeWithV(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src, "/"))
+			//copy files
+		}
+	}
 
-
-    return v,nil
+	return v, nil
 }
 
-func (d*gos) Add(sec,typ,name string){
+func (d *gos) Add(sec, typ, name string) {
 	if sec == "var" {
-	d.Variables = append(d.Variables, GlobalVariables{Name:name,Type:typ})
+		d.Variables = append(d.Variables, GlobalVariables{Name: name, Type: typ})
 	} else if sec == "import" {
 		if name != "io/ioutil" {
 			if name != "os" {
-			d.RootImports = append(d.RootImports,Import{Src: name})
+				d.RootImports = append(d.RootImports, Import{Src: name})
 			}
 		}
 	} else if sec == "end" {
-		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints,Endpoint{Path:name})
-	}  else if sec == "timer" {
-		d.Timers.Timers = append(d.Timers.Timers,Timer{Name:name})
-	} 
+		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints, Endpoint{Path: name})
+	} else if sec == "timer" {
+		d.Timers.Timers = append(d.Timers.Timers, Timer{Name: name})
+	}
 }
 
-func (d*gos) AddS(sec string,typ interface{}){
+func (d *gos) AddS(sec string, typ interface{}) {
 	if sec == "template" {
-	d.Templates.Templates = append(d.Templates.Templates, typ.(Template) )
+		d.Templates.Templates = append(d.Templates.Templates, typ.(Template))
 	} else if sec == "import" {
 		//d.RootImports = append(d.RootImports,Import{Src: name})
-	} 
+	}
 }
 
-func Decode64(decBuf, enc []byte) []byte { 
-         e64 := base64.StdEncoding 
-        maxDecLen := e64.DecodedLen(len(enc)) 
-        if decBuf == nil || len(decBuf) < maxDecLen { 
-                decBuf = make([]byte, maxDecLen) 
-        } 
-        n, err := e64.Decode(decBuf, enc) 
-        _ = err 
-        return decBuf[0:n] 
-} 
+func Decode64(decBuf, enc []byte) []byte {
+	e64 := base64.StdEncoding
+	maxDecLen := e64.DecodedLen(len(enc))
+	if decBuf == nil || len(decBuf) < maxDecLen {
+		decBuf = make([]byte, maxDecLen)
+	}
+	n, err := e64.Decode(decBuf, enc)
+	_ = err
+	return decBuf[0:n]
+}
 
-
-func (d*gos) Update(sec,id string,update interface{}){
+func (d *gos) Update(sec, id string, update interface{}) {
 	if sec == "var" {
 		temp := []GlobalVariables{}
-		for _,v := range d.Variables {
+		for _, v := range d.Variables {
 			if id == v.Name {
-			 temp = append(temp, update.(GlobalVariables))	
+				temp = append(temp, update.(GlobalVariables))
 			} else {
-				 temp = append(temp, v)	
+				temp = append(temp, v)
 			}
 		}
 		d.Variables = temp
 	} else if sec == "import" {
 		//d.RootImports = append(d.RootImports,Import{Src: name})
 		temp := []Import{}
-		for _,v := range d.RootImports {
+		for _, v := range d.RootImports {
 			if id == v.Src {
-			 temp = append(temp, update.(Import))	
+				temp = append(temp, update.(Import))
 			} else {
-				 temp = append(temp, v)	
+				temp = append(temp, v)
 			}
 		}
 		d.RootImports = temp
 	} else if sec == "template" {
 		temp := []Template{}
-		for _,v := range d.Templates.Templates {
+		for _, v := range d.Templates.Templates {
 			if id == v.Name {
 				v.Struct = update.(string)
-			   temp = append(temp, v)	
+				temp = append(temp, v)
 			} else {
-				 temp = append(temp, v)	
+				temp = append(temp, v)
 			}
 		}
 		d.Templates.Templates = temp
 	} else if sec == "timer" {
 		temp := []Timer{}
-		for _,v := range d.Timers.Timers {
+		for _, v := range d.Timers.Timers {
 			if id == v.Name {
-				
-			   temp = append(temp, update.(Timer))	
+
+				temp = append(temp, update.(Timer))
 			} else {
-				 temp = append(temp, v)	
+				temp = append(temp, v)
 			}
 		}
 		d.Timers.Timers = temp
 	} else if sec == "end" {
 		temp := []Endpoint{}
-		for _,v := range d.Endpoints.Endpoints {
+		for _, v := range d.Endpoints.Endpoints {
 			if id == v.Path {
-			   temp = append(temp, update.(Endpoint))	
+				temp = append(temp, update.(Endpoint))
 			} else {
-				 temp = append(temp, v)	
+				temp = append(temp, v)
 			}
 		}
 		d.Endpoints.Endpoints = temp
 	}
 }
 
-func (d*gos) Set(attr,value string) {
+func (d *gos) Set(attr, value string) {
 	if attr == "app" {
 		d.Type = value
 	} else if attr == "port" {
@@ -3590,262 +3500,254 @@ func (d*gos) Set(attr,value string) {
 	}
 }
 
-
-
-func VLoadGos(path string) (gos,*Error) {
+func VLoadGos(path string) (gos, *Error) {
 	fmt.Println("∑ loading " + path)
 	v := gos{}
-	 body, err := ioutil.ReadFile(path)
-    if err != nil {
-    	return v, &Error{code: 404,reason:"file not found! @ " + path}
-    }
+	body, err := ioutil.ReadFile(path)
+	if err != nil {
+		return v, &Error{code: 404, reason: "file not found! @ " + path}
+	}
 
- 	//obj := Error{}
- 	//fmt.Println(obj);
-    d := xml.NewDecoder(bytes.NewReader(body))
-    d.Strict = false;
-    err = d.Decode(&v)
-    if err != nil {
-        fmt.Printf("error: %v", err)
-        return v,nil
-    }
+	//obj := Error{}
+	//fmt.Println(obj);
+	d := xml.NewDecoder(bytes.NewReader(body))
+	d.Strict = false
+	err = d.Decode(&v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return v, nil
+	}
 
-    if v.FolderRoot == "" {
-    	ab :=  strings.Split(path, "/")
-    	v.FolderRoot = strings.Join(ab[:len(ab) - 1],"/") + "/"
-    }
-   	//process mergs
-   	for _,imp := range v.RootImports {
-   		//fmt.Println(imp.Src)
-   		if strings.Contains(imp.Src,".gxml") {
-   			srcP :=  strings.Split(imp.Src, "/")
-   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
-   			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + dir); os.IsNotExist(err) {
+	if v.FolderRoot == "" {
+		ab := strings.Split(path, "/")
+		v.FolderRoot = strings.Join(ab[:len(ab)-1], "/") + "/"
+	}
+	//process mergs
+	for _, imp := range v.RootImports {
+		//fmt.Println(imp.Src)
+		if strings.Contains(imp.Src, ".gxml") {
+			srcP := strings.Split(imp.Src, "/")
+			dir := strings.Join(srcP[:len(srcP)-1], "/")
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + dir)
 			}
-   		} else {
-   			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Trim(imp.Src,"/")
-   			if _, err := os.Stat(dir); os.IsNotExist(err) {
+		} else {
+			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + imp.Src)
 			}
-   		}
+		}
 
-   		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src,"/"))
-   			//copy files
-   		}
-   		//
-   	}
+		if strings.Contains(imp.Src, ".gxml") {
+			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/"))
+			//copy files
+		}
+		//
+	}
 
-    return v,nil
+	return v, nil
 }
 
-func LoadGos(path string) (*gos,*Error) {
+func LoadGos(path string) (*gos, *Error) {
 	fmt.Println("∑ loading " + path)
 	v := gos{}
-	 body, err := ioutil.ReadFile(path)
-    if err != nil {
-    	return nil, &Error{code: 404,reason:"file not found! @ " + path}
-    }
+	body, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, &Error{code: 404, reason: "file not found! @ " + path}
+	}
 
- 	//obj := Error{}
- 	//fmt.Println(obj);
-    d := xml.NewDecoder(bytes.NewReader(body))
-    d.Strict = false;
-    err = d.Decode(&v)
-    if err != nil {
-        fmt.Printf("error: %v", err)
-        return nil,nil
-    }
+	//obj := Error{}
+	//fmt.Println(obj);
+	d := xml.NewDecoder(bytes.NewReader(body))
+	d.Strict = false
+	err = d.Decode(&v)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return nil, nil
+	}
 
-    if v.FolderRoot == "" {
-    	ab :=  strings.Split(path, "/")
-    	v.FolderRoot = strings.Join(ab[:len(ab) - 1],"/") + "/"
-    }
-   	//process mergs
-   	for _,imp := range v.RootImports {
-   		//fmt.Println(imp.Src)
-   		if strings.Contains(imp.Src,".gxml") {
-   			srcP :=  strings.Split(imp.Src, "/")
-   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
-   			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + dir); os.IsNotExist(err) {
+	if v.FolderRoot == "" {
+		ab := strings.Split(path, "/")
+		v.FolderRoot = strings.Join(ab[:len(ab)-1], "/") + "/"
+	}
+	//process mergs
+	for _, imp := range v.RootImports {
+		//fmt.Println(imp.Src)
+		if strings.Contains(imp.Src, ".gxml") {
+			srcP := strings.Split(imp.Src, "/")
+			dir := strings.Join(srcP[:len(srcP)-1], "/")
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + dir)
 			}
-   		} else {
-   			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Trim(imp.Src,"/")
-   			if _, err := os.Stat(dir); os.IsNotExist(err) {
+		} else {
+			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
 				// path/to/whatever does not exist
 				//fmt.Println("")
 				RunCmd("go get " + imp.Src)
 			}
-   		}
+		}
 
-   		if strings.Contains(imp.Src,".gxml") {
-   			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src,"/"))
-   			//copy files
-   		}
-   		//
-   	}
+		if strings.Contains(imp.Src, ".gxml") {
+			v.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/"))
+			//copy files
+		}
+		//
+	}
 
-    return &v,nil
+	return &v, nil
 }
 
-func (d*gos) MergeWithV(target string) {
+func (d *gos) MergeWithV(target string) {
 	fmt.Println("∑ Merging " + target)
-    imp,err := LoadGos(target)
-    if err != nil {
-    	fmt.Println(err)
-    } else {
-    
-    for _,im := range imp.RootImports {
-   	if strings.Contains(im.Src,".gxml") {
-   			imp.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src,"/"))
-   			//copy files
-   	} else {
-   		d.RootImports = append(d.RootImports, im)
-   	}
-   }
-
-
-   	if imp.FolderRoot == "" {
-    	ab :=  strings.Split(target, "/")
-    	imp.FolderRoot = strings.Join(ab[:len(ab) - 1],"/") + "/"
-    }
-    //d.RootImports = append(imp.RootImports,d.RootImports...)
-    d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
-    d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
-    d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
-    d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
-    //Specialize method for templates
-    //d.Variables = append(imp.Variables, d.Variables...)
-    if imp.Package != "" && imp.Type == "package" {
-    		fmt.Println("Parsing Prefixes for " + imp.Package);
-    	for _,im := range imp.Templates.Templates {
-    		im.TemplateFile =  imp.Package + "/" + im.TemplateFile
-    		d.Templates.Templates = append(d.Templates.Templates, im) 
-    	}
+	imp, err := LoadGos(target)
+	if err != nil {
+		fmt.Println(err)
 	} else {
-    	d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
-	}
-    //copy files
-    d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)
-	}
 
-	d.Init_Func = d.Init_Func + ` 
-	` + imp.Init_Func			
-}
-
-func (d*gos) MergeWith(target string) {
-	fmt.Println("∑ Merging " + target)
-    imp,err := LoadGos(target)
-    if err != nil {
-    	fmt.Println(err)
-    } else {
-    
-    for _,im := range imp.RootImports {
-
-    		if strings.Contains(im.Src,".gxml") {
-   			srcP :=  strings.Split(im.Src, "/")
-   			dir  := strings.Join(srcP[:len(srcP)-1], "/")
-   			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + dir); os.IsNotExist(err) {
-				// path/to/whatever does not exist
-				//fmt.Println("")
-				RunCmd("go get " + dir)
+		for _, im := range imp.RootImports {
+			if strings.Contains(im.Src, ".gxml") {
+				imp.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src, "/"))
+				//copy files
+			} else {
+				d.RootImports = append(d.RootImports, im)
 			}
-   		} else {
-   			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Trim(im.Src,"/")
-   			if _, err := os.Stat(dir); os.IsNotExist(err) {
-				// path/to/whatever does not exist
-				//fmt.Println("")
-				RunCmd("go get " + im.Src)
+		}
+
+		if imp.FolderRoot == "" {
+			ab := strings.Split(target, "/")
+			imp.FolderRoot = strings.Join(ab[:len(ab)-1], "/") + "/"
+		}
+		//d.RootImports = append(imp.RootImports,d.RootImports...)
+		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
+		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
+		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
+		//Specialize method for templates
+		//d.Variables = append(imp.Variables, d.Variables...)
+		if imp.Package != "" && imp.Type == "package" {
+			fmt.Println("Parsing Prefixes for " + imp.Package)
+			for _, im := range imp.Templates.Templates {
+				im.TemplateFile = imp.Package + "/" + im.TemplateFile
+				d.Templates.Templates = append(d.Templates.Templates, im)
 			}
-   		}
-   	if strings.Contains(im.Src,".gxml") {
-   			imp.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Trim(im.Src,"/"))
-   			//copy files
-   	} else {
-   		d.RootImports = append(d.RootImports, im)
-   	}
-   }
-
-
-
-    //d.RootImports = append(imp.RootImports,d.RootImports...)
-    d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
-    d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
-    d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
-    d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
-    //Specialize method for templates
-     d.Variables = append(imp.Variables, d.Variables...)
-
-    if imp.Package != "" && imp.Type == "package" {
-    		fmt.Println("Parsing Prefixes for " + imp.Package);
-    	for _,im := range imp.Templates.Templates {
-    		im.TemplateFile =  imp.Package + "/" + im.TemplateFile
-    		d.Templates.Templates = append(d.Templates.Templates, im) 
-    	}
-	} else {
-    	d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+		} else {
+			d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+		}
+		//copy files
+		d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints, d.Endpoints.Endpoints...)
 	}
 
-	if imp.Tmpl == "" {
-		imp.Tmpl = "tmpl"
-	}
-
-	if imp.Web == "" {
-		imp.Web = "web"
-	}
-
-	if d.Tmpl == "" {
-		d.Tmpl = "tmpl"
-	}
-
-	if d.Web == "" {
-		d.Web = "web"
-	}
 	d.Init_Func = d.Init_Func + ` 
 	` + imp.Init_Func
-	d.Main = d.Main + ` 
+}
+
+func (d *gos) MergeWith(target string) {
+	fmt.Println("∑ Merging " + target)
+	imp, err := LoadGos(target)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+
+		for _, im := range imp.RootImports {
+
+			if strings.Contains(im.Src, ".gxml") {
+				srcP := strings.Split(im.Src, "/")
+				dir := strings.Join(srcP[:len(srcP)-1], "/")
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) {
+					// path/to/whatever does not exist
+					//fmt.Println("")
+					RunCmd("go get " + dir)
+				}
+			} else {
+				dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(im.Src, "/")
+				if _, err := os.Stat(dir); os.IsNotExist(err) {
+					// path/to/whatever does not exist
+					//fmt.Println("")
+					RunCmd("go get " + im.Src)
+				}
+			}
+			if strings.Contains(im.Src, ".gxml") {
+				imp.MergeWith(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(im.Src, "/"))
+				//copy files
+			} else {
+				d.RootImports = append(d.RootImports, im)
+			}
+		}
+
+		//d.RootImports = append(imp.RootImports,d.RootImports...)
+		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
+		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
+		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
+		//Specialize method for templates
+		d.Variables = append(imp.Variables, d.Variables...)
+
+		if imp.Package != "" && imp.Type == "package" {
+			fmt.Println("Parsing Prefixes for " + imp.Package)
+			for _, im := range imp.Templates.Templates {
+				im.TemplateFile = imp.Package + "/" + im.TemplateFile
+				d.Templates.Templates = append(d.Templates.Templates, im)
+			}
+		} else {
+			d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+		}
+
+		if imp.Tmpl == "" {
+			imp.Tmpl = "tmpl"
+		}
+
+		if imp.Web == "" {
+			imp.Web = "web"
+		}
+
+		if d.Tmpl == "" {
+			d.Tmpl = "tmpl"
+		}
+
+		if d.Web == "" {
+			d.Web = "web"
+		}
+		d.Init_Func = d.Init_Func + ` 
+	` + imp.Init_Func
+		d.Main = d.Main + ` 
 	` + imp.Main
-	os.MkdirAll( d.Tmpl + "/" + imp.Package, 0777)
-	os.MkdirAll( d.Web + "/" + imp.Package, 0777)
-	CopyDir(imp.FolderRoot + imp.Tmpl,   d.Tmpl + "/" + imp.Package  )
- 	CopyDir(imp.FolderRoot + imp.Web,  d.Web + "/" + imp.Package  )
- 
-    //copy files
-    d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints,d.Endpoints.Endpoints...)
-	}			
+		os.MkdirAll(d.Tmpl+"/"+imp.Package, 0777)
+		os.MkdirAll(d.Web+"/"+imp.Package, 0777)
+		CopyDir(imp.FolderRoot+imp.Tmpl, d.Tmpl+"/"+imp.Package)
+		CopyDir(imp.FolderRoot+imp.Web, d.Web+"/"+imp.Package)
+
+		//copy files
+		d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints, d.Endpoints.Endpoints...)
+	}
 }
 
 func contains(s []string, e string) bool {
-    for _, a := range s {
-        if a == e {
-            return true
-        }
-    }
-    return false
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
-
-
-func DoubleInput(p1 string,p2 string) (r1 string, r2 string) {
-    fmt.Println(p1)
-    fmt.Scanln(&r1)
-    fmt.Println(p2)
-    fmt.Scanln(&r2)
-    return
+func DoubleInput(p1 string, p2 string) (r1 string, r2 string) {
+	fmt.Println(p1)
+	fmt.Scanln(&r1)
+	fmt.Println(p2)
+	fmt.Scanln(&r2)
+	return
 }
-
 
 func AskForConfirmation() bool {
 	var response string
-		fmt.Println("Please type yes or no and then press enter:")
+	fmt.Println("Please type yes or no and then press enter:")
 	_, err := fmt.Scanln(&response)
 	if err != nil {
 		log.Fatal(err)
@@ -3861,7 +3763,6 @@ func AskForConfirmation() bool {
 		return AskForConfirmation()
 	}
 }
-
 
 func posString(slice []string, element string) int {
 	for index, elem := range slice {
