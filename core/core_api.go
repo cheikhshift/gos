@@ -982,7 +982,10 @@ import (`
 import (`
 
 		// if template.Type == "webapp" {
-
+		if !template.Prod {
+			template.ErrorPage = ""
+			template.NPage = ""
+		}
 		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
