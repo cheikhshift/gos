@@ -775,6 +775,112 @@ func Vmd() {
 	Vmd()
 }
 
+func VmT() {
+
+	fmt.Println("Trace >>")
+
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan() // use `for scanner.Scan()` to keep reading
+	cmd := scanner.Text()
+	cmd_set := strings.Split(`p `+cmd, " ")
+
+	if len(cmd_set) < 2 {
+
+		color.Red("List of commands : ")
+		color.Red("Trace a server path (API | page) : </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+
+		color.Green("Help needed with Event keys.")
+		VmT()
+		return
+	}
+
+	if cmd_set[0] == "p" {
+
+		var method = "GET"
+		var path = cmd_set[1]
+		var params = "nil"
+
+		if len(cmd_set) > 3 {
+			method = cmd_set[3]
+		}
+
+		templat := `
+			package main
+
+			import (
+			    "net/http"
+			    "net/http/httptest"
+			    "testing"
+			    `
+
+		if len(cmd_set) > 2 {
+			templat += `"bytes"`
+			params = `bytes.NewReader( []byte("` + cmd_set[2] + `") )`
+		}
+
+		templat += `
+			)
+			var result int
+
+			func GWeb(b *testing.B){
+				  req, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        b.Fatal(err)
+			    }
+
+			   
+
+			    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+			    rr := httptest.NewRecorder()
+			    handle := http.HandlerFunc(makeHandler(handler))
+
+			    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
+			    // directly and pass in our Request and ResponseRecorder.
+			 
+			   	handle.ServeHTTP(rr, req)
+
+			    // Check the status code is what we expect.
+			    if status := rr.Code; status != http.StatusOK {
+			        b.Errorf("handler returned wrong status code: got %v want %v",
+			            status, http.StatusOK)
+			    }
+
+			    // Check the response body is what we expect.
+			 
+			}
+
+			func BenchmarkGWeb(b *testing.B) {
+			    // Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+			    // pass 'nil' as the third parameter.
+
+			  
+				GWeb(b)
+				
+			}`
+
+		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
+		color.Magenta("Running benchmark...")
+		log_build, err := core.RunCmdSmartP("go test -bench=.")
+		if err != nil {
+			color.Red("Test failed! " + err.Error())
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_test.go")
+		process := make(chan bool)
+		go core.Exe_Stall("go tool trace __heap", process)
+		color.Yellow("Hit enter to trace another path.")
+		scanner.Scan() // use `for scanner.Scan()` to keep reading
+		cmd = scanner.Text()
+		process <- true
+
+	}
+
+	VmT()
+}
+
 func VmP() {
 
 	fmt.Println("Bench >>")
@@ -793,7 +899,7 @@ func VmP() {
 		color.Red("Benchmark a func in current main package : f <func name> args...(Use golang statements as well)")
 
 		color.Green("Help needed with Event keys.")
-		Vmd()
+		VmP()
 		return
 	}
 
@@ -1129,6 +1235,11 @@ func Build(path string) {
 	if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export" {
 		coreTemplate.Prod = true
 	}
+
+	if os.Args[1] == "--trace" {
+		coreTemplate.Debug = "on"
+	}
+
 	core.Process(coreTemplate, GOHOME, webroot, template_root)
 
 	cwd, er := os.Getwd()
@@ -1173,12 +1284,11 @@ func Build(path string) {
 								} else {
 									lnumber, _ = strconv.Atoi(line_part[1])
 								}
-									file, err := os.Open(coreTemplate.Output)
-									if err != nil {
-										color.Red("Could not find a source file")
-										return
-									}
-								
+								file, err := os.Open(coreTemplate.Output)
+								if err != nil {
+									color.Red("Could not find a source file")
+									return
+								}
 
 								//fmt.Println(line_part[len(line_part) - 1])
 								scanner := bufio.NewScanner(file)
@@ -1279,6 +1389,15 @@ func Build(path string) {
 			watcher.Close()
 			core.RunCmd("gos --t")
 			JBuild(path, coreTemplate.Output)
+
+		}
+
+		if os.Args[1] == "--trace" {
+			color.Red("List of commands : ")
+			color.Red("Trace a server path (API | page) : </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+
+			color.Green("Help needed with Event keys.")
+			VmT()
 
 		}
 

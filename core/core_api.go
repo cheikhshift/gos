@@ -986,7 +986,13 @@ import (`
 			template.ErrorPage = ""
 			template.NPage = ""
 		}
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log","io/ioutil","runtime/trace"}
+
+		var TraceOpt string
+		if template.Debug == "on" {
+			TraceOpt = `TraceTwo(2)`
+		}
+
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "io/ioutil", "runtime/trace"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1006,6 +1012,7 @@ import (`
 					       if n := recover(); n != nil {
 					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
 					          fmt.Println("Reason : ",n)
+					          ` + TraceOpt + `
 					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 						}()`
@@ -1025,7 +1032,7 @@ import (`
 				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
 				
-					
+						 ` + TraceOpt + `
 				}
 				`
 			}
@@ -1058,6 +1065,7 @@ import (`
 				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
 					
+					 ` + TraceOpt + `
 					callmet = true
 				}
 				`
@@ -1067,6 +1075,7 @@ import (`
 				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
 					` + est + `
 					
+					 ` + TraceOpt + `
 					callmet = true
 				}
 				`
@@ -1196,10 +1205,6 @@ import (`
 		}
 
 		netMa += `}`
-		var TraceOpt string
-		if template.Debug != "" {
-			TraceOpt = `TraceTwo(` + template.Debug + `)`
-		}
 
 		local_string += `
 		)
@@ -1275,9 +1280,34 @@ import (`
 				  		fmt.Println("Stack trace failed.")
 				  		return
 				  	}
-				  	time.Sleep( time.Duration(sec) * time.Second)
+				  	
 				  	trace.Stop()
 				  	ioutil.WriteFile("__heap", w.Bytes(), 0777)
+				  	//fmt.Println(w.String())
+				  }
+				func Trace( nam string) {
+  
+				  /*
+				  	if durationExceedsWriteTimeout(r, sec) {
+				  		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+				  		w.Header().Set("X-Go-Pprof", "1")
+				  		w.WriteHeader(http.StatusBadRequest)
+				  		fmt.Fprintln(w, "profile duration exceeds server's WriteTimeout")
+				  		return
+				  	} */
+				  
+				  	// Set Content Type assuming trace.Start will work,
+				  	// because if it does it starts writing.
+				  	 var w bytes.Buffer
+				  	if err := trace.Start(&w); err != nil {
+				  		// trace.Start failed, so no writes yet.
+				  		// Can change header back to text content and send error code.
+				  		fmt.Println("Stack trace failed.")
+				  		return
+				  	}
+				  	
+				  	trace.Stop()
+				  	ioutil.WriteFile(nam, w.Bytes(), 0777)
 				  	//fmt.Println(w.String())
 				  }
 
@@ -1332,6 +1362,7 @@ import (`
 				    p.Session.Save(r, w)
 
 				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
+				    ` + TraceOpt + `
 				    return true
 					}
 				    }
@@ -1342,7 +1373,7 @@ import (`
 				  	if !apiAttempt(w,r) {
 				      fn(w, r, "")
 				  	}
-				  	` + TraceOpt +`
+				  	
 				  }
 				} 
 
@@ -1619,6 +1650,7 @@ import (`
 				  p,err := loadPage(r.URL.Path , context,r,w)
 				  if err != nil {
 				  	fmt.Println(err)
+				  	` + TraceOpt + `
 				        http.Redirect(w,r,"` + template.NPage + `",307)
 				        return
 				  }
@@ -1632,6 +1664,7 @@ import (`
 					           	 fmt.Println(n)
 					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
 					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					           	 ` + TraceOpt + `
 					        }
 					    }()	
 				      	renderTemplate(w, r,  "` + web + `" + r.URL.Path, p)
@@ -1649,6 +1682,7 @@ import (`
 				  	 
 				      w.Write(p.Body)
 				  }
+				  
 				}
 
 				func loadPage(title string, servlet string,r *http.Request,w http.ResponseWriter) (*Page,error) {
@@ -1679,6 +1713,7 @@ import (`
 				      }
 				    } 
 				    //load custom struts
+				    ` + TraceOpt + `
 				    return &Page{Title: title, Body: body,isResource:false,request:r}, nil
 				}
 				func BytesToString(b []byte) string {
@@ -3205,10 +3240,12 @@ func exe_cmd(cmd string) {
 }
 
 func Exe_Stall(cmd string, chn chan bool) {
-	fmt.Println(cmd)
+	//fmt.Println(cmd)
 	parts := strings.Fields(cmd)
 	var out *exec.Cmd
-	if len(parts) > 2 {
+	if len(parts) > 3 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else if len(parts) > 2 {
 		out = exec.Command(parts[0], parts[1], parts[2], "2>&1")
 	} else if len(parts) == 1 {
 		out = exec.Command(parts[0], "2>&1")
@@ -3239,7 +3276,7 @@ func Exe_Stall(cmd string, chn chan bool) {
 	if m && tch {
 		t = tch
 	}
-	log.Println("Restarting service.")
+	log.Println("Killing proc.")
 	if err := out.Process.Kill(); err != nil {
 		log.Fatal("failed to kill: ", err)
 	}
