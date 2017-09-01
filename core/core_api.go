@@ -986,7 +986,7 @@ import (`
 			template.ErrorPage = ""
 			template.NPage = ""
 		}
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log","io/ioutil","runtime/trace"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1196,6 +1196,10 @@ import (`
 		}
 
 		netMa += `}`
+		var TraceOpt string
+		if template.Debug != "" {
+			TraceOpt = `TraceTwo(` + template.Debug + `)`
+		}
 
 		local_string += `
 		)
@@ -1250,6 +1254,32 @@ import (`
 					 s.Values[key] = value
 					 return ""
 				}
+
+				func TraceTwo( sec int64) {
+  
+				  /*
+				  	if durationExceedsWriteTimeout(r, sec) {
+				  		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+				  		w.Header().Set("X-Go-Pprof", "1")
+				  		w.WriteHeader(http.StatusBadRequest)
+				  		fmt.Fprintln(w, "profile duration exceeds server's WriteTimeout")
+				  		return
+				  	} */
+				  
+				  	// Set Content Type assuming trace.Start will work,
+				  	// because if it does it starts writing.
+				  	 var w bytes.Buffer
+				  	if err := trace.Start(&w); err != nil {
+				  		// trace.Start failed, so no writes yet.
+				  		// Can change header back to text content and send error code.
+				  		fmt.Println("Stack trace failed.")
+				  		return
+				  	}
+				  	time.Sleep( time.Duration(sec) * time.Second)
+				  	trace.Stop()
+				  	ioutil.WriteFile("__heap", w.Bytes(), 0777)
+				  	//fmt.Println(w.String())
+				  }
 
 				func net_importcss(s string) string {
 					return "<link rel=\"stylesheet\" href=\"" + s + "\" /> "
@@ -1312,6 +1342,7 @@ import (`
 				  	if !apiAttempt(w,r) {
 				      fn(w, r, "")
 				  	}
+				  	` + TraceOpt +`
 				  }
 				} 
 

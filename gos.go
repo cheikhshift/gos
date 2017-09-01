@@ -513,6 +513,9 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<output>application.go</output>
 	
+	<main>
+		//psss go code here
+	</main>
 
 
 	<key>a very very very very secret key</key>
@@ -1164,12 +1167,18 @@ func Build(path string) {
 						} else {
 							if line != "" {
 								line_part := strings.Split(line, ":")
-								lnumber, _ := strconv.Atoi(line_part[1])
-								file, err := os.Open(coreTemplate.Output)
-								if err != nil {
-									color.Red("Could not find a source file")
-									return
+								var lnumber int
+								if len(line_part) == 1 {
+									fmt.Println(line)
+								} else {
+									lnumber, _ = strconv.Atoi(line_part[1])
 								}
+									file, err := os.Open(coreTemplate.Output)
+									if err != nil {
+										color.Red("Could not find a source file")
+										return
+									}
+								
 
 								//fmt.Println(line_part[len(line_part) - 1])
 								scanner := bufio.NewScanner(file)

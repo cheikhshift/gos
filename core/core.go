@@ -28,6 +28,7 @@ type gosArch struct {
 type gos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
+	Debug             string           `xml:"trace_wait"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`
 	NPage            string            `xml:"not_found"`
