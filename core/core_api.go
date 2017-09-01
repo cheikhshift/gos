@@ -986,7 +986,7 @@ import (`
 			template.ErrorPage = ""
 			template.NPage = ""
 		}
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1019,6 +1019,39 @@ import (`
 			} else {
 				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
 			}
+			if imp.Type == "f" {
+
+				apiraw += ` 
+				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
+					` + est + `
+				
+					
+				}
+				`
+			}
+		}
+		for _, imp := range template.Endpoints.Endpoints {
+			est := ``
+			if !template.Prod {
+				est = `	
+					lastLine := ""
+					defer func() {
+					       if n := recover(); n != nil {
+					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
+					          fmt.Println("Reason : ",n)
+					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					        }
+						}()`
+				setv := strings.Split(imp.Method, "\n")
+				for _, line := range setv {
+					est += `
+						lastLine = ` + "`" + line + "`" + `
+						` + line
+				}
+
+			} else {
+				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
+			}
 			if imp.Type == "star" {
 
 				apiraw += ` 
@@ -1028,16 +1061,8 @@ import (`
 					callmet = true
 				}
 				`
-			} else if imp.Type == "f" {
+			} else if imp.Type != "f" {
 
-				apiraw += ` 
-				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
-					` + est + `
-				
-					
-				}
-				`
-			} else {
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
 					` + est + `
@@ -2001,8 +2026,12 @@ import (`
 					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
 					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web + `"}))
-					 http.ListenAndServe(":` + template.Port + `", nil)
-					 }`
+					err := http.ListenAndServe(":` + template.Port + `", nil)
+					if err != nil {
+						log.Fatal(err)
+					} 
+
+					}`
 
 			fmt.Println("Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
