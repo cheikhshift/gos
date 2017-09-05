@@ -1250,6 +1250,10 @@ func Build(path string) {
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
 	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+	
+	if !strings.Contains( os.Args[1] , "run") &&  os.Args[1] != "--t"   {
+	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+	}
 
 	if os.Args[1] == "--t" {
 		return
