@@ -513,24 +513,13 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<output>application.go</output>
 	
-	<main>
-		//psss go code here
-	</main>
+	<main>	//psss go code here</main>
 
 
 	<key>a very very very very secret key</key>
 	
 	<header> 
 		<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
-
-
-		<!-- Required for Gos To compile \|/-->
-	    <struct name="UserSpace">
-				/* Property Type */
-		</struct>
-		<object name="UserSpaceInterface" struct="UserSpace">
-		   
-		</object>
 	</header>
 	<methods>
 		
@@ -1249,8 +1238,6 @@ func Build(path string) {
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
-	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
-	
 	if !strings.Contains( os.Args[1] , "run") &&  os.Args[1] != "--t"   {
 	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
 	}
@@ -1529,6 +1516,9 @@ func main() {
 			os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/web", 0777)
 			os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/tmpl", 0777)
 			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/gos.gxml", []byte(gosTemplate), 0777)
+			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+ "/web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
+			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+ "/web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
+		
 			return
 		}
 

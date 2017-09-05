@@ -1967,6 +1967,13 @@ import (`
 						}`
 				}
 			}
+		
+
+			
+
+
+		}
+
 			for _, imp := range template.Templates.Templates {
 				if imp.Struct == "" {
 					imp.Struct = "NoStruct"
@@ -2102,8 +2109,6 @@ import (`
 			fmt.Println("Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
-
-		}
 
 	} else if template.Type == "bind" {
 		local_string = `package ` + template.Package + ` 
@@ -3098,6 +3103,26 @@ func RunCmdSmart(cmd string) (string, error) {
 	return ou.String(), nil
 }
 
+func RunCmdSmarttwo(cmd string) (string, error) {
+	parts := strings.Fields(cmd)
+	//	fmt.Println(parts[0],parts[1:])
+	var out *exec.Cmd
+
+	out = exec.Command(parts[0], parts[1:]...)
+
+	var ou, our bytes.Buffer
+	out.Stdout = &ou
+	out.Stderr = &our
+
+	fmt.Println(BytesToString(our.Bytes()))
+	err := out.Run()
+	if err != nil {
+		//	fmt.Println("%v", err.Error())
+		return our.String(), err
+	}
+	return ou.String(), nil
+}
+
 func RunCmdSmartZ(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
 	//	fmt.Println(parts[0],parts[1:])
@@ -3593,6 +3618,10 @@ func (d *gos) Set(attr, value string) {
 		d.Port = value
 	} else if attr == "key" {
 		d.Key = value
+	} else if attr == "erpage" {
+		d.ErrorPage = value
+	} else if attr == "fpage" {
+		d.NPage = value
 	}
 }
 

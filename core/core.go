@@ -55,6 +55,37 @@ type gos struct {
 	Prod             bool
 }
 
+
+type Pgos struct {
+	XMLName          xml.Name          `xml:"gos"`
+	Port             string            `xml:"port"`
+	Debug            string            `xml:"trace"`
+	Output           string            `xml:"output"`
+	ErrorPage        string            `xml:"error"`
+	NPage            string            `xml:"not_found"`
+	Type             string            `xml:"deploy"`
+	Main             string            `xml:"main"`
+	Variables        []GlobalVariables `xml:"var"`
+	WriteOut         bool
+	Export           string    `xml:"export"`
+	Key              string    `xml:"key"`
+	Session          string    `xml:"session"`
+	Template_path    string    `xml:"templatePath"`
+	Web_root         string    `xml:"webroot"`
+	Package          string    `xml:"package"`
+	Web              string    `xml:"web"`
+	Tmpl             string    `xml:"tmpl"`
+	RootImports      []Import  `xml:"import"`
+	Init_Func        string    `xml:"init"`
+	Header           Header    `xml:"header"`
+	Methods          Methods   `xml:"methods"`
+	Timers           Timers    `xml:"timers"`
+	Templates        Templates `xml:"templates"`
+	Endpoints        Endpoints `xml:"endpoints"`
+	FolderRoot, Name string
+	Prod             bool
+}
+/*
 type Pgos struct {
 	XMLName       xml.Name          `xml:"gos"`
 	Port          string            `xml:"port"`
@@ -79,7 +110,7 @@ type Pgos struct {
 	Templates     Templates `xml:"templates"`
 	Endpoints     Endpoints `xml:"endpoints"`
 	FolderRoot    string
-}
+} */
 
 type GlobalVariables struct {
 	XMLName xml.Name `xml:"var"`
