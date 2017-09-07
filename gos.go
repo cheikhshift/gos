@@ -1149,6 +1149,9 @@ func JBuild(path string, out string) {
 		return
 	}
 
+
+
+
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
 		pwd, err := os.Getwd()
@@ -1317,6 +1320,11 @@ func Build(path string) {
 				return
 			}
 
+			if len(os.Args) > 2 {
+				if os.Args[2] == "--buildcheck" {
+					return
+				}
+			}
 			var pk []string
 			if strings.Contains(os.Args[1], "--") {
 				pwd, err := os.Getwd()
