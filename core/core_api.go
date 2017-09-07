@@ -1927,6 +1927,14 @@ import (`
 
 			//create Unused methods methods
 		//	fmt.Println(int_methods)
+		
+		
+
+			
+
+
+		}
+
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
 					fmt.Println("Processing : " + imp)
@@ -1979,12 +1987,6 @@ import (`
 						}`
 				}
 			}
-		
-
-			
-
-
-		}
 
 			for _, imp := range template.Templates.Templates {
 				if imp.Struct == "" {
