@@ -119,6 +119,18 @@ func IsInSlice(qry string, slic []string) bool {
 	return false
 }
 
+func (d *gos) DeleteEnd(id string) {
+
+		temp := []Endpoint{}
+		for _, v := range d.Endpoints.Endpoints {
+			if v.Id != id  {
+				temp = append(temp, v)
+			}
+		}
+		d.Endpoints.Endpoints = temp
+
+}
+
 func ReadLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -1914,7 +1926,7 @@ import (`
 			}
 
 			//create Unused methods methods
-			fmt.Println(int_methods)
+		//	fmt.Println(int_methods)
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
 					fmt.Println("Processing : " + imp)
@@ -2099,9 +2111,9 @@ import (`
 					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
 					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web + `"}))
-					err := http.ListenAndServe(":` + template.Port + `", nil)
-					if err != nil {
-						log.Fatal(err)
+					errgos := http.ListenAndServe(":` + template.Port + `", nil)
+					if errgos != nil {
+						log.Fatal(errgos)
 					} 
 
 					}`
@@ -3529,7 +3541,7 @@ func (d *gos) Add(sec, typ, name string) {
 			}
 		}
 	} else if sec == "end" {
-		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints, Endpoint{Path: name})
+		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints, Endpoint{Path: name,Id: NewID(15)})
 	} else if sec == "timer" {
 		d.Timers.Timers = append(d.Timers.Timers, Timer{Name: name})
 	}
@@ -3552,6 +3564,21 @@ func Decode64(decBuf, enc []byte) []byte {
 	n, err := e64.Decode(decBuf, enc)
 	_ = err
 	return decBuf[0:n]
+}
+
+func (d *gos) UpdateMethod(id string, data string) {
+	
+		temp := []Endpoint{}
+		for _, v := range d.Endpoints.Endpoints {
+			if id == v.Id {
+				v.Method = data
+				temp = append(temp, v)
+			} else {
+				temp = append(temp, v)
+			}
+		}
+		d.Endpoints.Endpoints = temp
+	
 }
 
 func (d *gos) Update(sec, id string, update interface{}) {
@@ -3601,8 +3628,11 @@ func (d *gos) Update(sec, id string, update interface{}) {
 	} else if sec == "end" {
 		temp := []Endpoint{}
 		for _, v := range d.Endpoints.Endpoints {
-			if id == v.Path {
-				temp = append(temp, update.(Endpoint))
+			if id == v.Id {
+				upd := update.(Endpoint)
+				upd.Method = v.Method
+				upd.Id = id
+				temp = append(temp, upd)
 			} else {
 				temp = append(temp, v)
 			}
@@ -3738,7 +3768,7 @@ func (d *gos) MergeWithV(target string) {
 
 		for _, im := range imp.RootImports {
 			if strings.Contains(im.Src, ".gxml") {
-				imp.MergeWith(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src, "/"))
+				imp.MergeWithV(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(im.Src, "/"))
 				//copy files
 			} else {
 				d.RootImports = append(d.RootImports, im)
