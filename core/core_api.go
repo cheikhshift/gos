@@ -1274,7 +1274,7 @@ import (`
 
 				func dbDummy() {
 					smap := db.O{}
-					db.O["key"] = "set"
+					smap["key"] = "set"
 					fmt.Println(smap)
 				}
 
