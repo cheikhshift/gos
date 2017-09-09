@@ -571,6 +571,196 @@ func GetLine(fname string, match string) int {
 	return -1
 }
 
+func VmdOne() {
+
+	fmt.Println(">>")
+	var args_c string
+	cmd_set := os.Args[2:]
+
+	if len(cmd_set) < 2 {
+
+		color.Red("List of commands : ")
+		color.Red("Test a GoS method (func) : m <method name> args...(Can use golang statements as well)")
+		color.Red("Test a template : t <template name> <json_of_interface(optional)>")
+		color.Red("Test a server path (API | page) : p </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+		color.Red("Test a func in current main package : f <func name> args...(Use golang statements as well)")
+
+		color.Green("Help needed with Event keys.")
+	
+		return
+	}
+
+	if len(cmd_set) > 2 {
+		args_c = strings.Join(cmd_set[2:], ",")
+	} else {
+		args_c = ``
+	}
+
+	if cmd_set[0] == "m" {
+		//[2:]
+
+		templat := `package main
+
+			import "testing"
+
+			func Testnet_` + cmd_set[1] + `(t *testing.T){
+				usr := net_` + cmd_set[1] + ` (` + args_c + `)
+				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		log_build, err := core.RunCmdSmartZ("go test")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_internal_test.go")
+
+	} else if cmd_set[0] == "f" {
+		//[2:]
+
+		templat := `package main
+
+			import "testing"
+
+			func Test` + cmd_set[1] + `(t *testing.T){
+				usr := ` + cmd_set[1] + ` (` + args_c + `)
+				if ` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		log_build, err := core.RunCmdSmartZ("go test")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_internal_test.go")
+
+	} else if cmd_set[0] == "t" {
+
+		if args_c != "" {
+			args_c = `"` + args_c + `"`
+		}
+
+		templat := `package main
+
+			import "testing"
+
+			func Testnet_` + cmd_set[1] + `(t *testing.T){
+				usr := net_` + cmd_set[1] + ` (` + args_c + `)
+				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+					t.Error("...")
+				}
+			}`
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		log_build, err := core.RunCmdSmartZ("go test")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_internal_test.go")
+
+	} else if cmd_set[0] == "p" {
+
+		var method = "GET"
+		var path = cmd_set[1]
+		var params = "nil"
+
+		if len(cmd_set) > 3 {
+			method = cmd_set[3]
+		}
+
+		templat := `
+			package main
+
+			import (
+			    "net/http"
+			    "net/http/httptest"
+			    "testing"`
+
+		if len(cmd_set) > 2 {
+			templat += `"bytes"`
+			params = `bytes.NewReader( []byte("` + cmd_set[2] + `") )`
+		}
+
+		templat += `
+			)
+
+		
+
+			func Test(t *testing.T) {
+			    // Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+			    // pass 'nil' as the third parameter.
+			    req, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        t.Fatal(err)
+			    }
+
+			      reqtwo, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        t.Fatal(err)
+			    }
+
+			    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+			    rr := httptest.NewRecorder()
+			    handle := http.HandlerFunc(makeHandler(handler))
+
+			    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
+			    // directly and pass in our Request and ResponseRecorder.
+			 
+			   		rrtwo := httptest.NewRecorder()
+			   		handle.ServeHTTP(rrtwo, reqtwo) 
+			   		expected := rrtwo.Body.String()
+			   	
+
+			   	handle.ServeHTTP(rr, req)
+
+			    // Check the status code is what we expect.
+			    if status := rr.Code; status != http.StatusOK {
+			        t.Errorf("handler returned wrong status code: got %v want %v",
+			            status, http.StatusOK)
+			    }
+
+			    // Check the response body is what we expect.
+			 
+			  
+			    if rr.Body.String() != expected {
+			        t.Errorf("handler returned unexpected body: got %v want %v",
+			            rr.Body.String(), expected)
+			    }
+			}`
+
+		ioutil.WriteFile("test_internal_test.go", []byte(templat), 0777)
+		color.Magenta("Running test...")
+		log_build, err := core.RunCmdSmartZ("go test")
+		if err != nil {
+			color.Red("Test failed! " + err.Error())
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_internal_test.go")
+
+	}
+
+	
+}
+
 func Vmd() {
 
 	fmt.Println(">>")
@@ -888,7 +1078,7 @@ func VmP() {
 		color.Red("Benchmark a func in current main package : f <func name> args...(Use golang statements as well)")
 
 		color.Green("Help needed with Event keys.")
-		VmP()
+		
 		return
 	}
 
@@ -1087,6 +1277,221 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 	VmP()
 }
 
+func VmPOne() {
+
+	fmt.Println("Bench >>")
+	var args_c string
+
+	cmd_set := os.Args[2:]
+
+	if len(cmd_set) < 2 {
+
+		color.Red("List of commands : ")
+		color.Red("Benchmark a GoS method (func) : m <method name> args...(Can use golang statements as well)")
+		color.Red("Benchmark a template : t <template name> <json_of_interface(optional)>")
+		color.Red("Benchmark a server path (API | page) : p </path/to/resource/without/hostname/> <json_of_request(optional)> <method_of_request(optional)> ")
+		color.Red("Benchmark a func in current main package : f <func name> args...(Use golang statements as well)")
+
+		color.Green("Help needed with Event keys.")
+		
+		return
+	}
+
+	if len(cmd_set) > 2 {
+		args_c = strings.Join(cmd_set[2:], ",")
+	} else {
+		args_c = ``
+	}
+
+	if cmd_set[0] == "m" {
+		//[2:]
+
+		templat := `package main
+
+import "testing"
+
+var result int
+
+func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+	var r int
+	for n := 0; n < b.N; n++ {
+		
+		r = 0
+		net_` + cmd_set[1] + `(` + args_c + `)
+	}
+	
+	result = r
+}
+
+`
+
+		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
+		color.Magenta("Running benchmark...")
+		log_build, err := core.RunCmdSmartP("go test -bench=.")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_test.go")
+
+	} else if cmd_set[0] == "f" {
+		//[2:]
+
+		templat := `package main
+
+			import "testing"
+
+			var result int
+
+			func Benchmark` + cmd_set[1] + `(b *testing.B) {  
+				var r int
+				for n := 0; n < b.N; n++ {
+					
+					r = 0
+					` + cmd_set[1] + `(` + args_c + `)
+				}
+				
+				result = r
+			}
+
+			`
+		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
+		color.Magenta("Running benchmark...")
+		log_build, err := core.RunCmdSmartP("go test -bench=.")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_test.go")
+
+	} else if cmd_set[0] == "t" {
+
+		if args_c != "" {
+			args_c = `"` + args_c + `"`
+		}
+
+		templat := `package main
+
+			import "testing"
+
+			var result int
+
+			func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+				var r int
+				for n := 0; n < b.N; n++ {
+					
+					r = 0
+					net_` + cmd_set[1] + `(` + args_c + `)
+				}
+				
+				result = r
+			}
+
+			`
+		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
+		color.Magenta("Running benchmark...")
+		log_build, err := core.RunCmdSmartP("go test -bench=.")
+		if err != nil {
+			color.Red("Test failed!")
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_test.go")
+
+	} else if cmd_set[0] == "p" {
+
+		var method = "GET"
+		var path = cmd_set[1]
+		var params = "nil"
+
+		if len(cmd_set) > 3 {
+			method = cmd_set[3]
+		}
+
+		templat := `
+			package main
+
+			import (
+			    "net/http"
+			    "net/http/httptest"
+			    "testing"`
+
+		if len(cmd_set) > 2 {
+			templat += `"bytes"`
+			params = `bytes.NewReader( []byte("` + cmd_set[2] + `") )`
+		}
+
+		templat += `
+			)
+			var result int
+
+			func GWeb(b *testing.B){
+				  req, err := http.NewRequest("` + method + `", "` + path + `", ` + params + `)
+			    if err != nil {
+			        b.Fatal(err)
+			    }
+
+			   
+
+			    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+			    rr := httptest.NewRecorder()
+			    handle := http.HandlerFunc(makeHandler(handler))
+
+			    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
+			    // directly and pass in our Request and ResponseRecorder.
+			 
+			   	handle.ServeHTTP(rr, req)
+
+			    // Check the status code is what we expect.
+			    if status := rr.Code; status != http.StatusOK {
+			        b.Errorf("handler returned wrong status code: got %v want %v",
+			            status, http.StatusOK)
+			    }
+
+			    // Check the response body is what we expect.
+			 
+			}
+
+			func BenchmarkGWeb(b *testing.B) {
+			    // Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+			    // pass 'nil' as the third parameter.
+
+			    var r int
+				
+					for n := 0; n < b.N; n++ {
+					r = 0
+			  
+					GWeb(b)
+			   
+				}
+				result = r
+			}`
+
+		ioutil.WriteFile("test_test.go", []byte(templat), 0777)
+		color.Magenta("Running benchmark...")
+		log_build, err := core.RunCmdSmartP("go test -bench=.")
+		if err != nil {
+			color.Red("Test failed! " + err.Error())
+		} else {
+			color.Green("Success")
+
+		}
+		fmt.Println(log_build)
+		os.Remove("test_test.go")
+
+	}
+
+	
+}
+
 func JBuild(path string, out string) {
 
 	fmt.Println("Invoking go-bindata")
@@ -1241,7 +1646,7 @@ func Build(path string) {
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
-	if !strings.Contains( os.Args[1] , "run") &&  os.Args[1] != "--t"   {
+	if !strings.Contains( os.Args[1] , "run") &&  os.Args[1] != "--t" && !strings.Contains(os.Args[1],"-f")   {
 	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
 	}
 
@@ -1415,6 +1820,13 @@ func Build(path string) {
 			Vmd()
 		}
 
+		if os.Args[1] == "--test-f" {
+			//test console
+			fmt.Println("Invoking go-bindata")
+			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			VmdOne()
+		}
+
 		if os.Args[1] == "--bench" {
 			//test console
 			fmt.Println("Invoking go-bindata")
@@ -1428,6 +1840,14 @@ func Build(path string) {
 
 			color.Green("Help needed with Event keys.")
 			VmP()
+		}
+
+		if os.Args[1] == "--bench-f" {
+			//test console
+			fmt.Println("Invoking go-bindata")
+			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+		
+			VmPOne()
 		}
 
 		if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export" {

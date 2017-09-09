@@ -1022,7 +1022,7 @@ import (`
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
+					          fmt.Println("Web request (` + imp.Path +`) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
 					          fmt.Println("Reason : ",n)
 					          ` + TraceOpt + `
 					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
@@ -1056,7 +1056,7 @@ import (`
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
+					          fmt.Println("Web request (` + imp.Path + `) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
 					          fmt.Println("Reason : ",n)
 					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
@@ -1451,7 +1451,7 @@ import (`
 					       if n := recover(); n != nil {
 					           	fmt.Println()
 					           	// fmt.Println(n)
-					           			fmt.Println("Error on line :", lastline + 1,linestring)  
+					           			fmt.Println("Error on line :", lastline ,":" + strings.TrimSpace(linestring)) 
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
@@ -1560,7 +1560,7 @@ import (`
 					defer func() {
 					       if n := recover(); n != nil {
 					         
-					           			fmt.Println("Error on line :", lastline + 1,linestring) 
+					           			fmt.Println("Error on line :", lastline + 1,":" + strings.TrimSpace(linestring)) 
 					           			fmt.Println(n)
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
@@ -1960,7 +1960,7 @@ import (`
 							lastLine := ""
 							defer func() {
 							       if n := recover(); n != nil {
-							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, lastLine)
+							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
 							          fmt.Println("Reason : ",n)
 							         
 							        }
@@ -2000,7 +2000,7 @@ import (`
 					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
 						defer func() {
 					       if n := recover(); n != nil {
-					           	   color.Red("Error loading template in path : " + filename )
+					           	   color.Red("Error loading template in path (` + imp.Name + `) : " + filename )
 					           	// fmt.Println(n)
 					           		DebugTemplatePath(filename, &d)	
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
@@ -2055,7 +2055,7 @@ import (`
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				 defer func() {
 					        if n := recover(); n != nil {
-					           	color.Red("Error loading template in path : " + filename )
+					           	color.Red("Error loading template in path (` + imp.Name + `) : " + filename )
 					           	DebugTemplatePath(filename, &d)	
 					        }
 					    }()
@@ -2106,9 +2106,10 @@ import (`
 			local_string += `
 
 			func main() {
+				fmt.Printf("%d\n", os.Getpid())
 				` + template.Main
 
-			local_string += `
+			local_string += ` 
 					 ` + timeline + `
 					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
@@ -3083,8 +3084,11 @@ func RunCmdSmartB(cmd string) ([]byte, error) {
 	fmt.Println(parts[0], parts[1:])
 	var out *exec.Cmd
 
-	out = exec.Command(parts[0], parts[1:]...)
-
+	if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else {
+		out = exec.Command(parts[0], parts[1:]...)
+	}
 	var ou, our bytes.Buffer
 	out.Stdout = &ou
 	out.Stderr = &our
@@ -3099,10 +3103,14 @@ func RunCmdSmartB(cmd string) ([]byte, error) {
 
 func RunCmdSmart(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-	//	fmt.Println(parts[0],parts[1:])
+		fmt.Println(parts)
 	var out *exec.Cmd
 
-	out = exec.Command(parts[0], parts[1:]...)
+	if len(parts) == 4 {
+		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
+	} else {
+		out = exec.Command(parts[0], parts[1:]...)
+	}
 
 	var ou, our bytes.Buffer
 	out.Stdout = &ou

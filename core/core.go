@@ -220,4 +220,5 @@ type Endpoint struct {
 	Path    string   `xml:"path,attr"`
 	Method  string   `xml:",innerxml"`
 	Type    string   `xml:"type,attr"`
+	Id 		string	 `xml:"id,attr"`
 }
