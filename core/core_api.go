@@ -1272,6 +1272,12 @@ import (`
 					 return ""
 				}
 
+				func dbDummy() {
+					smap := db.O{}
+					db.O["key"] = "set"
+					fmt.Println(smap)
+				}
+
 				func TraceTwo( sec int64) {
   
 				  /*
