@@ -1920,7 +1920,8 @@ func main() {
 			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 			core.RunCmd("go get github.com/gorilla/sessions")
 			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
+			
+			core.RunCmd("go get gopkg.in/mgo.v2")
 			core.RunCmd("go get github.com/asaskevich/govalidator")
 			core.RunCmd("go get github.com/fatih/color")
 			core.RunCmd("go get github.com/cheikhshift/db")
