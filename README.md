@@ -2,5 +2,5 @@
 GoS compiler
 
 ## Documentation here :
-[Docs](http://github.com/cheikhshift/Gopher-Sauce)
+[Docs](http://golangserver.com)
 
