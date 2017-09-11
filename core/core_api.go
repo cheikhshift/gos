@@ -3679,7 +3679,7 @@ func (d *gos) Set(attr, value string) {
 		d.ErrorPage = value
 	} else if attr == "fpage" {
 		d.NPage = value
-	} else if attr == "Domain" {
+	} else if attr == "domain" {
 		d.Domain = value
 	}
 }
