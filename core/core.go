@@ -28,6 +28,7 @@ type gosArch struct {
 type gos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
+	Domain             string          `xml:"domain"`
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`
@@ -59,6 +60,7 @@ type gos struct {
 type Pgos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
+	Domain           string          `xml:"domain"`
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`

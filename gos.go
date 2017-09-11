@@ -512,7 +512,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 	<error>/your-500-page</error>
 
 	<output>application.go</output>
-	
+	<domain></domain><!-- Cookie domain -->
 	<main>	//psss go code here</main>
 
 
@@ -561,7 +561,7 @@ func GetLine(fname string, match string) int {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		intx = intx + 1
-		if strings.Contains(scanner.Text(), match) {
+		if strings.Contains(scanner.Text(), strings.TrimSpace(match)) {
 
 			return intx
 		}
@@ -586,7 +586,7 @@ func VmdOne() {
 		color.Red("Test a func in current main package : f <func name> args...(Use golang statements as well)")
 
 		color.Green("Help needed with Event keys.")
-	
+
 		return
 	}
 
@@ -758,7 +758,6 @@ func VmdOne() {
 
 	}
 
-	
 }
 
 func Vmd() {
@@ -1078,7 +1077,7 @@ func VmP() {
 		color.Red("Benchmark a func in current main package : f <func name> args...(Use golang statements as well)")
 
 		color.Green("Help needed with Event keys.")
-		
+
 		return
 	}
 
@@ -1293,7 +1292,7 @@ func VmPOne() {
 		color.Red("Benchmark a func in current main package : f <func name> args...(Use golang statements as well)")
 
 		color.Green("Help needed with Event keys.")
-		
+
 		return
 	}
 
@@ -1489,7 +1488,6 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 	}
 
-	
 }
 
 func JBuild(path string, out string) {
@@ -1553,9 +1551,6 @@ func JBuild(path string, out string) {
 
 		return
 	}
-
-
-
 
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
@@ -1646,8 +1641,8 @@ func Build(path string) {
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
-	if !strings.Contains( os.Args[1] , "run") &&  os.Args[1] != "--t" && !strings.Contains(os.Args[1],"-f")   {
-	core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+	if !strings.Contains(os.Args[1], "run") && os.Args[1] != "--t" && !strings.Contains(os.Args[1], "-f") {
+		core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
 	}
 
 	if os.Args[1] == "--t" {
@@ -1697,6 +1692,7 @@ func Build(path string) {
 									//fmt.Println("%+V", inm)
 									lin := scanner.Text()
 									if inm == lnumber {
+
 										acT_line := GetLine(serverconfig, lin)
 										if acT_line > -1 {
 											color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line) + " | " + strings.Join(line_part[2:], " - "))
@@ -1846,7 +1842,7 @@ func Build(path string) {
 			//test console
 			fmt.Println("Invoking go-bindata")
 			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
-		
+
 			VmPOne()
 		}
 
@@ -1924,7 +1920,9 @@ func main() {
 			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 			core.RunCmd("go get github.com/gorilla/sessions")
 			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-			//core.RunCmd("go get github.com/kronenthaler/mod-pbxproj")
+			
+			core.RunCmd("go get github.com/gorilla/context")
+			core.RunCmd("go get gopkg.in/mgo.v2")
 			core.RunCmd("go get github.com/asaskevich/govalidator")
 			core.RunCmd("go get github.com/fatih/color")
 			core.RunCmd("go get github.com/cheikhshift/db")
@@ -1944,9 +1942,9 @@ func main() {
 			os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/web", 0777)
 			os.MkdirAll(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/tmpl", 0777)
 			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/gos.gxml", []byte(gosTemplate), 0777)
-			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+ "/web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
-			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+ "/web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
-		
+			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/web/your-404-page.tmpl", []byte(htmlTemplate), 0777)
+			ioutil.WriteFile(os.ExpandEnv("$GOPATH")+"/src/"+strings.Trim(os.Args[2], "/")+"/web/your-500-page.tmpl", []byte(htmlTemplate), 0777)
+
 			return
 		}
 

@@ -1004,7 +1004,7 @@ import (`
 			TraceOpt = `TraceTwo(2)`
 		}
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "io/ioutil", "runtime/trace"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "io/ioutil", "runtime/trace"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -1043,8 +1043,8 @@ import (`
 				apiraw += ` 
 				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
-				
-						 ` + TraceOpt + `
+					context.Clear(r)
+					` + TraceOpt + `
 				}
 				`
 			}
@@ -1086,7 +1086,7 @@ import (`
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
 					` + est + `
-					
+					context.Clear(r)
 					 ` + TraceOpt + `
 					callmet = true
 				}
@@ -1270,6 +1270,12 @@ import (`
 				func net_sessionSetInt(key string, value interface{},s *sessions.Session) string {
 					 s.Values[key] = value
 					 return ""
+				}
+
+				func dbDummy() {
+					smap := db.O{}
+					smap["key"] = "set"
+					fmt.Println(smap)
 				}
 
 				func TraceTwo( sec int64) {
@@ -1657,13 +1663,14 @@ import (`
 				    }
 
 				}
-			func handler(w http.ResponseWriter, r *http.Request, context string) {
+			func handler(w http.ResponseWriter, r *http.Request, contxt string) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-				  p,err := loadPage(r.URL.Path , context,r,w)
+				  p,err := loadPage(r.URL.Path , contxt,r,w)
 				  if err != nil {
 				  	fmt.Println(err)
 				  	` + TraceOpt + `
 				        http.Redirect(w,r,"` + template.NPage + `",307)
+				        context.Clear(r)
 				        return
 				  }
 
@@ -1676,6 +1683,7 @@ import (`
 					           	 fmt.Println(n)
 					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
 					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					           	 context.Clear(r)
 					           	 ` + TraceOpt + `
 					        }
 					    }()	
@@ -1694,6 +1702,8 @@ import (`
 				  	 
 				      w.Write(p.Body)
 				  }
+
+				  context.Clear(r)
 				  
 				}
 
@@ -2113,6 +2123,13 @@ import (`
 					 ` + timeline + `
 					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
+					 store.Options = &sessions.Options{
+						    Path:     "/",
+						    MaxAge:   86400 * 7,
+						    HttpOnly: true,
+						    Secure : true,
+						    Domain : "` + template.Domain + `",
+						}
 					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web + `"}))
 					errgos := http.ListenAndServe(":` + template.Port + `", nil)
 					if errgos != nil {
