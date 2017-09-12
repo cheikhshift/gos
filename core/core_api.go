@@ -3298,7 +3298,7 @@ func exe_cmd(cmd string) {
 	}
 	stdoutStderr, err := out.CombinedOutput()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 	fmt.Printf("%s\n", stdoutStderr)
 }
