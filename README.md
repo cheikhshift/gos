@@ -6,7 +6,7 @@
 - [x] Generate tests of your application.
 - [x] Application and resources exported as one binary.
 - [x] Choose from the 50,000+ go packages online to build your application.
-- [x] Live reload on documentation update.
+- [x] Live reload on project `gxml` update.
 
 ## Documentation here :
 [Docs](http://golangserver.com)
