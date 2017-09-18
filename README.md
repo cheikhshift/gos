@@ -6,7 +6,11 @@
 - [x] Generate tests of your application.
 - [x] Application and resources exported as one binary.
 - [x] Choose from the 50,000+ go packages online to build your application.
+- [x] Live reload on documentation update.
 
 ## Documentation here :
 [Docs](http://golangserver.com)
+
+## IDE here :
+[thestrukture/IDE](https://github.com/thestrukture/IDE)
 
