@@ -3346,8 +3346,10 @@ func Exe_Stall(cmd string, chn chan bool) {
 		t = tch
 	}
 	log.Println("Killing proc.")
-	if err := out.Process.Kill(); err != nil {
-		log.Fatal("failed to kill: ", err)
+	 _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
+	
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
