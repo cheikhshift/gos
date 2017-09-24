@@ -3346,11 +3346,13 @@ func Exe_Stall(cmd string, chn chan bool) {
 		t = tch
 	}
 	log.Println("Killing proc.")
-	 _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
+	out.Process.Kill()
+	/* _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
 	
 	if err != nil {
 		log.Fatal(err)
 	}
+	*/
 }
 
 func Exe_Stalll(cmd string) {
