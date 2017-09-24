@@ -1912,8 +1912,8 @@ func Build(path string) {
 }
 
 func main() {
-	
-	GOHOME = gpath + "/src/"
+
+	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
 	//fmt.Println( os.Args)
 	if len(os.Args) > 1 {
 		//args := os.Args[1:]
