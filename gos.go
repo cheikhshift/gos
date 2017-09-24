@@ -1559,6 +1559,7 @@ func JBuild(path string, out string) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		pwd = strings.Replace(pwd, "\\", "/", -1)
 		pk = strings.Split(strings.Trim(pwd, "/"), "/")
 
 	} else {
@@ -1734,6 +1735,7 @@ func Build(path string) {
 					fmt.Println(err)
 					os.Exit(1)
 				}
+				pwd = strings.Replace(pwd, "\\", "/", -1)
 				pk = strings.Split(strings.Trim(pwd, "/"), "/")
 
 			} else {
@@ -1912,7 +1914,9 @@ func Build(path string) {
 }
 
 func main() {
-
+	if tpath := os.ExpandEnv("$USERPROFILE") ; tpath != "" && os.ExpandEnv("$GOPATH") == "" {
+		os.Setenv("GOPATH", tpath + "/go")
+	}
 	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
 	//fmt.Println( os.Args)
 	if len(os.Args) > 1 {
