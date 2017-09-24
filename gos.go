@@ -1493,7 +1493,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 func JBuild(path string, out string) {
 
 	fmt.Println("Invoking go-bindata")
-	core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+	core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 	//time.Sleep(time.Second*100 )
 	//core.RunFile(GOHOME, coreTemplate.Output)
 	log_build, err := core.RunCmdSmart("go build")
@@ -1642,6 +1642,7 @@ func Build(path string) {
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
 	if !strings.Contains(os.Args[1], "run") && os.Args[1] != "--t" && !strings.Contains(os.Args[1], "-f") {
+		core.RunCmd("rm bindata.go") //speed
 		core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
 	}
 
@@ -1656,7 +1657,7 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
 			log_build, err := core.RunCmdSmart("go build")
@@ -1804,7 +1805,7 @@ func Build(path string) {
 		if os.Args[1] == "--test" {
 			//test console
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 			color.Magenta("Welcome to the Gopher Sauce test console.")
 			color.Red("List of commands : ")
 			color.Red("Test a GoS method (func) : m <method name> args...(Can use golang statements as well)")
@@ -1819,14 +1820,14 @@ func Build(path string) {
 		if os.Args[1] == "--test-f" {
 			//test console
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 			VmdOne()
 		}
 
 		if os.Args[1] == "--bench" {
 			//test console
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 			color.Magenta("Welcome to the Gopher Sauce benchmark console.")
 			color.Red("List of commands : ")
 			color.Red("Benchmark a GoS method (func) : m <method name> args...(Can use golang statements as well)")
@@ -1841,7 +1842,7 @@ func Build(path string) {
 		if os.Args[1] == "--bench-f" {
 			//test console
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
 
 			VmPOne()
 		}
@@ -1853,7 +1854,7 @@ func Build(path string) {
 			}
 			//create both zips
 			fmt.Println("Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata  " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata  " + webroot + "/... " + template_root + "/...")
 			core.RunCmd("go build")
 		}
 	} else if coreTemplate.Type == "bind" {
@@ -1911,7 +1912,8 @@ func Build(path string) {
 }
 
 func main() {
-	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
+	
+	GOHOME = gpath + "/src/"
 	//fmt.Println( os.Args)
 	if len(os.Args) > 1 {
 		//args := os.Args[1:]
@@ -2016,7 +2018,7 @@ func main() {
 				if core.AskForConfirmation() {
 					os.Chdir(GOHOME)
 					fmt.Println("Invoking go-bindata");
-					core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/go-bindata -debug " + webroot +"/... " + template_root + "/...")
+					core.RunCmd("go-bindata -debug " + webroot +"/... " + template_root + "/...")
 					//time.Sleep(time.Second*100 )
 					//core.RunFile(GOHOME, coreTemplate.Output)
 					core.RunCmd("go build")
@@ -2035,7 +2037,7 @@ func main() {
 						os.Chdir(GOHOME)
 						//create both zips
 						fmt.Println("Invoking go-bindata");
-						core.RunCmd(  os.ExpandEnv("$GOPATH") + "/bin/go-bindata  " + webroot +"/... " + template_root + "/...")
+						core.RunCmd(  "go-bindata  " + webroot +"/... " + template_root + "/...")
 						core.RunCmd("go build")
 
 					}
