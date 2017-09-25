@@ -3538,7 +3538,8 @@ func (d *gos) MMethod(ne []Method) {
 	d.Methods.Methods = ne
 }
 
-func PLoadGos(path string) (*gos, *Error) {
+func PLoadGos(pathraw string) (*gos, *Error) {
+	path := strings.Replace(pathraw, "\\", "/" , -1 )
 	fmt.Println("∑ loading " + path)
 	v := &gos{}
 	body, err := ioutil.ReadFile(path)
@@ -3689,7 +3690,8 @@ func (d *gos) Set(attr, value string) {
 	}
 }
 
-func VLoadGos(path string) (gos, *Error) {
+func VLoadGos(pathraw string) (gos, *Error) {
+	path := strings.Replace(pathraw, "\\", "/" , -1 )
 	fmt.Println("∑ loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
@@ -3741,7 +3743,8 @@ func VLoadGos(path string) (gos, *Error) {
 	return v, nil
 }
 
-func LoadGos(path string) (*gos, *Error) {
+func LoadGos(pathraw string) (*gos, *Error) {
+	path := strings.Replace(pathraw, "\\", "/" , -1 )
 	fmt.Println("∑ loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
