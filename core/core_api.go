@@ -1178,8 +1178,14 @@ import (`
 		//	fmt.Println(template.Methods.Methods[0].Name)
 
 		for _, imp := range net_imports {
+
+			if hasQts := strings.Contains(imp, `"`); hasQts {
+				local_string += `
+			 `+ imp 
+			} else {
 			local_string += `
 			"` + imp + `"`
+			}
 		}
 		var structs_string string
 		//Lets Do structs
