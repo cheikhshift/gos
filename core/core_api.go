@@ -625,12 +625,13 @@ import (`
 				        return
 				  }
 
-				   w.Header().Set("Cache-Control",  "public")
+				  
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		
 				        renderTemplate(w, r,  "` + web + `" + r.URL.Path, p)
 				  } else {
+				  		 w.Header().Set("Cache-Control",  "public")
 				  	  	if strings.Contains(r.URL.Path, ".css") {
 				  	  		w.Header().Add("Content-Type",  "text/css")
 				  	  	} else if strings.Contains(r.URL.Path, ".js") {
@@ -1674,7 +1675,7 @@ import (`
 				        return
 				  }
 
-				   w.Header().Set("Cache-Control",  "public")
+				   
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		    defer func() {
@@ -1691,6 +1692,7 @@ import (`
 				     
 				     // fmt.Println(w)
 				  } else {
+				  		w.Header().Set("Cache-Control",  "public")
 				  		if strings.Contains(r.URL.Path, ".css") {
 				  	  		w.Header().Add("Content-Type",  "text/css")
 				  	  	} else if strings.Contains(r.URL.Path, ".js") {
