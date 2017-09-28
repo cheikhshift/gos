@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	//"time"
+	"runtime"
 	"bufio"
 	"github.com/fatih/color"
 	"github.com/howeyc/fsnotify"
@@ -1643,8 +1643,12 @@ func Build(path string) {
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 
 	if !strings.Contains(os.Args[1], "run") && os.Args[1] != "--t" && !strings.Contains(os.Args[1], "-f") {
-		core.RunCmd("rm bindata.go") //speed
-		core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+		os.Remove("bindata.go") //speed
+		if isWin := strings.Contains(runtime.GOOS, "indows"); isWin { 
+			core.RunCmd("gofmt -w " + pkgpath[len(pkgpath)-1])
+		} else {
+			core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+		}
 	}
 
 	if os.Args[1] == "--t" {
