@@ -1615,12 +1615,10 @@ func JBuild(path string, out string) {
 func Build(path string) {
 
 	color.Magenta("Loading project!")
-	coreTemplate, err := core.LoadGos(path)
-	if err != nil {
-		fmt.Println(err)
+	coreTemplate, _ := core.LoadGos(path)
+	if coreTemplate == nil {
 		return
 	}
-
 	//fmt.Println(coreTemplate.Methods.Methods)
 	coreTemplate.WriteOut = false
 	coreTemplate.Name = path
@@ -1637,7 +1635,7 @@ func Build(path string) {
 
 	cwd, er := os.Getwd()
 	if er != nil {
-		fmt.Println(err)
+		fmt.Println(er)
 		os.Exit(1)
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")

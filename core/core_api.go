@@ -359,6 +359,8 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 
 	`
 
+
+
 	if template.Type == "locale" {
 		local_string = `package main 
 import (`
@@ -1017,6 +1019,7 @@ import (`
 		}
 		apiraw := ``
 		for _, imp := range template.Endpoints.Endpoints {
+			imp.Method = strings.Replace(imp.Method, `&lt;`, `<`, -1)
 			est := ``
 			if !template.Prod {
 				est = `	
@@ -1031,13 +1034,16 @@ import (`
 						}()`
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
+				line = strings.TrimSpace(line)
+					if len(line) > 0 {
 					est += `
 						lastLine = ` + "`" + line + "`" + `
 						` + line
+					}
 				}
 
 			} else {
-				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
+				est = imp.Method
 			}
 			if imp.Type == "f" {
 
@@ -1064,9 +1070,12 @@ import (`
 						}()`
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
+				line = strings.TrimSpace(line)
+					if len(line) > 0 {
 					est += `
 						lastLine = ` + "`" + line + "`" + `
 						` + line
+					}
 				}
 
 			} else {
@@ -1971,7 +1980,7 @@ import (`
 								`
 						}
 					}
-
+					meth.Method = strings.Replace(meth.Method,"&lt;","<", -1)
 					est := ``
 					if !template.Prod {
 						est = `	
@@ -1985,7 +1994,8 @@ import (`
 								}()`
 						setv := strings.Split(meth.Method, "\n")
 						for _, line := range setv {
-							if len(line) > 4 {
+							line = strings.TrimSpace(line)
+							if len(line) > 0 {
 								est += `
 								lastLine = ` + "`" + line + "`" + `
 								` + line
@@ -3557,6 +3567,7 @@ func PLoadGos(pathraw string) (*gos, *Error) {
 
 	//obj := Error{}
 	//fmt.Println(obj);
+	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
@@ -3709,6 +3720,7 @@ func VLoadGos(pathraw string) (gos, *Error) {
 
 	//obj := Error{}
 	//fmt.Println(obj);
+	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
@@ -3751,6 +3763,28 @@ func VLoadGos(pathraw string) (gos, *Error) {
 	return v, nil
 }
 
+func EscpaseGXML(data []byte) []byte {
+	lines := strings.Split( string(data) , "\n" )
+	infunc := false
+
+	for i,line := range lines {
+		if !infunc && (strings.Contains(line, "<method ") || strings.Contains(line,"<end ") ) && !strings.Contains(line, "<!--") {
+			infunc = true
+			
+		} 
+		if infunc &&  (strings.Contains(line,"</method>") || strings.Contains(line,"</end>") ) {
+			infunc = false
+			
+		} 
+		if strings.Contains(line,"<") && strings.Contains(line, "{") && infunc {
+			lines[i] = strings.Replace(line,"<","&lt;", -1)
+		}
+
+	}
+	
+	return []byte(strings.Join(lines, "\n"))
+}
+
 func LoadGos(pathraw string) (*gos, *Error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
 	fmt.Println("∑ loading " + path)
@@ -3762,6 +3796,7 @@ func LoadGos(pathraw string) (*gos, *Error) {
 
 	//obj := Error{}
 	//fmt.Println(obj);
+	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
