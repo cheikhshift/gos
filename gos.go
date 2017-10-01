@@ -504,7 +504,7 @@ var htmlTemplate = `<!DOCTYPE html>
 </html>`
 var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <gos>
-	<!-- xml Schema : https://github.com/cheikhshift/Gopher-Sauce/wiki/XML-tags#xml-schema -->
+	<!-- xml docs : http://golangserver.com/docs/markup.html -->
 	<deploy>webapp</deploy>
 	<port>8080</port>
 	<package>if-package-is-library</package>
@@ -513,38 +513,24 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 	<output>application.go</output>
 	<domain></domain><!-- Cookie domain -->
-	<main>	//psss go code here</main>
+	<main>	
+	//psss go code here : func main()
+	</main>
 
 
 	<key>a very very very very secret key</key>
 	
 	<header> 
-		<!-- remember to Jumpline when stating methods or different struct attributes, it is vital for our parser \n trick -->
 	</header>
 	<methods>
 		
 	</methods>
 
 	<templates>
- 		<!-- Template libraries are useful for expediting page creation and reuse common website elements within this GoS application -->
 
- 		<!-- *Notice that special braces are used to initialize the parameters of the struct '&{' and '}&' -->
- 		
- 		<!-- <template name="Bootstrap_alert" tmpl="bootstrap/alert" struct="Bootstrap_alert" /> -->
- 		
 	</templates>
 	<endpoints>
-      <!-- Depending on your build type the usage of this tag will vary. -->
-      <!-- For WebServers it will override any request for a given path and run the specified method. No vars or return types are needed for  -->
-      <!-- methods linked to an API call, please keep in mind that you may use w for http.ResponseWriter and r for http.Request . Additional available function variables is params and session. If a function is api listed it will not be used anywhere else.-->
-      <!-- <end /> is the endpoint tag and has the variables path,method, -->
-      <!-- Happy trails!!! -->
-      <!-- <end path="/index/api"  type="POST" >
-      	varr := "data"
-      	fmt.Println(varr)
-      	//response is the string variable sent -> mResponse()
-      	response = varr
-      </end> -->
+  
 	</endpoints>
 </gos>
 `

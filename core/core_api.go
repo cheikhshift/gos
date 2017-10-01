@@ -1084,7 +1084,7 @@ import (`
 			if imp.Type == "star" {
 
 				apiraw += ` 
-				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
+				if   strings.Contains(r.URL.Path, "` + imp.Path + `") && !callmet { 
 					` + est + `
 					
 					 ` + TraceOpt + `
@@ -1094,7 +1094,7 @@ import (`
 			} else if imp.Type != "f" {
 
 				apiraw += ` 
-				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
+				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") && !callmet { 
 					` + est + `
 					context.Clear(r)
 					 ` + TraceOpt + `
@@ -1359,7 +1359,7 @@ import (`
 					return r.FormValue(s)
 				}
 			
-				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page)  bool {
+				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page,session *sessions.Session)  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
 					           	 color.Red("Error loading template in path : ` + web + `" + r.URL.Path + ".tmpl reason :" )
@@ -1371,11 +1371,7 @@ import (`
 
 				    filename :=  tmpl  + ".tmpl"
 				    body, err := Asset(filename)
-				    session, er := store.Get(r, "session-")
-
-				 	if er != nil {
-				           session,er = store.New(r,"session-")
-				    }
+				    
 				    p.Session = session
 				    p.R = r
 				    if err != nil {
@@ -1402,32 +1398,27 @@ import (`
 				    }
 				}
 
-				func makeHandler(fn func (http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
-				  	if !apiAttempt(w,r) {
-				      fn(w, r, "")
+				  	session, er := store.Get(r, "session-")
+				  	if er != nil {
+						session,_ = store.New(r, "session-")
+					}
+				  	if !apiAttempt(w,r,session) {
+				      fn(w, r, "",session)
 				  	}
 				  	
 				  }
 				} 
 
-				func mHandler(w http.ResponseWriter, r *http.Request) {
-				  	
-				  	if !apiAttempt(w,r) {
-				      handler(w, r, "")
-				  	}
-				  
-				} 
 				func mResponse(v interface{}) string {
 					data,_ := json.Marshal(&v)
 					return string(data)
 				}
-				func apiAttempt(w http.ResponseWriter, r *http.Request) bool {
-					session, er := store.Get(r, "session-")
+				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) bool {
+					
 					response := ""
-					if er != nil {
-						session,_ = store.New(r, "session-")
-					}
+					
 					callmet := false
 
 					` + apiraw + `
@@ -1679,7 +1670,7 @@ import (`
 				    }
 
 				}
-			func handler(w http.ResponseWriter, r *http.Request, contxt string) {
+			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path , contxt,r,w)
 				  if err != nil {
@@ -1703,7 +1694,7 @@ import (`
 					           	 ` + TraceOpt + `
 					        }
 					    }()	
-				      	renderTemplate(w, r,  "` + web + `" + r.URL.Path, p)
+				      	renderTemplate(w, r,  "` + web + `" + r.URL.Path, p,session)
 				     
 				     // fmt.Println(w)
 				  } else {
@@ -2136,18 +2127,23 @@ import (`
 			func main() {
 				fmt.Printf("%d\n", os.Getpid())
 				` + template.Main
-
-			local_string += ` 
-					 ` + timeline + `
-					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
-					 http.HandleFunc( "/",  makeHandler(handler))
-					 store.Options = &sessions.Options{
+				if template.Prod {
+					local_string += ` store.Options = &sessions.Options{
 						    Path:     "/",
 						    MaxAge:   86400 * 7,
 						    HttpOnly: true,
 						    Secure : true,
 						    Domain : "` + template.Domain + `",
-						}
+						}`
+
+					//todo timeouts
+				}
+			local_string += ` 
+					 ` + timeline + `
+					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
+					 http.HandleFunc( "/",  makeHandler(handler))
+
+
 					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "` + web + `"}))
 					errgos := http.ListenAndServe(":` + template.Port + `", nil)
 					if errgos != nil {
