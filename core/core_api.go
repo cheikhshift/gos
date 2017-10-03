@@ -1506,38 +1506,17 @@ import (`
 				    open := 0
 				    for i, line := range lines {
 				    	
+				    	processd := false
 				    	
 
-				   
-
-				    	if waitend {
-				    		linebuffer += line
-
-				    		endstr := ""
-				    		for i := 0; i < open; i++ {
-				    			endstr += "{{end}}"
-				    		}
-				    		//exec
-				    		outp := new(bytes.Buffer)  
-					    	t := template.New("PageWrapper")
-					    	t = t.Funcs(` + netMa + `)
-					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
-					    	lastline = i
-					    	linestring =  line
-					    	error := t.Execute(outp, p)
-						    if error != nil {
-						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
-						    } 
-
-				    	}
-
-				    if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
+				    	if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
 				    		linebuffer += line
 				    		waitend = true
 				    		open++;
 				    		endstr := ""
+				    		processd = true
 				    		for i := 0; i < open; i++ {
-				    			endstr += "{{end}}"
+				    			endstr += "\n{{end}}"
 				    		}
 				    		//exec
 				    		outp := new(bytes.Buffer)  
@@ -1551,8 +1530,32 @@ import (`
 						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
 						    } 
 				    	}
+				   
 
-				    	if !waitend {
+				    	if waitend && !processd && !( strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") ) {
+				    		linebuffer += line
+
+				    		endstr := ""
+				    		for i := 0; i < open; i++ {
+				    			endstr += "\n{{end}}"
+				    		}
+				    		//exec
+				    		outp := new(bytes.Buffer)  
+					    	t := template.New("PageWrapper")
+					    	t = t.Funcs(` + netMa + `)
+					    	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(linebuffer + endstr, "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
+					    	lastline = i
+					    	linestring =  line
+					    	error := t.Execute(outp, p)
+						    if error != nil {
+						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						    } 
+
+				    	}
+
+
+
+				    	if !waitend && !processd {
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(` + netMa + `)
@@ -1565,7 +1568,7 @@ import (`
 					    }  
 						}
 
-						if  strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") {
+						if  !processd && ( strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") ) {
 							open--
 
 							if open == 0 {
@@ -1641,7 +1644,7 @@ import (`
 
 				    		endstr := ""
 				    		for i := 0; i < open; i++ {
-				    			endstr += "{{end}}"
+				    			endstr += "\n{{end}}"
 				    		}
 				    		//exec
 				    		outp := new(bytes.Buffer)  
@@ -1672,7 +1675,7 @@ import (`
 					    }  
 						}
 
-						if  processd && (strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}") ) {
+						if  !processd && (strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}") ) {
 							open--
 
 							if open == 0 {
