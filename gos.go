@@ -1778,7 +1778,8 @@ func Build(path string) {
 			close(done)
 			watcher.RemoveWatch(path)
 			watcher.Close()
-			core.RunCmd("🤔 gos --t")
+			log.Println("🤔 Refreshing")
+			core.RunCmd("gos --t")
 			JBuild(path, coreTemplate.Output)
 
 		}
