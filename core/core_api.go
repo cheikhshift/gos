@@ -1165,7 +1165,7 @@ import (`
 				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
 				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + imp.Src); os.IsNotExist(err) && strings.Contains(imp.Src,"."){
 					color.Red("Package not found")
-					fmt.Println("∑ Downloading Package " + imp.Src)
+					fmt.Println("🎁 Downloading Package " + imp.Src)
 
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
@@ -1214,7 +1214,7 @@ import (`
 		structs_string = ``
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-				fmt.Println("Processing Struct : " + imp.Name)
+				fmt.Println("🔧 Processing Struct : " + imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
 				structs_string += `
 			type ` + imp.Name + ` struct {`
@@ -1968,7 +1968,7 @@ import (`
 
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					fmt.Println("Processing : " + imp)
+					fmt.Println("🚰 Processing : " + imp)
 					meth := template.findMethod(imp)
 					addedit := false
 					if meth.Returntype == "" {
@@ -2165,7 +2165,7 @@ import (`
 
 					}`
 
-			fmt.Println("Saving file to " + r + "/" + template.Output)
+			fmt.Println("🔗 Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
 
@@ -3361,7 +3361,7 @@ func Exe_Stall(cmd string, chn chan bool) {
 	if m && tch {
 		t = tch
 	}
-	log.Println("Killing proc.")
+	log.Println("💣 Killing proc.")
 	out.Process.Kill()
 	/* _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
 	
@@ -3554,13 +3554,13 @@ func (d *gos) MMethod(ne []Method) {
 	d.Methods.Methods = ne
 }
 
-func PLoadGos(pathraw string) (*gos, *Error) {
+func PLoadGos(pathraw string) (*gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("∑ loading " + path)
+	fmt.Println("🎁 loading " + path)
 	v := &gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, &Error{code: 404, reason: "file not found! @ " + path}
+		return nil, err
 	}
 
 	//obj := Error{}
@@ -3707,13 +3707,13 @@ func (d *gos) Set(attr, value string) {
 	}
 }
 
-func VLoadGos(pathraw string) (gos, *Error) {
+func VLoadGos(pathraw string) (gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("∑ loading " + path)
+	fmt.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
-		return v, &Error{code: 404, reason: "file not found! @ " + path}
+		return v, err
 	}
 
 	//obj := Error{}
@@ -3723,7 +3723,7 @@ func VLoadGos(pathraw string) (gos, *Error) {
 	d.Strict = false
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		fmt.Printf("✊ error: %v", err)
 		return v, nil
 	}
 
@@ -3788,13 +3788,13 @@ func EscpaseGXML(data []byte) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
-func LoadGos(pathraw string) (*gos, *Error) {
+func LoadGos(pathraw string) (*gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("∑ loading " + path)
+	fmt.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, &Error{code: 404, reason: "file not found! @ " + path}
+		return nil, err
 	}
 
 	//obj := Error{}
@@ -3804,7 +3804,7 @@ func LoadGos(pathraw string) (*gos, *Error) {
 	d.Strict = false
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		fmt.Printf("✊ error: %v", err)
 		return nil, nil
 	}
 
