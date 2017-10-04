@@ -1034,13 +1034,18 @@ import (`
 					          ` + TraceOpt + `
 					         	w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
-								pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+								pag,err := loadPage("` + template.ErrorPage + `")
 								 if err != nil {
 								        	fmt.Println(err.Error())
 								        	callmet = true	        	
 								        	return
 								 }
-								 w.Write(pag.Body) 
+								if pag.isResource {
+				        			w.Write(pag.Body)
+						    	} else {
+						    		renderTemplate(w, r, "` + web + template.ErrorPage + `" , pag,session)
+						     
+						    	}
 								 callmet = true
 					        }
 						}()`
@@ -1080,13 +1085,18 @@ import (`
 					          ` +TraceOpt +`
 					        	 w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
-								pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+								pag,err := loadPage("` + template.ErrorPage + `")
 								 if err != nil {
 								        	fmt.Println(err.Error())
 								        	callmet = true	        	
 								        	return 
 								 }
-								 w.Write(pag.Body) 
+								   if pag.isResource {
+							        	w.Write(pag.Body)
+							    	} else {
+							    		renderTemplate(w, r, "` + web + template.ErrorPage + `" , pag,session)
+							     
+							    	}
 					           callmet = true
 					        }
 						}()`
@@ -1396,16 +1406,21 @@ import (`
 					           	 DebugTemplate( w,r , fmt.Sprintf("`+web+`%s", r.URL.Path) )
 					           	 w.WriteHeader(http.StatusInternalServerError)
 					           	 
-						         pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+						         pag,err := loadPage("` + template.ErrorPage + `" )
 						        if err != nil {
 						        	fmt.Println(err.Error())	        	
 						        	return
 						        }
-						        w.Write(pag.Body)
+						         if pag.isResource {
+						        	w.Write(pag.Body)
+						    	} else {
+						    		renderTemplate(w, r, "` + web + template.ErrorPage + `" , pag,session)
+						     
+						    	}
 					        }
 					    }()
 
-				    filename :=  tmpl  + ".tmpl"
+				    filename :=  fmt.Sprintf("%s%s",tmpl , ".tmpl")
 				    body, err := Asset(filename)
 				    
 				    p.Session = session
@@ -1424,12 +1439,17 @@ import (`
 				    	DebugTemplate( w,r , fmt.Sprintf("` + web +`%s", r.URL.Path))
 				    	w.WriteHeader(http.StatusInternalServerError)
 					    w.Header().Set("Content-Type",  "text/html")
-						pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+						pag,err := loadPage("` + template.ErrorPage + `" )
 						 if err != nil {
 						        	fmt.Println(err.Error())	        	
 						        	return false
 						 }
-						 w.Write(pag.Body) 
+						  if pag.isResource {
+				        	w.Write(pag.Body)
+				    	} else {
+				    		renderTemplate(w, r, "` + web + template.ErrorPage + `" , pag,session)
+				     
+				    	}
 				    	return false
 				    }  else {
 				    p.Session.Save(r, w)
@@ -1734,13 +1754,18 @@ import (`
 				  	` + TraceOpt + `
 				        w.WriteHeader(http.StatusNotFound)				  	
 				       
-				        pag,err := loadPage(fmt.Sprintf("` + template.NPage + `") )
+				        pag,err := loadPage("` + template.NPage + `")
 				        if err != nil {
 				        	fmt.Println(err.Error())
 				        	//context.Clear(r)
 				        	return
 				        }
-				        w.Write(pag.Body)
+				        if pag.isResource {
+				        	w.Write(pag.Body)
+				    	} else {
+				    		renderTemplate(w, r, "` + web + template.NPage + `" , pag,session)
+				     
+				    	}
 				        //context.Clear(r)
 				        return
 				  }
@@ -1749,7 +1774,7 @@ import (`
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 
-				      	renderTemplate(w, r, fmt.Sprintf("` + web + `%s", r.URL.Path) , p,session)
+				      	renderTemplate(w, r, "` + web  + template.NPage + `" , p,session)
 				     
 				     // fmt.Println(w)
 				  } else {
