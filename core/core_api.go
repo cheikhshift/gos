@@ -626,7 +626,7 @@ import (`
 
 				func handler(w http.ResponseWriter, r *http.Request, context string) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-				  p,err := loadPage(r.URL.Path , context,r,w)
+				  p,err := loadPage(r)
 				  if err != nil {
 				  		fmt.Println(err)
 				        http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1003,10 +1003,7 @@ import (`
 import (`
 
 		// if template.Type == "webapp" {
-		if !template.Prod {
-			template.ErrorPage = ""
-			template.NPage = ""
-		}
+	
 
 		var TraceOpt string
 		if template.Debug == "on" {
@@ -1035,7 +1032,16 @@ import (`
 					          fmt.Println("Web request (` + imp.Path +`) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
 					          fmt.Println("Reason : ",n)
 					          ` + TraceOpt + `
-					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					         	w.WriteHeader(http.StatusInternalServerError)
+							    w.Header().Set("Content-Type",  "text/html")
+								pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+								 if err != nil {
+								        	fmt.Println(err.Error())
+								        	callmet = true	        	
+								        	return
+								 }
+								 w.Write(pag.Body) 
+								 callmet = true
 					        }
 						}()`
 				setv := strings.Split(imp.Method, "\n")
@@ -1056,7 +1062,7 @@ import (`
 				apiraw += ` 
 				if   strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
-					context.Clear(r)
+					//context.Clear(r)
 					` + TraceOpt + `
 				}
 				`
@@ -1071,7 +1077,17 @@ import (`
 					       if n := recover(); n != nil {
 					          fmt.Println("Web request (` + imp.Path + `) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
 					          fmt.Println("Reason : ",n)
-					          http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					          ` +TraceOpt +`
+					        	 w.WriteHeader(http.StatusInternalServerError)
+							    w.Header().Set("Content-Type",  "text/html")
+								pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+								 if err != nil {
+								        	fmt.Println(err.Error())
+								        	callmet = true	        	
+								        	return 
+								 }
+								 w.Write(pag.Body) 
+					           callmet = true
 					        }
 						}()`
 				setv := strings.Split(imp.Method, "\n")
@@ -1102,7 +1118,7 @@ import (`
 				apiraw += ` 
 				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") && !callmet { 
 					` + est + `
-					context.Clear(r)
+					//context.Clear(r)
 					 ` + TraceOpt + `
 					callmet = true
 				}
@@ -1375,10 +1391,17 @@ import (`
 				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page,session *sessions.Session)  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
-					           	 color.Red("Error loading template in path : ` + web + `" + r.URL.Path + ".tmpl reason :" )
-					           	 fmt.Println(n)
-					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
-					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
+					           	 color.Red(fmt.Sprintf("Error loading template in path : `+web+`%s.tmpl reason : %s", r.URL.Path,n)  )
+					           	 
+					           	 DebugTemplate( w,r , fmt.Sprintf("`+web+`%s", r.URL.Path) )
+					           	 w.WriteHeader(http.StatusInternalServerError)
+					           	 
+						         pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+						        if err != nil {
+						        	fmt.Println(err.Error())	        	
+						        	return
+						        }
+						        w.Write(pag.Body)
 					        }
 					    }()
 
@@ -1398,9 +1421,16 @@ import (`
 				    error := t.Execute(outp, p)
 				    if error != nil {
 				    fmt.Println(error.Error())
-				    	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
-				    	 http.Redirect(w,r,"` + template.ErrorPage + `",301)
-				    return false
+				    	DebugTemplate( w,r , fmt.Sprintf("` + web +`%s", r.URL.Path))
+				    	w.WriteHeader(http.StatusInternalServerError)
+					    w.Header().Set("Content-Type",  "text/html")
+						pag,err := loadPage(fmt.Sprintf("` + template.ErrorPage + `") )
+						 if err != nil {
+						        	fmt.Println(err.Error())	        	
+						        	return false
+						 }
+						 w.Write(pag.Body) 
+				    	return false
 				    }  else {
 				    p.Session.Save(r, w)
 
@@ -1413,6 +1443,11 @@ import (`
 
 				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
+				
+				  	if r.URL.Path == "/" {
+				      http.Redirect(w,r,"/index",302)
+				      return
+				    }
 				  	session, er := store.Get(r, "session-")
 				  	if er != nil {
 						session,_ = store.New(r, "session-")
@@ -1421,6 +1456,7 @@ import (`
 				      fn(w, r, "",session)
 				  	}
 				  	
+				  	context.Clear(r)
 				  }
 				} 
 
@@ -1428,11 +1464,11 @@ import (`
 					data,_ := json.Marshal(&v)
 					return string(data)
 				}
-				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) bool {
+				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) (callmet bool) {
 					
 					response := ""
 					
-					callmet := false
+					
 
 					` + apiraw + `
 
@@ -1482,7 +1518,7 @@ import (`
 					        }
 					    }()	
 
-					p,err := loadPage(r.URL.Path , "",r,w)
+					p,err := loadPage(r.URL.Path)
 					filename :=  tmpl  + ".tmpl"
 				    body, err := Asset(filename)
 				    session, er := store.Get(r, "session-")
@@ -1691,29 +1727,29 @@ import (`
 				}
 			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-				  p,err := loadPage(r.URL.Path , contxt,r,w)
+				  p,err := loadPage(r.URL.Path)
 				  if err != nil {
-				  	fmt.Println(err)
+				  		fmt.Println(w.Header())
+				  		fmt.Println(err.Error())
 				  	` + TraceOpt + `
-				        http.Redirect(w,r,"` + template.NPage + `",307)
-				        context.Clear(r)
+				        w.WriteHeader(http.StatusNotFound)				  	
+				       
+				        pag,err := loadPage(fmt.Sprintf("` + template.NPage + `") )
+				        if err != nil {
+				        	fmt.Println(err.Error())
+				        	//context.Clear(r)
+				        	return
+				        }
+				        w.Write(pag.Body)
+				        //context.Clear(r)
 				        return
 				  }
 
 				   
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
-				  		    defer func() {
-					       if n := recover(); n != nil {
-					           	 color.Red("Error loading template in path : ` + web + `" + r.URL.Path + ".tmpl reason :" )
-					           	 fmt.Println(n)
-					           	 DebugTemplate( w,r ,"` + web + `" + r.URL.Path)
-					           	 http.Redirect(w,r,"` + template.ErrorPage + `",307)
-					           	 context.Clear(r)
-					           	 ` + TraceOpt + `
-					        }
-					    }()	
-				      	renderTemplate(w, r,  "` + web + `" + r.URL.Path, p,session)
+
+				      	renderTemplate(w, r, fmt.Sprintf("` + web + `%s", r.URL.Path) , p,session)
 				     
 				     // fmt.Println(w)
 				  } else {
@@ -1730,24 +1766,23 @@ import (`
 				      w.Write(p.Body)
 				  }
 
-				  context.Clear(r)
+				  //context.Clear(r)
 				  
 				}
 
-				func loadPage(title string, servlet string,r *http.Request,w http.ResponseWriter) (*Page,error) {
-				    filename :=  "` + web + `" + title + ".tmpl"
-				    if title == "/" {
-				      http.Redirect(w,r,"/index",302)
-				    }
+				func loadPage(title string) (*Page,error) {
+				    filename := fmt.Sprintf("`+web+`%s.tmpl", title) 
+				    
+				   
 				    body, err := Asset(filename)
 				    if err != nil {
-				      filename = "` + web + `" + title + ".html"
+				      filename = fmt.Sprintf("`+web+`%s.html", title) 
 				      if title == "/" {
 				    	filename = "` + web + `/index.html"
 				    	}
 				      body, err = Asset(filename)
 				      if err != nil {
-				         filename = "` + web + `" + title
+				         filename = fmt.Sprintf("`+web+`%s", title) 
 				         body, err = Asset(filename)
 				         if err != nil {
 				            return nil, err
@@ -1755,15 +1790,15 @@ import (`
 				          if strings.Contains(title, ".tmpl") || title == "/" {
 				              return nil,nil
 				          }
-				          return &Page{Title: title, Body: body,isResource: true,request: nil}, nil
+				          return &Page{ Body: body,isResource: true }, nil
 				         }
 				      } else {
-				         return &Page{Title: title, Body: body,isResource: true,request: nil}, nil
+				         return &Page{ Body: body,isResource: true}, nil
 				      }
 				    } 
 				    //load custom struts
 				    ` + TraceOpt + `
-				    return &Page{Title: title, Body: body,isResource:false,request:r}, nil
+				    return &Page{Body: body,isResource:false}, nil
 				}
 				func BytesToString(b []byte) string {
 				    bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
