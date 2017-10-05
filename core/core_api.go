@@ -442,9 +442,9 @@ import (`
 					fmt.Println("∑ Downloading Package " + imp.Src)
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get " + rfset[1])
+						RunCmdSmart("go get -v " + rfset[1])
 					} else {
-						RunCmdSmart("go get " + imp.Src)
+						RunCmdSmart("go get -v " + imp.Src)
 					}
 				}
 				if !contains(net_imports, imp.Src) {
@@ -460,7 +460,7 @@ import (`
 					fmt.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
 
 
-					RunCmdSmart("go get " + strings.Join(pathsplit, "/"))
+					RunCmdSmart("go get -v " + strings.Join(pathsplit, "/"))
 				}
 				//split and replace last section
 				fmt.Println("∑ Processing XML Yåå ", pathsplit)
@@ -1168,7 +1168,7 @@ import (`
 					if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
 							color.Red("Package not found")
 							fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
-							RunCmdSmart("go get " + strings.Join(pathsplit,"/"))
+							RunCmdSmart("go get -v " + strings.Join(pathsplit,"/"))
 					}
 					//split and replace last section
 					fmt.Println("∑ Processing XML Yåå ", pathsplit)
@@ -1195,9 +1195,9 @@ import (`
 
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get " + rfset[1])
+						RunCmdSmart("go get -v " + rfset[1])
 					} else {
-						RunCmdSmart("go get " + imp.Src)
+						RunCmdSmart("go get -v " + imp.Src)
 					}
 					
 				}
@@ -1774,7 +1774,7 @@ import (`
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 
-				      	renderTemplate(w, r, "` + web  + template.NPage + `" , p,session)
+				      	renderTemplate(w, r, fmt.Sprintf("` + web  + `%s", r.URL.Path) , p,session)
 				     
 				     // fmt.Println(w)
 				  } else {
@@ -3806,7 +3806,7 @@ func VLoadGos(pathraw string) (gos, error) {
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-				RunCmdSmart("go get " + dir)
+				RunCmdSmart("go get -v " + dir)
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
@@ -3815,9 +3815,9 @@ func VLoadGos(pathraw string) (gos, error) {
 				//fmt.Println("")
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get " + rfset[1])
+						RunCmdSmart("go get -v " + rfset[1])
 					} else {
-						RunCmdSmart("go get " + imp.Src)
+						RunCmdSmart("go get -v " + imp.Src)
 					}
 			}
 		}
@@ -3887,7 +3887,7 @@ func LoadGos(pathraw string) (*gos, error) {
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-				RunCmdSmart("go get " + dir)
+				RunCmdSmart("go get -v " + dir)
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
@@ -3896,9 +3896,9 @@ func LoadGos(pathraw string) (*gos, error) {
 				//fmt.Println("")
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get " + rfset[1])
+						RunCmdSmart("go get -v " + rfset[1])
 					} else {
-						RunCmdSmart("go get " + imp.Src)
+						RunCmdSmart("go get -v " + imp.Src)
 					}
 			}
 		}
@@ -3972,7 +3972,7 @@ func (d *gos) MergeWith(target string) {
 				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
 					// path/to/whatever does not exist
 					//fmt.Println("")
-					RunCmdSmart("go get " + dir)
+					RunCmdSmart("go get -v " + dir)
 				}
 			} else {
 				dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(im.Src, "/")
@@ -3981,9 +3981,9 @@ func (d *gos) MergeWith(target string) {
 					//fmt.Println("")
 					if strings.Contains(im.Src, "\"") {
 						rfset := strings.Split(im.Src,"\"")
-						RunCmdSmart("go get " + rfset[1])
+						RunCmdSmart("go get -v " + rfset[1])
 					} else {
-						RunCmdSmart("go get " + im.Src)
+						RunCmdSmart("go get -v " + im.Src)
 					}
 				}
 			}
