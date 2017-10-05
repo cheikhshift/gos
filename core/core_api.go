@@ -1135,7 +1135,7 @@ import (`
 			if imp.Type == "star" {
 
 				apiraw += ` 
-				if   strings.Contains(r.URL.Path, "` + imp.Path + `") && !callmet { 
+				if  !callmet &&  strings.Contains(r.URL.Path, "` + imp.Path + `")  { 
 					` + est + `
 					
 					 ` + TraceOpt + `
@@ -1145,7 +1145,7 @@ import (`
 			} else if imp.Type != "f" {
 
 				apiraw += ` 
-				if  r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") && !callmet { 
+				if  !callmet && r.URL.Path == "` + imp.Path + `" && r.Method == strings.ToUpper("` + imp.Type + `") { 
 					` + est + `
 					//context.Clear(r)
 					 ` + TraceOpt + `
@@ -1755,8 +1755,7 @@ import (`
 			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session) {
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path)
-				  if err != nil {
-				  		fmt.Println(w.Header())
+				  if err != nil {	
 				  		fmt.Println(err.Error())
 				  	` + TraceOpt + `
 				        w.WriteHeader(http.StatusNotFound)				  	
