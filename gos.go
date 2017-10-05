@@ -1846,7 +1846,7 @@ func Build(path string) {
 			//create both zips
 			fmt.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata  " + webroot + "/... " + template_root + "/...")
-			core.RunCmd("🔨 go build")
+			core.RunCmd("go build")
 		}
 	} else if coreTemplate.Type == "bind" {
 
