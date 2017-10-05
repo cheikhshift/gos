@@ -437,14 +437,28 @@ import (`
 			//fmt.Println(imp)
 			if !strings.Contains(imp.Src, ".gxml") {
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + imp.Src
+				if strings.Contains(imp.Src, "\"") {
+						tpset := strings.Split(imp.Src,"\"")
+						dir = strings.Replace(dir, imp.Src, tpset[1], -1)
+				} 
 				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 					color.Red("Package not found")
 					fmt.Println("∑ Downloading Package " + imp.Src)
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get -v " + rfset[1])
+						logg,err := RunCmdSmart("go get -v " + rfset[1])
+						if err != nil {
+							fmt.Println("Error :"  , logg)
+						} else {
+							fmt.Println("go get ", rfset[1] , "Ok :" , logg)
+						}
 					} else {
-						RunCmdSmart("go get -v " + imp.Src)
+						logg,err := RunCmdSmart("go get -v " + imp.Src)
+						if err != nil {
+							fmt.Println("Error :"  , logg)
+						}  else {
+							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+						}
 					}
 				}
 				if !contains(net_imports, imp.Src) {
@@ -460,7 +474,12 @@ import (`
 					fmt.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
 
 
-					RunCmdSmart("go get -v " + strings.Join(pathsplit, "/"))
+					logg ,err := RunCmdSmart("go get -v " + strings.Join(pathsplit, "/"))
+					if err != nil {
+							fmt.Println("Error :"  , logg)
+					}  else {
+							fmt.Println("go get ", strings.Join(pathsplit, "/"), "Ok :" , logg)
+					}
 				}
 				//split and replace last section
 				fmt.Println("∑ Processing XML Yåå ", pathsplit)
@@ -1189,18 +1208,6 @@ import (`
 		for _, imp := range template.RootImports {
 			if !strings.Contains(imp.Src, ".gxml") {
 				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + imp.Src); os.IsNotExist(err) && strings.Contains(imp.Src,"."){
-					color.Red("Package not found")
-					fmt.Println("🎁 Downloading Package " + imp.Src)
-
-					if strings.Contains(imp.Src, "\"") {
-						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get -v " + rfset[1])
-					} else {
-						RunCmdSmart("go get -v " + imp.Src)
-					}
-					
-				}
 				if !contains(net_imports, imp.Src) {
 					net_imports = append(net_imports, imp.Src)
 				}
@@ -3806,19 +3813,33 @@ func VLoadGos(pathraw string) (gos, error) {
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-				RunCmdSmart("go get -v " + dir)
+				color.Red("Package not found")
+				fmt.Println("🎁 Downloading Package " + imp.Src)
+				logg,err := RunCmdSmart("go get -v " + dir)
+				if err != nil {
+							fmt.Println("Error :"  , logg)
+				}  else {
+						   fmt.Println("go get ", dir , "Ok :" , logg)
+				}
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
+			if strings.Contains(imp.Src, "\"") {
+				tpset := strings.Split(imp.Src,"\"")
+				dir = strings.Replace(dir, imp.Src, tpset[1], -1)
+			} 
 			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-					if strings.Contains(imp.Src, "\"") {
-						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get -v " + rfset[1])
-					} else {
-						RunCmdSmart("go get -v " + imp.Src)
-					}
+						color.Red("Package not found")
+						fmt.Println("🎁 Downloading Package " + imp.Src)
+						logg,err := RunCmdSmart("go get -v " + imp.Src)
+						if err != nil {
+							fmt.Println("Error :"  , logg)
+						}  else {
+							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+						}
+					
 			}
 		}
 
@@ -3884,22 +3905,41 @@ func LoadGos(pathraw string) (*gos, error) {
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
+			dir = fmt.Sprintf("%s%s",dir,"/")
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-				RunCmdSmart("go get -v " + dir)
+
+				color.Red("Package not found")
+						fmt.Println("🎁 Downloading Package " + imp.Src)
+			
+				logg,err := RunCmdSmart("go get -v " + dir)
+				if err != nil {
+							fmt.Println("Error :"  , logg)
+				}  else {
+							fmt.Println("go get ", dir , "Ok :" , logg)
+				}
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
+			if strings.Contains(imp.Src, "\"") {
+				tpset := strings.Split(imp.Src,"\"")
+				dir = strings.Replace(dir, imp.Src, tpset[1], -1)
+				
+			} 
+			dir = fmt.Sprintf("%s%s",dir,"/")
 			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
 				//fmt.Println("")
-					if strings.Contains(imp.Src, "\"") {
-						rfset := strings.Split(imp.Src,"\"")
-						RunCmdSmart("go get -v " + rfset[1])
-					} else {
-						RunCmdSmart("go get -v " + imp.Src)
-					}
+						color.Red("Package not found")
+						fmt.Println("🎁 Ddownloading Package " + imp.Src)
+						logg,err := RunCmdSmart("go get -v " + imp.Src)
+						if err != nil {
+							fmt.Println("Error :"  , logg)
+						}  else {
+							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+						}
+					
 			}
 		}
 
@@ -3972,18 +4012,15 @@ func (d *gos) MergeWith(target string) {
 				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
 					// path/to/whatever does not exist
 					//fmt.Println("")
-					RunCmdSmart("go get -v " + dir)
-				}
-			} else {
-				dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(im.Src, "/")
-				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
-					// path/to/whatever does not exist
-					//fmt.Println("")
-					if strings.Contains(im.Src, "\"") {
-						rfset := strings.Split(im.Src,"\"")
-						RunCmdSmart("go get -v " + rfset[1])
-					} else {
-						RunCmdSmart("go get -v " + im.Src)
+
+					color.Red("Package not found")
+					fmt.Println("🎁 Downloading Package " + im.Src)
+			
+					logg,err := RunCmdSmart("go get -v " + dir)
+					if err != nil {
+							fmt.Println("Error :"  , logg)
+					}  else {
+							fmt.Println("go get ", dir , "Ok :" , logg)
 					}
 				}
 			}
