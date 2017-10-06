@@ -609,7 +609,7 @@ import (`
 				
 				return &s
 			}
-			func net_struct%s() *%s{ return &%s{} }`, imp.Name ,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name )
+			func net_struct%s() *%s{ return &%s{} }`, imp.Name ,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name )
 
 				netMa += fmt.Sprintf(`,"%s : net_struct%s` ,imp.Name, imp.Name)
 				netMa += fmt.Sprintf(`,"is%s" : net_cast%s`, imp.Name, imp.Name )
