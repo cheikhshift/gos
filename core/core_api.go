@@ -3421,7 +3421,10 @@ func Exe_Stall(cmd string, chn chan bool) {
 	t := false
 
 	go func() {
-		for !t {
+		for {
+			if t {
+				break
+			}
 			line, _, _ := r.ReadLine()
 			if string(line) != "" {
 				log.Println(string(line))

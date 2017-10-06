@@ -16,8 +16,9 @@ import (
 )
 
 var webroot string
-var template_root string
+var templateroot string
 var gos_root string
+var appout string
 var GOHOME string
 var serverconfig string
 
@@ -1476,10 +1477,58 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 }
 
+func WatchForUpdate(path string){
+	
+	done := make(chan bool)
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reloading := false
+
+	go func() {
+		for {
+			select {
+			case ev := <-watcher.Event:
+				
+				if !reloading {
+					fname := fmt.Sprintf("%v", ev)
+					if  TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
+					//Build( GOHOME + "/" + serverconfig )
+					reloading = true
+					done <- true
+					break
+					}
+				}
+
+			}
+		}
+	}()
+	err = watcher.Watch(fmt.Sprintf("%s/", GOHOME))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Waiting for new updates to source.")
+	<-done
+	defer close(done)
+	watcher.RemoveWatch(path)
+	watcher.Close()
+	log.Println("🤔 Refreshing")
+	core.RunCmd("gos --t")
+	JBuild(path, appout)
+}
+
+func TriggerType(typ string) (is bool) {
+	is = strings.Contains(typ, ".go") || strings.Contains(typ, ".css") || strings.Contains(typ, ".tmpl") || strings.Contains(typ, ".gxml") || strings.Contains(typ, ".html") || strings.Contains(typ, ".js")
+	return
+}
+
 func JBuild(path string, out string) {
 
 	fmt.Println("Invoking go-bindata")
-	core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...",webroot,templateroot))
 	//time.Sleep(time.Second*100 )
 	//core.RunFile(GOHOME, coreTemplate.Output)
 	log_build, err := core.RunCmdSmart("go build")
@@ -1512,7 +1561,7 @@ func JBuild(path string, out string) {
 							if inm == lnumber {
 								acT_line := GetLine(serverconfig, lin)
 								if acT_line > -1 {
-									color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line) + " | " + strings.Join(line_part[2:], " - "))
+									color.Magenta( fmt.Sprintf("Verify your file %s on line : %v | %s" , serverconfig, acT_line, strings.Join(line_part[2:], " - ")  ) )
 
 								} else {
 									color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
@@ -1534,7 +1583,7 @@ func JBuild(path string, out string) {
 		}
 		color.Red("Full compiler build log : ")
 		fmt.Println(log_build)
-
+		WatchForUpdate(path)
 		return
 	}
 
@@ -1564,36 +1613,40 @@ func JBuild(path string, out string) {
 	}
 
 	reloading := false
-	//brokep := false
-	// Process events
+
 	go func() {
 		for {
 			select {
 			case ev := <-watcher.Event:
-
+				
 				if !reloading {
-					log.Println("event:", ev)
+					fname := fmt.Sprintf("%v", ev)
+					
+					if TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
 					//Build( GOHOME + "/" + serverconfig )
 					reloading = true
 					process <- true
-					//	done <- true
-
 					done <- true
+					break
+					}
 				}
 
 			}
 		}
 	}()
 
-	err = watcher.Watch(GOHOME + "/" + serverconfig)
+	err = watcher.Watch(fmt.Sprintf("%s/", GOHOME))
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Ready!")
-	go core.Exe_Stall("./"+pk[len(pk)-1], process)
+	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1] ) , process)
 	<-done
+	defer close(process)
+	defer close(done)
 	watcher.RemoveWatch(path)
 	watcher.Close()
+	log.Println("🤔 Refreshing")
 	core.RunCmd("gos --t")
 	JBuild(path, out)
 }
@@ -1602,6 +1655,7 @@ func Build(path string) {
 
 	color.Magenta("😎 Loading project!")
 	coreTemplate, _ := core.LoadGos(path)
+	appout = coreTemplate.Output
 	if coreTemplate == nil {
 		return
 	}
@@ -1617,7 +1671,7 @@ func Build(path string) {
 		coreTemplate.Debug = "on"
 	}
 
-	core.Process(coreTemplate, GOHOME, webroot, template_root)
+	core.Process(coreTemplate, GOHOME, webroot, templateroot)
 
 	cwd, er := os.Getwd()
 	if er != nil {
@@ -1646,7 +1700,7 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
 			log_build, err := core.RunCmdSmart("go build")
@@ -1707,7 +1761,7 @@ func Build(path string) {
 				}
 				color.Red("Full compiler build log : ")
 				fmt.Println(log_build)
-
+				WatchForUpdate(path)
 				return
 			}
 
@@ -1750,14 +1804,16 @@ func Build(path string) {
 
 					case ev := <-watcher.Event:
 						if !reloading {
-							log.Println("event:", ev)
+							fname := fmt.Sprintf("%v", ev)
+							
+							if TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
 							//Build( GOHOME + "/" + serverconfig )
-							reloading = true
-							process <- true
-							//	done <- true
-
-							done <- true
-
+								reloading = true
+								process <- true
+								//	done <- true
+								done <- true
+								break
+							}
 						} /* else if !brokep {
 
 						}*/
@@ -1765,7 +1821,7 @@ func Build(path string) {
 				}
 			}()
 
-			err = watcher.Watch(GOHOME + "/" + serverconfig)
+			err = watcher.Watch(fmt.Sprintf("%s/", GOHOME))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -1774,8 +1830,8 @@ func Build(path string) {
 			//process <- false
 			<-done
 
-			close(process)
-			close(done)
+			defer close(process)
+			defer close(done)
 			watcher.RemoveWatch(path)
 			watcher.Close()
 			log.Println("🤔 Refreshing")
@@ -1796,7 +1852,7 @@ func Build(path string) {
 		if os.Args[1] == "--test" {
 			//test console
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			color.Magenta("Welcome to the Gopher Sauce test console.")
 			color.Red("List of commands : ")
 			color.Red("Test a GoS method (func) : m <method name> args...(Can use golang statements as well)")
@@ -1811,14 +1867,14 @@ func Build(path string) {
 		if os.Args[1] == "--test-f" {
 			//test console
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			VmdOne()
 		}
 
 		if os.Args[1] == "--bench" {
 			//test console
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			color.Magenta("Welcome to the Gopher Sauce benchmark console.")
 			color.Red("List of commands : ")
 			color.Red("Benchmark a GoS method (func) : m <method name> args...(Can use golang statements as well)")
@@ -1833,7 +1889,7 @@ func Build(path string) {
 		if os.Args[1] == "--bench-f" {
 			//test console
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 
 			VmPOne()
 		}
@@ -1845,7 +1901,7 @@ func Build(path string) {
 			}
 			//create both zips
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata  " + webroot + "/... " + template_root + "/...")
+			core.RunCmd("go-bindata  " + webroot + "/... " + templateroot + "/...")
 			core.RunCmd("go build")
 		}
 	} else if coreTemplate.Type == "bind" {
@@ -1856,7 +1912,7 @@ func Build(path string) {
 			os.Chdir(GOHOME)
 			//create both zips
 			fmt.Println("📦 Invoking go-bindata")
-			core.RunCmd(os.ExpandEnv("$GOPATH") + `/bin/go-bindata ` + webroot + "/... " + template_root + "/...")
+			core.RunCmd(os.ExpandEnv("$GOPATH") + `/bin/go-bindata ` + webroot + "/... " + templateroot + "/...")
 			body, er := ioutil.ReadFile(GOHOME + "/bindata.go")
 			if er != nil {
 				fmt.Println(er)
@@ -1968,11 +2024,11 @@ func main() {
 
 		if strings.Contains(os.Args[1], "--") {
 			webroot = "web"
-			template_root = "tmpl"
+			templateroot = "tmpl"
 			serverconfig = "gos.gxml"
 		} else {
 			webroot = os.Args[4]
-			template_root = os.Args[5]
+			templateroot = os.Args[5]
 			serverconfig = os.Args[3]
 		}
 
@@ -1990,7 +2046,7 @@ func main() {
 	   	fmt.Printf("We need your Gos Project config source (%v)\n", GOHOME)
 	   	fmt.Scanln(&serverconfig)
 	    //fmt.Println(GOHOME)
-		webroot,template_root = core.DoubleInput("What is the name of your webroot's folder ?", "What is the name of your template folder? ")
+		webroot,templateroot = core.DoubleInput("What is the name of your webroot's folder ?", "What is the name of your template folder? ")
 			fmt.Println("Are you ready to begin? ");
 			if core.AskForConfirmation() {
 				fmt.Println("ΩΩ Operation Started!!");
@@ -2001,7 +2057,7 @@ func main() {
 				}
 
 				coreTemplate.WriteOut = false
-				core.Process(coreTemplate,GOHOME, webroot,template_root);
+				core.Process(coreTemplate,GOHOME, webroot,templateroot);
 				fmt.Println("One moment...")
 				core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 	    	    core.RunCmd("go get github.com/gorilla/sessions")
@@ -2011,7 +2067,7 @@ func main() {
 				if core.AskForConfirmation() {
 					os.Chdir(GOHOME)
 					fmt.Println("Invoking go-bindata");
-					core.RunCmd("go-bindata -debug " + webroot +"/... " + template_root + "/...")
+					core.RunCmd("go-bindata -debug " + webroot +"/... " + templateroot + "/...")
 					//time.Sleep(time.Second*100 )
 					//core.RunFile(GOHOME, coreTemplate.Output)
 					core.RunCmd("go build")
@@ -2030,7 +2086,7 @@ func main() {
 						os.Chdir(GOHOME)
 						//create both zips
 						fmt.Println("Invoking go-bindata");
-						core.RunCmd(  "go-bindata  " + webroot +"/... " + template_root + "/...")
+						core.RunCmd(  "go-bindata  " + webroot +"/... " + templateroot + "/...")
 						core.RunCmd("go build")
 
 					}
@@ -2040,7 +2096,7 @@ func main() {
 							os.Chdir(GOHOME)
 							//create both zips
 							 fmt.Println("Invoking go-bindata");
-							 core.RunCmd( os.ExpandEnv("$GOPATH") + `/bin/go-bindata `  + webroot +"/... " + template_root + "/...")
+							 core.RunCmd( os.ExpandEnv("$GOPATH") + `/bin/go-bindata `  + webroot +"/... " + templateroot + "/...")
 							 body,er := ioutil.ReadFile(GOHOME + "/bindata.go")
 							 if er != nil {
 							 	fmt.Println(er)
