@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"runtime"
 	//"go/types"
 )
 
@@ -407,7 +408,7 @@ import (`
     `
 		}
 
-		//fmt.Printf("APi Methods %v\n",api_methods)
+		//log.Printf("APi Methods %v\n",api_methods)
 		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
@@ -434,7 +435,7 @@ import (`
 		netMa += `}`
 
 		for _, imp := range template.RootImports {
-			//fmt.Println(imp)
+			//log.Println(imp)
 			if !strings.Contains(imp.Src, ".gxml") {
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + imp.Src
 				if strings.Contains(imp.Src, "\"") {
@@ -443,21 +444,21 @@ import (`
 				} 
 				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 					color.Red("Package not found")
-					fmt.Println("∑ Downloading Package " + imp.Src)
+					log.Println("∑ Downloading Package " + imp.Src)
 					if strings.Contains(imp.Src, "\"") {
 						rfset := strings.Split(imp.Src,"\"")
 						logg,err := RunCmdSmart("go get -v " + rfset[1])
 						if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 						} else {
-							fmt.Println("go get ", rfset[1] , "Ok :" , logg)
+							log.Println("go get ", rfset[1] , "Ok :" , logg)
 						}
 					} else {
 						logg,err := RunCmdSmart("go get -v " + imp.Src)
 						if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 						}  else {
-							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+							log.Println("go get ", imp.Src , "Ok :" , logg)
 						}
 					}
 				}
@@ -471,23 +472,23 @@ import (`
 				dir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit, "/")
 				if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 					color.Red("Package not found")
-					fmt.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
+					log.Println("∑ Downloading Package " + strings.Join(pathsplit, "/"))
 
 
 					logg ,err := RunCmdSmart("go get -v " + strings.Join(pathsplit, "/"))
 					if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 					}  else {
-							fmt.Println("go get ", strings.Join(pathsplit, "/"), "Ok :" , logg)
+							log.Println("go get ", strings.Join(pathsplit, "/"), "Ok :" , logg)
 					}
 				}
 				//split and replace last section
-				fmt.Println("∑ Processing XML Yåå ", pathsplit)
+				log.Println("∑ Processing XML Yåå ", pathsplit)
 				xmlPackageDir := os.ExpandEnv("$GOPATH") + "/src/" + strings.Join(pathsplit, "/") + "/"
 				xml_iter, _ := LoadGos(xmlPackageDir + gosName)
 				if xml_iter.Package != "" {
 					//copy gole with given path -
-					fmt.Println("Installing Resources into project!")
+					log.Println("Installing Resources into project!")
 					//delete prior to copy
 					//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
 					//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
@@ -495,12 +496,12 @@ import (`
 					//CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
 					//CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
 				} else {
-					fmt.Println("∑ Error, Couldn't import your files no package name specified")
+					log.Println("∑ Error, Couldn't import your files no package name specified")
 				}
 			}
 		}
 
-		//	fmt.Println(template.Methods.Methods[0].Name)
+		//	log.Println(template.Methods.Methods[0].Name)
 
 		for _, imp := range net_imports {
 			local_string += `
@@ -583,7 +584,7 @@ import (`
 				    p.Session = session
 				    p.R = r
 				    if err != nil {
-				       fmt.Print(err)
+				       log.Print(err)
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
@@ -647,7 +648,7 @@ import (`
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r)
 				  if err != nil {
-				  		fmt.Println(err)
+				  		log.Println(err)
 				        http.Error(w, err.Error(), http.StatusInternalServerError)
 				        return
 				  }
@@ -763,7 +764,7 @@ import (`
 		//Lets Do structs
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-				fmt.Println("Processing Struct : " + imp.Name)
+				log.Println("Processing Struct : " + imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
 				local_string += `
 			type ` + imp.Name + ` struct {`
@@ -781,7 +782,7 @@ import (`
 		//Create an object map
 		for _, imp := range template.Header.Objects {
 			//struct return and function
-			fmt.Println("∑ Processing object :" + imp.Name)
+			log.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
 				available_methods = append(available_methods, imp.Name)
@@ -793,7 +794,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return
 					}
 					return
@@ -810,7 +811,7 @@ import (`
 			for _, im := range delegateMethods {
 
 				if stripSpaces(im) != "" {
-					fmt.Println(imp.Name + "->" + im)
+					log.Println(imp.Name + "->" + im)
 					function_map := strings.Split(im, ")")
 
 					if !contains(int_mappings, function_map[0]+imp.Templ) {
@@ -825,7 +826,7 @@ import (`
 
 							 */
 							procc_funcs := true
-							fmt.Println()
+							log.Println()
 
 							if meth.Limit != "" {
 								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
@@ -880,10 +881,10 @@ import (`
 			}
 
 			//create Unused methods methods
-			fmt.Println(int_methods)
+			log.Println(int_methods)
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					fmt.Println("Processing : " + imp)
+					log.Println("Processing : " + imp)
 					meth := template.findMethod(imp)
 					addedit := false
 					if meth.Returntype == "" {
@@ -918,7 +919,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return ""
 					}
 					} else {
@@ -937,7 +938,7 @@ import (`
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -955,7 +956,7 @@ import (`
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -965,7 +966,7 @@ import (`
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return 
 					}
 					} else {
@@ -980,7 +981,7 @@ import (`
 			local_string += `
 			func dummy_timer(){
 				dg := time.Second *5
-				fmt.Println(dg)
+				log.Println(dg)
 			}`
 
 			local_string += `
@@ -1002,16 +1003,16 @@ import (`
 
 				req, err := http.NewRequest(os.Args[2], "http://example.com" + path,bytes.NewReader(params) )
 				if err != nil {
-					fmt.Printf("error",err)
+					log.Printf("error",err)
 				}
 
 				w := httptest.NewRecorder()
 				mHandler(w, req)
 
-				fmt.Printf("%s", w.Body.String())
+				log.Printf("%s", w.Body.String())
 			}`
 
-			fmt.Println("Saving file to " + r + "/" + template.Output)
+			log.Println("Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
 
@@ -1048,14 +1049,14 @@ import (`
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request (` + imp.Path +`) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
-					          fmt.Println("Reason : ",n)
+					          log.Println("Web request (` + imp.Path +`) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
+					          log.Println("Reason : ",n)
 					          ` + TraceOpt + `
 					         	w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("` + template.ErrorPage + `")
 								 if err != nil {
-								        	fmt.Println(err.Error())
+								        	log.Println(err.Error())
 								        	callmet = true	        	
 								        	return
 								 }
@@ -1099,14 +1100,14 @@ import (`
 					lastLine := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					          fmt.Println("Web request (` + imp.Path + `) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
-					          fmt.Println("Reason : ",n)
+					          log.Println("Web request (` + imp.Path + `) failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
+					          log.Println("Reason : ",n)
 					          ` +TraceOpt +`
 					        	 w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("` + template.ErrorPage + `")
 								 if err != nil {
-								        	fmt.Println(err.Error())
+								        	log.Println(err.Error())
 								        	callmet = true	        	
 								        	return 
 								 }
@@ -1168,7 +1169,7 @@ import (`
     `
 		}
 
-		//fmt.Printf("APi Methods %v\n",api_methods)
+		//log.Printf("APi Methods %v\n",api_methods)
 		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
@@ -1178,7 +1179,7 @@ import (`
 		int_lok := []string{}
 
 		/*	for _,imp := range template.RootImports {
-					//fmt.Println(imp)
+					//log.Println(imp)
 				if strings.Contains(imp.Src,".gxml") {
 
 					pathsplit := strings.Split(imp.Src,"/")
@@ -1186,28 +1187,28 @@ import (`
 					pathsplit = pathsplit[:len(pathsplit)-1]
 					if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/"  + strings.Join(pathsplit,"/")); os.IsNotExist(err){
 							color.Red("Package not found")
-							fmt.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
+							log.Println("∑ Downloading Package " + strings.Join(pathsplit,"/"))
 							RunCmdSmart("go get -v " + strings.Join(pathsplit,"/"))
 					}
 					//split and replace last section
-					fmt.Println("∑ Processing XML Yåå ", pathsplit)
+					log.Println("∑ Processing XML Yåå ", pathsplit)
 					xmlPackageDir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + strings.Join(pathsplit,"/") + "/"
 						//copy gole with given path -
-						fmt.Println("Installing Resources into project!")
+						log.Println("Installing Resources into project!")
 						//delete prior to copy
 					//	RemoveContents(r + "/" + web + "/" + xml_iter.Package)
 					//	RemoveContents(r + "/" + tmpl + "/" + xml_iter.Package)
 					//	CopyDir(xmlPackageDir + xml_iter.Web, r + "/" + web + "/" + xml_iter.Package)
 					//	CopyDir(xmlPackageDir + xml_iter.Tmpl, r + "/" + tmpl + "/" + xml_iter.Package)
 					//	template.MergeWith( xmlPackageDir + gosName)
-					//	fmt.Println(template)
+					//	log.Println(template)
 
 				}
 			}
 		*/
 		for _, imp := range template.RootImports {
 			if !strings.Contains(imp.Src, ".gxml") {
-				//fmt.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
+				//log.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
 				if !contains(net_imports, imp.Src) {
 					net_imports = append(net_imports, imp.Src)
 				}
@@ -1230,7 +1231,7 @@ import (`
 			netMa += `,"c` + imp.Name + `" : net_c` + imp.Name
 		}
 
-		//	fmt.Println(template.Methods.Methods[0].Name)
+		//	log.Println(template.Methods.Methods[0].Name)
 
 		for _, imp := range net_imports {
 
@@ -1247,7 +1248,7 @@ import (`
 		structs_string = ``
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-				fmt.Println("🔧 Processing Struct : " + imp.Name)
+				log.Println("🔧 Processing Struct : " + imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
 				structs_string += `
 			type ` + imp.Name + ` struct {`
@@ -1266,7 +1267,7 @@ import (`
 				
 				err := json.Unmarshal(data, &s) 
 				if err != nil {
-					fmt.Println(err.Error())
+					log.Println(err.Error())
 				}
 				
 				return &s
@@ -1337,7 +1338,7 @@ import (`
 				func dbDummy() {
 					smap := db.O{}
 					smap["key"] = "set"
-					fmt.Println(smap)
+					log.Println(smap)
 				}
 
 				func TraceTwo( sec int64) {
@@ -1357,13 +1358,13 @@ import (`
 				  	if err := trace.Start(&w); err != nil {
 				  		// trace.Start failed, so no writes yet.
 				  		// Can change header back to text content and send error code.
-				  		fmt.Println("Stack trace failed.")
+				  		log.Println("Stack trace failed.")
 				  		return
 				  	}
 				  	
 				  	trace.Stop()
 				  	ioutil.WriteFile("__heap", w.Bytes(), 0777)
-				  	//fmt.Println(w.String())
+				  	//log.Println(w.String())
 				  }
 				func Trace( nam string) {
   
@@ -1382,13 +1383,13 @@ import (`
 				  	if err := trace.Start(&w); err != nil {
 				  		// trace.Start failed, so no writes yet.
 				  		// Can change header back to text content and send error code.
-				  		fmt.Println("Stack trace failed.")
+				  		log.Println("Stack trace failed.")
 				  		return
 				  	}
 				  	
 				  	trace.Stop()
 				  	ioutil.WriteFile(nam, w.Bytes(), 0777)
-				  	//fmt.Println(w.String())
+				  	//log.Println(w.String())
 				  }
 
 				func net_importcss(s string) string {
@@ -1415,7 +1416,7 @@ import (`
 					           	 
 						         pag,err := loadPage("` + template.ErrorPage + `" )
 						        if err != nil {
-						        	fmt.Println(err.Error())	        	
+						        	log.Println(err.Error())	        	
 						        	return
 						        }
 						         if pag.isResource {
@@ -1433,7 +1434,7 @@ import (`
 				    p.Session = session
 				    p.R = r
 				    if err != nil {
-				      // fmt.Print(err)
+				      // log.Print(err)
 				    	return false
 				    } else {
 				    t := template.New("PageWrapper")
@@ -1442,13 +1443,13 @@ import (`
 				    outp := new(bytes.Buffer)
 				    error := t.Execute(outp, p)
 				    if error != nil {
-				    fmt.Println(error.Error())
+				    log.Println(error.Error())
 				    	DebugTemplate( w,r , fmt.Sprintf("` + web +`%s", r.URL.Path))
 				    	w.WriteHeader(http.StatusInternalServerError)
 					    w.Header().Set("Content-Type",  "text/html")
 						pag,err := loadPage("` + template.ErrorPage + `" )
 						 if err != nil {
-						        	fmt.Println(err.Error())	        	
+						        	log.Println(err.Error())	        	
 						        	return false
 						 }
 						  if pag.isResource {
@@ -1538,9 +1539,9 @@ import (`
 					linestring := ""
 					defer func() {
 					       if n := recover(); n != nil {
-					           	fmt.Println()
-					           	// fmt.Println(n)
-					           			fmt.Println("Error on line :", lastline + 1 ,":" + strings.TrimSpace(linestring)) 
+					           	log.Println()
+					           	// log.Println(n)
+					           			log.Println("Error on line :", lastline + 1 ,":" + strings.TrimSpace(linestring)) 
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
@@ -1556,14 +1557,14 @@ import (`
 				    p.Session = session
 				    p.R = r
 				    if err != nil {
-				       	fmt.Print(err)
+				       	log.Print(err)
 				    	
 				    } else {
 				    
 				  
 				   
 				    lines := strings.Split(string(body), "\n")
-				   // fmt.Println( lines )
+				   // log.Println( lines )
 				    linebuffer := ""
 				    waitend := false
 				    open := 0
@@ -1590,7 +1591,7 @@ import (`
 					    	linestring =  line
 					    	error := t.Execute(outp, p)
 						    if error != nil {
-						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						   		log.Println("Error on line :", i + 1,line,error.Error())   
 						    } 
 				    	}
 				   
@@ -1611,7 +1612,7 @@ import (`
 					    	linestring =  line
 					    	error := t.Execute(outp, p)
 						    if error != nil {
-						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						   		log.Println("Error on line :", i + 1,line,error.Error())   
 						    } 
 
 				    	}
@@ -1627,7 +1628,7 @@ import (`
 				    	linestring = line
 				    	error := t.Execute(outp, p)
 					    if error != nil {
-					   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+					   		log.Println("Error on line :", i + 1,line,error.Error())   
 					    }  
 						}
 
@@ -1652,8 +1653,8 @@ import (`
 					defer func() {
 					       if n := recover(); n != nil {
 					         
-					           			fmt.Println("Error on line :", lastline + 1,":" + strings.TrimSpace(linestring)) 
-					           			fmt.Println(n)
+					           			log.Println("Error on line :", lastline + 1,":" + strings.TrimSpace(linestring)) 
+					           			log.Println(n)
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
 					    }()	
@@ -1663,14 +1664,14 @@ import (`
 				    body, err := Asset(filename)
 				   
 				    if err != nil {
-				       	fmt.Print(err)
+				       	log.Print(err)
 				    	
 				    } else {
 				    
 				  
 				   
 				    lines := strings.Split(string(body), "\n")
-				   // fmt.Println( lines )
+				   // log.Println( lines )
 				    linebuffer := ""
 				    waitend := false
 				    open := 0
@@ -1696,7 +1697,7 @@ import (`
 					    	linestring =  line	    	
 					    	error := t.Execute(outp, intrf)
 						    if error != nil {
-						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						   		log.Println("Error on line :", i + 1,line,error.Error())   
 						    } 
 				    	}
 
@@ -1718,7 +1719,7 @@ import (`
 					    	linestring =  line
 					    	error := t.Execute(outp, intrf)
 						    if error != nil {
-						   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+						   		log.Println("Error on line :", i + 1,line,error.Error())   
 						    } 
 
 				    	}
@@ -1734,7 +1735,7 @@ import (`
 				    	linestring = line
 				    	error := t.Execute(outp, intrf)
 					    if error != nil {
-					   		fmt.Println("Error on line :", i + 1,line,error.Error())   
+					   		log.Println("Error on line :", i + 1,line,error.Error())   
 					    }  
 						}
 
@@ -1756,13 +1757,13 @@ import (`
 				  // fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 				  p,err := loadPage(r.URL.Path)
 				  if err != nil {	
-				  		fmt.Println(err.Error())
+				  		log.Println(err.Error())
 				  	` + TraceOpt + `
 				        w.WriteHeader(http.StatusNotFound)				  	
 				       
 				        pag,err := loadPage("` + template.NPage + `")
 				        if err != nil {
-				        	fmt.Println(err.Error())
+				        	log.Println(err.Error())
 				        	//context.Clear(r)
 				        	return
 				        }
@@ -1782,7 +1783,7 @@ import (`
 
 				      	renderTemplate(w, r, fmt.Sprintf("` + web  + `%s", r.URL.Path) , p,session)
 				     
-				     // fmt.Println(w)
+				     // log.Println(w)
 				  } else {
 				  		w.Header().Set("Cache-Control",  "public")
 				  		if strings.Contains(r.URL.Path, ".css") {
@@ -1926,7 +1927,7 @@ import (`
 		//Create an object map
 		for _, imp := range template.Header.Objects {
 			//struct return and function
-			fmt.Println("∑ Processing object :" + imp.Name)
+			log.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
 				if imp.Templ == "" {
@@ -1942,7 +1943,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return
 					}
 					return
@@ -1959,7 +1960,7 @@ import (`
 			for _, im := range delegateMethods {
 
 				if stripSpaces(im) != "" {
-					fmt.Println(imp.Name + "->" + im)
+					log.Println(imp.Name + "->" + im)
 					function_map := strings.Split(im, ")")
 
 					if !contains(int_mappings, function_map[0]+imp.Templ) {
@@ -1974,7 +1975,7 @@ import (`
 
 							 */
 							procc_funcs := true
-							fmt.Println()
+							log.Println()
 
 							if meth.Limit != "" {
 								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
@@ -2029,7 +2030,7 @@ import (`
 			}
 
 			//create Unused methods methods
-		//	fmt.Println(int_methods)
+		//	log.Println(int_methods)
 		
 		
 
@@ -2040,7 +2041,7 @@ import (`
 
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					fmt.Println("🚰 Processing : " + imp)
+					log.Println("🚰 Processing : " + imp)
 					meth := template.findMethod(imp)
 					addedit := false
 					if meth.Returntype == "" {
@@ -2063,8 +2064,8 @@ import (`
 							lastLine := ""
 							defer func() {
 							       if n := recover(); n != nil {
-							          fmt.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
-							          fmt.Println("Reason : ",n)
+							          log.Println("Pipeline failed at line :",GetLine("` + template.Name + `", lastLine),"Of file:` + template.Name + ` :"` + `, strings.TrimSpace(lastLine))
+							          log.Println("Reason : ",n)
 							         
 							        }
 								}()`
@@ -2105,7 +2106,7 @@ import (`
 						defer func() {
 					       if n := recover(); n != nil {
 					           	   color.Red("Error loading template in path (` + imp.Name + `) : " + filename )
-					           	// fmt.Println(n)
+					           	// log.Println(n)
 					           		DebugTemplatePath(filename, &d)	
 					           	 //http.Redirect(w,r,"` + template.ErrorPage + `",307)
 					        }
@@ -2115,7 +2116,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return ""
 					}
 					} else {
@@ -2165,7 +2166,7 @@ import (`
 					    }()
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -2175,7 +2176,7 @@ import (`
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return 
 					}
 					} else {
@@ -2189,7 +2190,7 @@ import (`
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return 
 					}
 					} else {
@@ -2204,13 +2205,13 @@ import (`
 			local_string += `
 			func dummy_timer(){
 				dg := time.Second *5
-				fmt.Println(dg)
+				log.Println(dg)
 			}`
 
 			local_string += `
 
 			func main() {
-				fmt.Printf("%d\n", os.Getpid())
+				log.Printf("%d\n", os.Getpid())
 				` + template.Main
 				if template.Prod {
 					local_string += ` store.Options = &sessions.Options{
@@ -2225,7 +2226,7 @@ import (`
 				}
 			local_string += ` 
 					 ` + timeline + `
-					 fmt.Printf("Listenning on Port %v\n", "` + template.Port + `")
+					 log.Printf("Listenning on Port %v\n", "` + template.Port + `")
 					 http.HandleFunc( "/",  makeHandler(handler))
 
 
@@ -2237,7 +2238,7 @@ import (`
 
 					}`
 
-			fmt.Println("🔗 Saving file to " + r + "/" + template.Output)
+			log.Println("🔗 Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
 
@@ -2272,7 +2273,7 @@ import (`
 
 		}
 
-		fmt.Printf("APi Methods %v\n", api_methods)
+		log.Printf("APi Methods %v\n", api_methods)
 		netMa := `template.FuncMap{"GetLocation": net_supportGetLocation,"Run": net_supportRunjs,"PlaySound" : net_supportSoundPlay,"StopSound" : net_supportSoundStop,"SetVolume" : net_supportSoundSetVolume,"GetVolume" : net_supportSoundGetVolume, "isPlaying" : net_supportSoundisPlaying,"trackMotion": net_supportMotionStart,"stopMotion" : net_supportMotionStop,"ShowLoad" : net_supportShowload, "HideLoad" : net_supportHideLoad, "Device": net_supportDevice,"TakePicture" : net_supportTakePicture, "Notify" : net_supportNotify,"AbsolutePath" : net_supportFileAbsPath,"Download" : net_supportFileDownload,"Download_lg" : net_supportFileDownloadLarge,"Base64" : net_supportBase64,"DeleteRes" : net_supportDeleteFile , "Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
@@ -2304,7 +2305,7 @@ import (`
 
 	
 
-		//fmt.Println(template.Methods.Methods[0].Name)
+		//log.Println(template.Methods.Methods[0].Name)
 
 		for _, imp := range net_imports {
 			local_string += `
@@ -2523,7 +2524,7 @@ import (`
 			
 				func dummy_timer(){
 					dg := time.Second *5
-					fmt.Println(dg)
+					log.Println(dg)
 				}
 
 				func LoadUrl(path string,bod []byte,method string,flow Flow)[]byte { 
@@ -2541,7 +2542,7 @@ import (`
 
 								 p,err := loadPage(path)
 								  if err != nil {
-								  	fmt.Println(err)
+								  	log.Println(err)
 								        return []byte("Error ")
 								  }
 
@@ -2672,7 +2673,7 @@ import (`
     				data,_ := decrypt(body)
     				err = json.Unmarshal(data, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return session{}
 					}
 					return d
@@ -2688,7 +2689,7 @@ import (`
     				data,_ := decrypt(body)
     				err = json.Unmarshal(data, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return make(map[string]interface{})
 					}
 					return d.(map[string]interface{})
@@ -2701,25 +2702,25 @@ import (`
 				
 					data,er := encrypt([]byte(mResponse(s)))
 					if er != nil {
-						fmt.Println(er)
+						log.Println(er)
 						return
 					}
 					err := ioutil.WriteFile(os.TempDir() + "/session", data,0644)
 					if err != nil {
-						fmt.Println(err)
+						log.Println(err)
 					}
 				}
 
 					func keepSessionMap(s interface{}){
-					fmt.Println(mResponse(s))
+					log.Println(mResponse(s))
 					data,er := encrypt([]byte(mResponse(s)))
 					if er != nil {
-						fmt.Println(er)
+						log.Println(er)
 						return
 					}
 					err := ioutil.WriteFile(os.TempDir() + "/session", data,0644)
 					if err != nil {
-						fmt.Println(err)
+						log.Println(err)
 					}
 				}
 
@@ -2729,7 +2730,7 @@ import (`
 				   body, err := Asset(filename)
 				   outp := new(bytes.Buffer)
 				    if err != nil {
-				       fmt.Print(err)
+				       log.Print(err)
 				    } else {
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(` + netMa + `)
@@ -2737,7 +2738,7 @@ import (`
 				   
 				    error := t.Execute(outp, f)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    return nil
 				    } 
 
@@ -2871,7 +2872,7 @@ import (`
 		//Lets Do structs
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-				fmt.Println("Processing Struct : " + imp.Name)
+				log.Println("Processing Struct : " + imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
 				local_string += `
 			type ` + imp.Name + ` struct {`
@@ -2895,7 +2896,7 @@ import (`
 		//Create an object map
 		for _, imp := range template.Header.Objects {
 			//struct return and function
-			fmt.Println("∑ Processing object :" + imp.Name)
+			log.Println("∑ Processing object :" + imp.Name)
 			if !contains(available_methods, imp.Name) {
 				//addcontructor
 				available_methods = append(available_methods, imp.Name)
@@ -2907,7 +2908,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return
 					}
 					return
@@ -2924,7 +2925,7 @@ import (`
 			for _, im := range delegateMethods {
 
 				if stripSpaces(im) != "" {
-					fmt.Println(imp.Name + "->" + im)
+					log.Println(imp.Name + "->" + im)
 					function_map := strings.Split(im, ")")
 
 					if !contains(int_mappings, function_map[0]+imp.Templ) {
@@ -2939,7 +2940,7 @@ import (`
 
 							 */
 							procc_funcs := true
-							fmt.Println()
+							log.Println()
 
 							if meth.Limit != "" {
 								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
@@ -2994,10 +2995,10 @@ import (`
 			}
 
 			//create Unused methods methods
-			fmt.Println(int_methods)
+			log.Println(int_methods)
 			for _, imp := range available_methods {
 				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					fmt.Println("Processing : " + imp)
+					log.Println("Processing : " + imp)
 					meth := template.findMethod(imp)
 					addedit := false
 					if meth.Returntype == "" {
@@ -3032,7 +3033,7 @@ import (`
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return ""
 					}
 					} else {
@@ -3051,7 +3052,7 @@ import (`
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -3072,7 +3073,7 @@ import (`
 			
 				    error := t.Execute(output, &d)
 				    if error != nil {
-				    fmt.Print(error)
+				    log.Print(error)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -3082,7 +3083,7 @@ import (`
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return 
 					}
 					} else {
@@ -3095,7 +3096,7 @@ import (`
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						fmt.Println("error:", err)
+						log.Println("error:", err)
 						return 
 					}
 					} else {
@@ -3107,7 +3108,7 @@ import (`
 
 			//Methods have been added
 
-			fmt.Println("Saving file to " + r + "/" + template.Output)
+			log.Println("Saving file to " + r + "/" + template.Output)
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
 
@@ -3118,7 +3119,7 @@ import (`
 }
 
 func RunFile(root string, file string) {
-	fmt.Println("∑ Running " + root + "/" + file)
+	log.Println("∑ Running " + root + "/" + file)
 	exe_cmd("go run " + root + "/" + file)
 }
 
@@ -3128,13 +3129,13 @@ func RunCmd(cmd string) {
 
 func RunCmdString(cmd string) string {
 	parts := strings.Fields(cmd)
-	fmt.Println(cmd)
+	log.Println(cmd)
 	var out *exec.Cmd
 	if len(parts) == 5 {
-		fmt.Println("Match")
+		log.Println("Match")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
 	} else if len(parts) == 9 {
-		fmt.Println("Match GPGl")
+		log.Println("Match GPGl")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
 	} else if len(parts) == 4 {
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
@@ -3150,20 +3151,20 @@ func RunCmdString(cmd string) string {
 	out.Stdout = &ou
 	err := out.Run()
 	if err != nil {
-		fmt.Println("Error")
+		log.Println("Error")
 	}
 	return ou.String()
 }
 
 func RunCmdByte(cmd string) []byte {
 	parts := strings.Fields(cmd)
-	fmt.Println(cmd)
+	log.Println(cmd)
 	var out *exec.Cmd
 	if len(parts) == 5 {
-		fmt.Println("Match")
+		log.Println("Match")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
 	} else if len(parts) == 9 {
-		fmt.Println("Match GPGl")
+		log.Println("Match GPGl")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
 	} else if len(parts) == 4 {
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
@@ -3179,14 +3180,14 @@ func RunCmdByte(cmd string) []byte {
 	out.Stdout = &ou
 	err := out.Run()
 	if err != nil {
-		fmt.Println("Error")
+		log.Println("Error")
 	}
 	return ou.Bytes()
 }
 
 func RunCmdSmartB(cmd string) ([]byte, error) {
 	parts := strings.Fields(cmd)
-	fmt.Println(parts[0], parts[1:])
+	log.Println(parts[0], parts[1:])
 	var out *exec.Cmd
 
 	if len(parts) == 4 {
@@ -3199,7 +3200,7 @@ func RunCmdSmartB(cmd string) ([]byte, error) {
 	out.Stderr = &our
 
 	err := out.Run()
-	fmt.Println(our.String())
+	log.Println(our.String())
 	if err != nil {
 		return our.Bytes(), err
 	}
@@ -3208,7 +3209,7 @@ func RunCmdSmartB(cmd string) ([]byte, error) {
 
 func RunCmdSmart(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-		//fmt.Println(parts)
+		//log.Println(parts)
 	var out *exec.Cmd
 
 	if len(parts) == 4 {
@@ -3221,10 +3222,10 @@ func RunCmdSmart(cmd string) (string, error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	//fmt.Println(BytesToString(our.Bytes()))
+	//log.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-		//	fmt.Println("%v", err.Error())
+		//	log.Println("%v", err.Error())
 		return our.String(), err
 	}
 	return ou.String(), nil
@@ -3232,7 +3233,7 @@ func RunCmdSmart(cmd string) (string, error) {
 
 func RunCmdSmarttwo(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-	//	fmt.Println(parts[0],parts[1:])
+	//	log.Println(parts[0],parts[1:])
 	var out *exec.Cmd
 
 	out = exec.Command(parts[0], parts[1:]...)
@@ -3241,10 +3242,10 @@ func RunCmdSmarttwo(cmd string) (string, error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	fmt.Println(BytesToString(our.Bytes()))
+	log.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-		//	fmt.Println("%v", err.Error())
+		//	log.Println("%v", err.Error())
 		return our.String(), err
 	}
 	return ou.String(), nil
@@ -3252,7 +3253,7 @@ func RunCmdSmarttwo(cmd string) (string, error) {
 
 func RunCmdSmartZ(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-	//	fmt.Println(parts[0],parts[1:])
+	//	log.Println(parts[0],parts[1:])
 	var out *exec.Cmd
 
 	out = exec.Command(parts[0], parts[1])
@@ -3261,10 +3262,10 @@ func RunCmdSmartZ(cmd string) (string, error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	fmt.Println(BytesToString(our.Bytes()))
+	log.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-		//	fmt.Println("%v", err.Error())
+		//	log.Println("%v", err.Error())
 		return ou.String() + our.String(), err
 	}
 	return ou.String(), nil
@@ -3272,7 +3273,7 @@ func RunCmdSmartZ(cmd string) (string, error) {
 
 func RunCmdSmartP(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-	//	fmt.Println(parts[0],parts[1:])
+	//	log.Println(parts[0],parts[1:])
 	var out *exec.Cmd
 
 	out = exec.Command(parts[0], parts[1], parts[2], "-benchmem")
@@ -3281,10 +3282,10 @@ func RunCmdSmartP(cmd string) (string, error) {
 	out.Stdout = &ou
 	out.Stderr = &our
 
-	fmt.Println(BytesToString(our.Bytes()))
+	log.Println(BytesToString(our.Bytes()))
 	err := out.Run()
 	if err != nil {
-		//	fmt.Println("%v", err.Error())
+		//	log.Println("%v", err.Error())
 		return ou.String() + our.String(), err
 	}
 	return ou.String(), nil
@@ -3292,14 +3293,14 @@ func RunCmdSmartP(cmd string) (string, error) {
 
 func RunCmdSmartCmb(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-	fmt.Println(parts[0], parts[1:])
+	log.Println(parts[0], parts[1:])
 	var out *exec.Cmd
 
 	out = exec.Command(parts[0], parts[1:]...)
 
 	ou, err := out.CombinedOutput()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return "", err
 	}
 	return string(ou), nil
@@ -3311,16 +3312,16 @@ func BytesToString(b []byte) string {
 
 func RunCmdB(cmd string) {
 	parts := strings.Fields(cmd)
-	fmt.Println(cmd)
+	log.Println(cmd)
 	var out *exec.Cmd
 	if len(parts) == 5 {
-		fmt.Println("Match")
+		log.Println("Match")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
 	} else if len(parts) == 9 {
-		fmt.Println("Match GPGl")
+		log.Println("Match GPGl")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], parts[8])
 	} else if len(parts) == 8 {
-		fmt.Println("Match decrypt GPGl")
+		log.Println("Match decrypt GPGl")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7], "pass")
 
 	} else if len(parts) == 4 {
@@ -3337,21 +3338,21 @@ func RunCmdB(cmd string) {
 	out.Stdout = &ou
 	err := out.Run()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	fmt.Println(ou.String())
+	log.Println(ou.String())
 }
 
 func RunCmdA(cm string) error {
 
 	parts := strings.Fields(cm)
-	fmt.Println(parts)
+	log.Println(parts)
 	var cmd *exec.Cmd
-	fmt.Println("Match decrypt GPGl")
+	log.Println("Match decrypt GPGl")
 	cmd = exec.Command(parts[0], parts[1], parts[2], "--no-tty", parts[3], parts[4], parts[5], parts[6])
 	inpipe, err := cmd.StdinPipe()
 	if err != nil {
-		fmt.Println("Pipe : ", err)
+		log.Println("Pipe : ", err)
 	}
 	io.WriteString(inpipe, "")
 	var out bytes.Buffer
@@ -3360,25 +3361,24 @@ func RunCmdA(cm string) error {
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return err
 	}
-	fmt.Println("Result: " + out.String())
+	log.Println("Result: " + out.String())
 	return nil
 }
 
 func exe_cmd(cmd string) {
-		defer func() {
+	defer func() {
 		if n := recover(); n != nil {
 			
-			fmt.Println(n)
+			log.Println(n)
 		}
 	}()
 	parts := strings.Fields(cmd)
-	fmt.Println(cmd)
+	log.Println(cmd)
 	var out *exec.Cmd
 	if len(parts) == 5 {
-		fmt.Println("Match")
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3], parts[4])
 	} else if len(parts) == 4 {
 		out = exec.Command(parts[0], parts[1], parts[2], parts[3])
@@ -3391,13 +3391,13 @@ func exe_cmd(cmd string) {
 	}
 	stdoutStderr, err := out.CombinedOutput()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 	}
-	fmt.Printf("%s\n", stdoutStderr)
+	log.Printf("%s\n", stdoutStderr)
 }
 
 func Exe_Stall(cmd string, chn chan bool) {
-	//fmt.Println(cmd)
+	//log.Println(cmd)
 	parts := strings.Fields(cmd)
 	var out *exec.Cmd
 	if len(parts) > 3 {
@@ -3409,33 +3409,13 @@ func Exe_Stall(cmd string, chn chan bool) {
 	} else {
 		out = exec.Command(parts[0], parts[1], "2>&1")
 	}
-	stdout, err := out.StdoutPipe()
+	//stdout, err := out.StdoutPipe()
 
-	if err != nil {
-		fmt.Println("error occurred")
-		fmt.Printf("%s", err)
-	}
+	out.Stdout = os.Stdout
+    out.Stderr = os.Stderr
 	out.Start()
-	r := bufio.NewReader(stdout)
-
-	t := false
-
-	go func() {
-		for {
-			if t {
-				break
-			}
-			line, _, _ := r.ReadLine()
-			if string(line) != "" {
-				log.Println(string(line))
-			}
-
-		}
-	}()
-	tch, m := <-chn
-	if m && tch {
-		t = tch
-	}
+	//r := bufio.NewReader(stdout)
+	<-chn
 	log.Println("💣 Killing proc.")
 	out.Process.Kill()
 	/* _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
@@ -3444,10 +3424,11 @@ func Exe_Stall(cmd string, chn chan bool) {
 		log.Fatal(err)
 	}
 	*/
+	runtime.Goexit()
 }
 
 func Exe_Stalll(cmd string) {
-	fmt.Println(cmd)
+	log.Println(cmd)
 	parts := strings.Fields(cmd)
 	var out *exec.Cmd
 	if len(parts) > 2 {
@@ -3460,8 +3441,8 @@ func Exe_Stalll(cmd string) {
 	stdout, err := out.StdoutPipe()
 
 	if err != nil {
-		fmt.Println("error occurred")
-		fmt.Printf("%s", err)
+		log.Println("error occurred")
+		log.Printf("%s", err)
 	}
 	out.Start()
 	r := bufio.NewReader(stdout)
@@ -3470,7 +3451,7 @@ func Exe_Stalll(cmd string) {
 	for !t {
 		line, _, _ := r.ReadLine()
 		if string(line) != "" {
-			fmt.Println(string(line))
+			log.Println(string(line))
 		}
 
 	}
@@ -3478,7 +3459,7 @@ func Exe_Stalll(cmd string) {
 }
 
 func Exe_BG(cmd string) {
-	fmt.Println(cmd)
+	log.Println(cmd)
 	parts := strings.Fields(cmd)
 	var out *exec.Cmd
 	if len(parts) > 2 {
@@ -3490,8 +3471,8 @@ func Exe_BG(cmd string) {
 	}
 	stdout, err := out.StdoutPipe()
 	if err != nil {
-		fmt.Println("error occurred")
-		fmt.Printf("%s", err)
+		log.Println("error occurred")
+		log.Printf("%s", err)
 	}
 	out.Start()
 	r := bufio.NewReader(stdout)
@@ -3499,7 +3480,7 @@ func Exe_BG(cmd string) {
 	for !t {
 		line, _, _ := r.ReadLine()
 		if string(line) != "" {
-			fmt.Println(string(line))
+			log.Println(string(line))
 		}
 	}
 }
@@ -3611,7 +3592,7 @@ func CreateVGos(path string) *VGos {
 	}
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		log.Printf("error: %v", err)
 		return nil
 	}
 	return v
@@ -3631,7 +3612,7 @@ func (d *gos) MMethod(ne []Method) {
 
 func PLoadGos(pathraw string) (*gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("🎁 loading " + path)
+	log.Println("🎁 loading " + path)
 	v := &gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -3639,18 +3620,18 @@ func PLoadGos(pathraw string) (*gos, error) {
 	}
 
 	//obj := Error{}
-	//fmt.Println(obj);
+	//log.Println(obj);
 	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		log.Printf("error: %v", err)
 		return nil, nil
 	}
 
 	for _, imp := range v.RootImports {
-		//fmt.Println(imp.Src)
+		//log.Println(imp.Src)
 		if strings.Contains(imp.Src, ".gxml") {
 			v.MergeWithV(os.ExpandEnv("$GOPATH") + "/" + strings.Trim(imp.Src, "/"))
 			//copy files
@@ -3784,7 +3765,7 @@ func (d *gos) Set(attr, value string) {
 
 func VLoadGos(pathraw string) (gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("🎁 loading " + path)
+	log.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -3792,13 +3773,13 @@ func VLoadGos(pathraw string) (gos, error) {
 	}
 
 	//obj := Error{}
-	//fmt.Println(obj);
+	//log.Println(obj);
 	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("✊ error: %v", err)
+		log.Printf("✊ error: %v", err)
 		return v, nil
 	}
 
@@ -3808,20 +3789,20 @@ func VLoadGos(pathraw string) (gos, error) {
 	}
 	//process mergs
 	for _, imp := range v.RootImports {
-		//fmt.Println(imp.Src)
+		//log.Println(imp.Src)
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
-				//fmt.Println("")
+				//log.Println("")
 				color.Red("Package not found")
-				fmt.Println("🎁 Downloading Package " + imp.Src)
+				log.Println("🎁 Downloading Package " + imp.Src)
 				logg,err := RunCmdSmart("go get -v " + dir)
 				if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 				}  else {
-						   fmt.Println("go get ", dir , "Ok :" , logg)
+						   log.Println("go get ", dir , "Ok :" , logg)
 				}
 			}
 		} else {
@@ -3832,14 +3813,14 @@ func VLoadGos(pathraw string) (gos, error) {
 			} 
 			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
-				//fmt.Println("")
+				//log.Println("")
 						color.Red("Package not found")
-						fmt.Println("🎁 Downloading Package " + imp.Src)
+						log.Println("🎁 Downloading Package " + imp.Src)
 						logg,err := RunCmdSmart("go get -v " + imp.Src)
 						if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 						}  else {
-							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+							log.Println("go get ", imp.Src , "Ok :" , logg)
 						}
 					
 			}
@@ -3879,7 +3860,7 @@ func EscpaseGXML(data []byte) []byte {
 
 func LoadGos(pathraw string) (*gos, error) {
 	path := strings.Replace(pathraw, "\\", "/" , -1 )
-	fmt.Println("🎁 loading " + path)
+	log.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -3887,13 +3868,13 @@ func LoadGos(pathraw string) (*gos, error) {
 	}
 
 	//obj := Error{}
-	//fmt.Println(obj);
+	//log.Println(obj);
 	body = EscpaseGXML(body)
 	d := xml.NewDecoder(bytes.NewReader(body))
 	d.Strict = false
 	err = d.Decode(&v)
 	if err != nil {
-		fmt.Printf("✊ error: %v", err)
+		log.Printf("✊ error: %v", err)
 		return nil, nil
 	}
 
@@ -3903,23 +3884,23 @@ func LoadGos(pathraw string) (*gos, error) {
 	}
 	//process mergs
 	for _, imp := range v.RootImports {
-		//fmt.Println(imp.Src)
+		//log.Println(imp.Src)
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
 			dir = fmt.Sprintf("%s%s",dir,"/")
 			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
-				//fmt.Println("")
+				//log.Println("")
 
 				color.Red("Package not found")
-						fmt.Println("🎁 Downloading Package " + imp.Src)
+						log.Println("🎁 Downloading Package " + imp.Src)
 			
 				logg,err := RunCmdSmart("go get -v " + dir)
 				if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 				}  else {
-							fmt.Println("go get ", dir , "Ok :" , logg)
+							log.Println("go get ", dir , "Ok :" , logg)
 				}
 			}
 		} else {
@@ -3932,14 +3913,14 @@ func LoadGos(pathraw string) (*gos, error) {
 			dir = fmt.Sprintf("%s%s",dir,"/")
 			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
 				// path/to/whatever does not exist
-				//fmt.Println("")
+				//log.Println("")
 						color.Red("Package not found")
-						fmt.Println("🎁 Ddownloading Package " + imp.Src)
+						log.Println("🎁 Ddownloading Package " + imp.Src)
 						logg,err := RunCmdSmart("go get -v " + imp.Src)
 						if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 						}  else {
-							fmt.Println("go get ", imp.Src , "Ok :" , logg)
+							log.Println("go get ", imp.Src , "Ok :" , logg)
 						}
 					
 			}
@@ -3956,10 +3937,10 @@ func LoadGos(pathraw string) (*gos, error) {
 }
 
 func (d *gos) MergeWithV(target string) {
-	fmt.Println("∑ Merging " + target)
+	log.Println("∑ Merging " + target)
 	imp, err := LoadGos(target)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	} else {
 
 		for _, im := range imp.RootImports {
@@ -3983,7 +3964,7 @@ func (d *gos) MergeWithV(target string) {
 		//Specialize method for templates
 		//d.Variables = append(imp.Variables, d.Variables...)
 		if imp.Package != "" && imp.Type == "package" {
-			fmt.Println("Parsing Prefixes for " + imp.Package)
+			log.Println("Parsing Prefixes for " + imp.Package)
 			for _, im := range imp.Templates.Templates {
 				im.TemplateFile = imp.Package + "/" + im.TemplateFile
 				d.Templates.Templates = append(d.Templates.Templates, im)
@@ -4000,10 +3981,10 @@ func (d *gos) MergeWithV(target string) {
 }
 
 func (d *gos) MergeWith(target string) {
-	fmt.Println("∑ Merging " + target)
+	log.Println("∑ Merging " + target)
 	imp, err := LoadGos(target)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	} else {
 
 		for _, im := range imp.RootImports {
@@ -4013,16 +3994,16 @@ func (d *gos) MergeWith(target string) {
 				dir := strings.Join(srcP[:len(srcP)-1], "/")
 				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
 					// path/to/whatever does not exist
-					//fmt.Println("")
+					//log.Println("")
 
 					color.Red("Package not found")
-					fmt.Println("🎁 Downloading Package " + im.Src)
+					log.Println("🎁 Downloading Package " + im.Src)
 			
 					logg,err := RunCmdSmart("go get -v " + dir)
 					if err != nil {
-							fmt.Println("Error :"  , logg)
+							log.Println("Error :"  , logg)
 					}  else {
-							fmt.Println("go get ", dir , "Ok :" , logg)
+							log.Println("go get ", dir , "Ok :" , logg)
 					}
 				}
 			}
@@ -4043,7 +4024,7 @@ func (d *gos) MergeWith(target string) {
 		d.Variables = append(imp.Variables, d.Variables...)
 
 		if imp.Package != "" && imp.Type == "package" {
-			fmt.Println("Parsing Prefixes for " + imp.Package)
+			log.Println("Parsing Prefixes for " + imp.Package)
 			for _, im := range imp.Templates.Templates {
 				im.TemplateFile = imp.Package + "/" + im.TemplateFile
 				d.Templates.Templates = append(d.Templates.Templates, im)
@@ -4091,16 +4072,16 @@ func contains(s []string, e string) bool {
 }
 
 func DoubleInput(p1 string, p2 string) (r1 string, r2 string) {
-	fmt.Println(p1)
+	log.Println(p1)
 	fmt.Scanln(&r1)
-	fmt.Println(p2)
+	log.Println(p2)
 	fmt.Scanln(&r2)
 	return
 }
 
 func AskForConfirmation() bool {
 	var response string
-	fmt.Println("Please type yes or no and then press enter:")
+	log.Println("Please type yes or no and then press enter:")
 	_, err := fmt.Scanln(&response)
 	if err != nil {
 		log.Fatal(err)
@@ -4112,7 +4093,7 @@ func AskForConfirmation() bool {
 	} else if containsString(nokayResponses, response) {
 		return false
 	} else {
-		fmt.Println("Please type yes or no and then press enter:")
+		log.Println("Please type yes or no and then press enter:")
 		return AskForConfirmation()
 	}
 }

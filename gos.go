@@ -560,7 +560,7 @@ func GetLine(fname string, match string) int {
 
 func VmdOne() {
 
-	fmt.Println(">>")
+	log.Println(">>")
 	var args_c string
 	cmd_set := os.Args[2:]
 
@@ -605,7 +605,7 @@ func VmdOne() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "f" {
@@ -630,7 +630,7 @@ func VmdOne() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "t" {
@@ -658,7 +658,7 @@ func VmdOne() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "p" {
@@ -740,7 +740,7 @@ func VmdOne() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	}
@@ -749,7 +749,7 @@ func VmdOne() {
 
 func Vmd() {
 
-	fmt.Println(">>")
+	log.Println(">>")
 	var args_c string
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan() // use `for scanner.Scan()` to keep reading
@@ -797,7 +797,7 @@ func Vmd() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "f" {
@@ -822,7 +822,7 @@ func Vmd() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "t" {
@@ -850,7 +850,7 @@ func Vmd() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	} else if cmd_set[0] == "p" {
@@ -932,7 +932,7 @@ func Vmd() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_internal_test.go")
 
 	}
@@ -942,7 +942,7 @@ func Vmd() {
 
 func VmT() {
 
-	fmt.Println("Trace >>")
+	log.Println("Trace >>")
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan() // use `for scanner.Scan()` to keep reading
@@ -1032,7 +1032,7 @@ func VmT() {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 		process := make(chan bool)
 		go core.Exe_Stall("go tool trace __heap", process)
@@ -1048,7 +1048,7 @@ func VmT() {
 
 func VmP() {
 
-	fmt.Println("Bench >>")
+	log.Println("Bench >>")
 	var args_c string
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan() // use `for scanner.Scan()` to keep reading
@@ -1105,7 +1105,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "f" {
@@ -1138,7 +1138,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "t" {
@@ -1174,7 +1174,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "p" {
@@ -1255,7 +1255,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	}
@@ -1265,7 +1265,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 func VmPOne() {
 
-	fmt.Println("Bench >>")
+	log.Println("Bench >>")
 	var args_c string
 
 	cmd_set := os.Args[2:]
@@ -1320,7 +1320,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "f" {
@@ -1353,7 +1353,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "t" {
@@ -1389,7 +1389,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	} else if cmd_set[0] == "p" {
@@ -1470,7 +1470,7 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 			color.Green("Success")
 
 		}
-		fmt.Println(log_build)
+		log.Println(log_build)
 		os.Remove("test_test.go")
 
 	}
@@ -1510,7 +1510,7 @@ func WatchForUpdate(path string){
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Waiting for new updates to source.")
+	log.Println("Waiting for new updates to source.")
 	<-done
 	defer close(done)
 	watcher.RemoveWatch(path)
@@ -1527,13 +1527,13 @@ func TriggerType(typ string) (is bool) {
 
 func JBuild(path string, out string) {
 
-	fmt.Println("Invoking go-bindata")
+	log.Println("Invoking go-bindata")
 	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...",webroot,templateroot))
 	//time.Sleep(time.Second*100 )
 	//core.RunFile(GOHOME, coreTemplate.Output)
 	log_build, err := core.RunCmdSmart("go build")
 	if err != nil {
-		//fmt.Println(err.Error())
+		//log.Println(err.Error())
 		color.Red("Your build failed, Here is why :>")
 		lines := strings.Split(log_build, "\n")
 		for i, line := range lines {
@@ -1551,12 +1551,12 @@ func JBuild(path string, out string) {
 							return
 						}
 
-						//fmt.Println(line_part[len(line_part) - 1])
+						//log.Println(line_part[len(line_part) - 1])
 						scanner := bufio.NewScanner(file)
 						inm := 0
 						for scanner.Scan() {
 							inm++
-							//fmt.Println("%+V", inm)
+							//log.Println("%+V", inm)
 							lin := scanner.Text()
 							if inm == lnumber {
 								acT_line := GetLine(serverconfig, lin)
@@ -1568,7 +1568,7 @@ func JBuild(path string, out string) {
 
 								}
 							}
-							// fmt.Println("data : " + scanner.Text())
+							// log.Println("data : " + scanner.Text())
 						}
 
 						if err := scanner.Err(); err != nil {
@@ -1582,7 +1582,7 @@ func JBuild(path string, out string) {
 			}
 		}
 		color.Red("Full compiler build log : ")
-		fmt.Println(log_build)
+		log.Println(log_build)
 		WatchForUpdate(path)
 		return
 	}
@@ -1591,7 +1591,7 @@ func JBuild(path string, out string) {
 	if strings.Contains(os.Args[1], "--") {
 		pwd, err := os.Getwd()
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			os.Exit(1)
 		}
 		pwd = strings.Replace(pwd, "\\", "/", -1)
@@ -1600,7 +1600,7 @@ func JBuild(path string, out string) {
 	} else {
 		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 	}
-	fmt.Println("Use Ctrl + C to quit")
+	log.Println("Use Ctrl + C to quit")
 
 	process := make(chan bool)
 	done := make(chan bool)
@@ -1639,7 +1639,7 @@ func JBuild(path string, out string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Ready!")
+	log.Println("Ready!")
 	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1] ) , process)
 	<-done
 	defer close(process)
@@ -1659,10 +1659,10 @@ func Build(path string) {
 	if coreTemplate == nil {
 		return
 	}
-	//fmt.Println(coreTemplate.Methods.Methods)
+	//log.Println(coreTemplate.Methods.Methods)
 	coreTemplate.WriteOut = false
 	coreTemplate.Name = path
-	//fmt.Println(coreTemplate)
+	//log.Println(coreTemplate)
 	if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export" {
 		coreTemplate.Prod = true
 	}
@@ -1675,7 +1675,7 @@ func Build(path string) {
 
 	cwd, er := os.Getwd()
 	if er != nil {
-		fmt.Println(er)
+		log.Println(er)
 		os.Exit(1)
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
@@ -1699,13 +1699,13 @@ func Build(path string) {
 			if !strings.Contains(os.Args[1], "run-") && !strings.Contains(os.Args[1], "--") {
 				os.Chdir(GOHOME)
 			}
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
 			log_build, err := core.RunCmdSmart("go build")
 			if err != nil {
-				//fmt.Println(err.Error())
+				//log.Println(err.Error())
 				color.Red("😎 Your build failed, Here is why :>")
 				lines := strings.Split(log_build, "\n")
 				for i, line := range lines {
@@ -1718,7 +1718,7 @@ func Build(path string) {
 								line_part := strings.Split(line, ":")
 								var lnumber int
 								if len(line_part) == 1 {
-									fmt.Println(line)
+									log.Println(line)
 								} else {
 									lnumber, _ = strconv.Atoi(line_part[1])
 								}
@@ -1728,12 +1728,12 @@ func Build(path string) {
 									return
 								}
 
-								//fmt.Println(line_part[len(line_part) - 1])
+								//log.Println(line_part[len(line_part) - 1])
 								scanner := bufio.NewScanner(file)
 								inm := 0
 								for scanner.Scan() {
 									inm++
-									//fmt.Println("%+V", inm)
+									//log.Println("%+V", inm)
 									lin := scanner.Text()
 									if inm == lnumber {
 
@@ -1746,7 +1746,7 @@ func Build(path string) {
 
 										}
 									}
-									// fmt.Println("data : " + scanner.Text())
+									// log.Println("data : " + scanner.Text())
 								}
 
 								if err := scanner.Err(); err != nil {
@@ -1760,7 +1760,7 @@ func Build(path string) {
 					}
 				}
 				color.Red("Full compiler build log : ")
-				fmt.Println(log_build)
+				log.Println(log_build)
 				WatchForUpdate(path)
 				return
 			}
@@ -1774,7 +1774,7 @@ func Build(path string) {
 			if strings.Contains(os.Args[1], "--") {
 				pwd, err := os.Getwd()
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					os.Exit(1)
 				}
 				pwd = strings.Replace(pwd, "\\", "/", -1)
@@ -1783,7 +1783,7 @@ func Build(path string) {
 			} else {
 				pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 			}
-			fmt.Println("🤓 Use Ctrl + C to quit")
+			log.Println("🤓 Use Ctrl + C to quit")
 
 			process := make(chan bool)
 			done := make(chan bool)
@@ -1825,7 +1825,7 @@ func Build(path string) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Ready!")
+			log.Println("Ready!")
 			go core.Exe_Stall("./"+pk[len(pk)-1], process)
 			//process <- false
 			<-done
@@ -1851,7 +1851,7 @@ func Build(path string) {
 
 		if os.Args[1] == "--test" {
 			//test console
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			color.Magenta("Welcome to the Gopher Sauce test console.")
 			color.Red("List of commands : ")
@@ -1866,14 +1866,14 @@ func Build(path string) {
 
 		if os.Args[1] == "--test-f" {
 			//test console
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			VmdOne()
 		}
 
 		if os.Args[1] == "--bench" {
 			//test console
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			color.Magenta("Welcome to the Gopher Sauce benchmark console.")
 			color.Red("List of commands : ")
@@ -1888,19 +1888,19 @@ func Build(path string) {
 
 		if os.Args[1] == "--bench-f" {
 			//test console
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 
 			VmPOne()
 		}
 
 		if os.Args[1] == "export" || os.Args[1] == "export-sub" || os.Args[1] == "--export" {
-			fmt.Println("Generating Export Program")
+			log.Println("Generating Export Program")
 			if !strings.Contains(os.Args[1], "export-") && !strings.Contains(os.Args[1], "--export") {
 				os.Chdir(GOHOME)
 			}
 			//create both zips
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd("go-bindata  " + webroot + "/... " + templateroot + "/...")
 			core.RunCmd("go build")
 		}
@@ -1908,18 +1908,18 @@ func Build(path string) {
 
 		//check for directory gomobile
 		if os.Args[1] == "export" {
-			fmt.Println("Generating Export Program")
+			log.Println("Generating Export Program")
 			os.Chdir(GOHOME)
 			//create both zips
-			fmt.Println("📦 Invoking go-bindata")
+			log.Println("📦 Invoking go-bindata")
 			core.RunCmd(os.ExpandEnv("$GOPATH") + `/bin/go-bindata ` + webroot + "/... " + templateroot + "/...")
 			body, er := ioutil.ReadFile(GOHOME + "/bindata.go")
 			if er != nil {
-				fmt.Println(er)
+				log.Println(er)
 				return
 			}
 			writeLocalProtocol(coreTemplate.Package)
-			fmt.Println("Preparing Bindata for framework conversion...")
+			log.Println("Preparing Bindata for framework conversion...")
 			ioutil.WriteFile("bindata.go", prepBindForMobile(body, coreTemplate.Package), 0644)
 			core.RunCmd(os.ExpandEnv("$GOPATH") + "/bin/gomobile bind -target=ios")
 			//edit plist file
@@ -1937,7 +1937,7 @@ func Build(path string) {
 				plistPath := os.Args[6] + "/" + finalSub + "/Info.plist"
 				plist, erro := ioutil.ReadFile(plistPath)
 				if erro != nil {
-					fmt.Println("Please check your project's folder for the Info.plist (Info.plisp chuckles...) file")
+					log.Println("Please check your project's folder for the Info.plist (Info.plisp chuckles...) file")
 					return
 				}
 
@@ -1951,7 +1951,7 @@ func Build(path string) {
 				//if project does not exist create it and link this framework
 
 			} else {
-				fmt.Println("Subexists no need for Linkage :o")
+				log.Println("Subexists no need for Linkage :o")
 			}
 		}
 
@@ -1963,11 +1963,11 @@ func main() {
 		os.Setenv("GOPATH", tpath + "/go")
 	}
 	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
-	//fmt.Println( os.Args)
+	//log.Println( os.Args)
 	if len(os.Args) > 1 {
 		//args := os.Args[1:]
 		if os.Args[1] == "dependencies" || os.Args[1] == "deps" {
-			fmt.Println("∑ Getting GoS dependencies")
+			log.Println("∑ Getting GoS dependencies")
 			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 			core.RunCmd("go get github.com/gorilla/sessions")
 			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
@@ -1979,11 +1979,11 @@ func main() {
 			core.RunCmd("go get github.com/cheikhshift/db")
 			core.RunCmd("go get gopkg.in/ldap.v2")
 			//core.RunCmd("")
-			//fmt.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
+			//log.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
 			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
 			//core.RunCmd("python setup.py install" )
 			//time.Sleep(time.Second *120)
-			fmt.Println("Done")
+			log.Println("Done")
 			return
 		}
 
@@ -2036,79 +2036,79 @@ func main() {
 
 	} /* else {
 
-		fmt.Println("To begin please tell us a bit about the gos project you wish to compile");
-		fmt.Printf("We need the GoS package folder relative to your $GOPATH/src (%v)\n", GOHOME)
+		log.Println("To begin please tell us a bit about the gos project you wish to compile");
+		log.Printf("We need the GoS package folder relative to your $GOPATH/src (%v)\n", GOHOME)
 	   	gosProject := ""
 	   	serverconfig := ""
 
 	   	fmt.Scanln(&gosProject)
 	   	GOHOME = GOHOME  + strings.Trim(gosProject,"/")
-	   	fmt.Printf("We need your Gos Project config source (%v)\n", GOHOME)
+	   	log.Printf("We need your Gos Project config source (%v)\n", GOHOME)
 	   	fmt.Scanln(&serverconfig)
-	    //fmt.Println(GOHOME)
+	    //log.Println(GOHOME)
 		webroot,templateroot = core.DoubleInput("What is the name of your webroot's folder ?", "What is the name of your template folder? ")
-			fmt.Println("Are you ready to begin? ");
+			log.Println("Are you ready to begin? ");
 			if core.AskForConfirmation() {
-				fmt.Println("ΩΩ Operation Started!!");
+				log.Println("ΩΩ Operation Started!!");
 				coreTemplate,err := core.LoadGos( GOHOME + "/" + serverconfig );
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 					return
 				}
 
 				coreTemplate.WriteOut = false
 				core.Process(coreTemplate,GOHOME, webroot,templateroot);
-				fmt.Println("One moment...")
+				log.Println("One moment...")
 				core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 	    	    core.RunCmd("go get github.com/gorilla/sessions")
 	    		core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-				fmt.Println("Would you like to just run this application [y,n]")
+				log.Println("Would you like to just run this application [y,n]")
 
 				if core.AskForConfirmation() {
 					os.Chdir(GOHOME)
-					fmt.Println("Invoking go-bindata");
+					log.Println("Invoking go-bindata");
 					core.RunCmd("go-bindata -debug " + webroot +"/... " + templateroot + "/...")
 					//time.Sleep(time.Second*100 )
 					//core.RunFile(GOHOME, coreTemplate.Output)
 					core.RunCmd("go build")
 					pk := strings.Split(strings.Trim(gosProject,"/"), "/")
-					fmt.Println("Use Ctrl + C to quit")
+					log.Println("Use Ctrl + C to quit")
 					core.Exe_Stall("./" + pk[len(pk) - 1] )
 
 				} else {
-					fmt.Println("Is this a Mobile application [y,n]")
+					log.Println("Is this a Mobile application [y,n]")
 
 					if !core.AskForConfirmation() {
-					fmt.Println("Would you like to create an export release [y,n]")
+					log.Println("Would you like to create an export release [y,n]")
 
 					if core.AskForConfirmation() {
-						fmt.Println("Generating Export Program")
+						log.Println("Generating Export Program")
 						os.Chdir(GOHOME)
 						//create both zips
-						fmt.Println("Invoking go-bindata");
+						log.Println("Invoking go-bindata");
 						core.RunCmd(  "go-bindata  " + webroot +"/... " + templateroot + "/...")
 						core.RunCmd("go build")
 
 					}
 					} else {
 						//create mobile export here
-						fmt.Println("Generating Export Program")
+						log.Println("Generating Export Program")
 							os.Chdir(GOHOME)
 							//create both zips
-							 fmt.Println("Invoking go-bindata");
+							 log.Println("Invoking go-bindata");
 							 core.RunCmd( os.ExpandEnv("$GOPATH") + `/bin/go-bindata `  + webroot +"/... " + templateroot + "/...")
 							 body,er := ioutil.ReadFile(GOHOME + "/bindata.go")
 							 if er != nil {
-							 	fmt.Println(er)
+							 	log.Println(er)
 							 	return
 							 }
-							 fmt.Println("Preparing Bindata for framework conversion...")
+							 log.Println("Preparing Bindata for framework conversion...")
 							 ioutil.WriteFile("bindata.go", prepBindForMobile(body, coreTemplate.Package)  ,0644)
 							 core.RunCmd( os.ExpandEnv("$GOPATH")  + "/bin/gomobile bind -target=ios")
 							 //edit plist file
 							 subp := "sub.check"
 
-							 fmt.Println("What is the folder name of your IOS application?")
+							 log.Println("What is the folder name of your IOS application?")
 							 folderX := ""
 							 fmt.Scanln(&folderX)
 							 _,error := ioutil.ReadFile(subp)
@@ -2124,7 +2124,7 @@ func main() {
 							 plistPath := folderX + "/" + finalSub + "/Info.plist"
 							 plist,erro := ioutil.ReadFile(plistPath)
 							 if erro != nil {
-							 	fmt.Println("Please check your project's folder for the Info.plit file")
+							 	log.Println("Please check your project's folder for the Info.plit file")
 							 	return
 							 }
 							 writeLocalProtocol(coreTemplate.Package)
@@ -2136,16 +2136,16 @@ func main() {
 							 //if project does not exist create it and link this framework
 
 							} else {
-								fmt.Println("Subexists no need for Linkage :o")
+								log.Println("Subexists no need for Linkage :o")
 							}
-							fmt.Println("Your file is ready, go on your default IDE and run your application :)")
+							log.Println("Your file is ready, go on your default IDE and run your application :)")
 
 					}
 				}
 
 
 			} else {
-				fmt.Println("Operation Cancelled!!")
+				log.Println("Operation Cancelled!!")
 			}
 		} */
 
