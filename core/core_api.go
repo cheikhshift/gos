@@ -2211,7 +2211,7 @@ import (`
 			local_string += `
 
 			func main() {
-				log.Printf("%d\n", os.Getpid())
+				fmt.Fprintf(os.Stdout, "%v\n", os.Getpid())
 				` + template.Main
 				if template.Prod {
 					local_string += ` store.Options = &sessions.Options{
