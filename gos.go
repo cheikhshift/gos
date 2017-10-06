@@ -1826,7 +1826,7 @@ func Build(path string) {
 				log.Fatal(err)
 			}
 			log.Println("Ready!")
-			go core.Exe_Stall("./"+pk[len(pk)-1], process)
+			go core.Exe_Stall(fmt.Sprintf("./%s",pk[len(pk)-1]), process)
 			//process <- false
 			<-done
 
