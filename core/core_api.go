@@ -1399,21 +1399,40 @@ import (`
 		}
 		local_string += fmt.Sprintf(` 
 					 %s
-					 log.Printf("Listenning on Port %%v\n", "%s")
+					 port := ":%s"
+						if envport := os.ExpandEnv("$PORT"); envport != "" {
+							port = fmt.Sprintf(":%s", envport)
+						}
+					 log.Printf("Listenning on Port %%v\n", port)
 					 http.HandleFunc( "/",  makeHandler(handler))
 
 
-					 http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
-					errgos := http.ListenAndServe(":%s", nil)
+					http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
+					
+					errgos := http.ListenAndServe(port, nil)
 					if errgos != nil {
 						log.Fatal(errgos)
 					} 
 
-					}`, timeline, template.Port, web, template.Port)
+					}`, timeline, template.Port, web)
 
 		log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
 		d1 := []byte(local_string)
 
+		dockerfile := fmt.Sprintf(`FROM golang:1.8
+RUN mkdir -p /go/src/server
+COPY . /go/src/server/
+ENV PORT=%s 
+RUN go get github.com/cheikhshift/gos
+RUN cd /go/src/server && gos deps && gos --export && go install
+ENTRYPOINT server
+EXPOSE %s
+# healthcheck requires docker 1.12 and up.
+# HEALTHCHECK --interval=20m --timeout=3s \
+#  CMD curl -f http://{Your application hostname}/ || exit 1`,template.Port, template.Port)
+
+		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700 )
+		
 		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
 	} else if template.Type == "bind" {
