@@ -765,7 +765,8 @@ import (`
 				  	if 	session, er = store.Get(r, "session-"); er != nil {
 						session,_ = store.New(r, "session-")
 					}
-				  	if !apiAttempt(w,r,session) {
+
+				  	if attmpt := apiAttempt(w,r,session) ;!attmpt {
 				      fn(w, r, "",session)
 				  	}
 				  	
