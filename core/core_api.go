@@ -763,10 +763,6 @@ import (`
 				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
 				
-				  	if r.URL.Path == "/" {
-				      http.Redirect(w,r,"/index",302)
-				      return
-				    }
 				  	session, er := store.Get(r, "session-")
 				  	if er != nil {
 						session,_ = store.New(r, "session-")
@@ -1100,7 +1096,19 @@ import (`
 				    if err != nil {
 				      filename = fmt.Sprintf("%s%%s.html", title) 
 				      if title == "/" {
-				    	filename = "%s/index.html"
+				    	webbase := "%s/"
+					    	filename = fmt.Sprintf("%%s%%s", webbase, "index.tmpl")
+					    	body, err := Asset(filename)
+					    	if err != nil {
+					    		filename = fmt.Sprintf("%%s%%s", webbase, "index.html")
+					    		body , err = Asset(filename)
+					    	}
+
+					    	if err != nil {
+					    			return nil,err
+					    	}  
+					    	return  &Page{ Body: body,isResource: !strings.Contains(filename, ".tmpl")}, nil
+					    		
 				    	}
 				      body, err = Asset(filename)
 				      if err != nil {
@@ -1950,6 +1958,15 @@ EXPOSE %s
 				    filename :=  "web" + title + ".tmpl"
 				    if title == "/" {
 				    	filename = "web/index.tmpl"
+				    	body, err := Asset(filename)
+				    	if err != nil {
+				    		filename = "web/index.html"
+				    		body , err = Asset(filename)
+				    	}
+
+				    	if err == nil {
+				    		return  &page{ Body: body,isResource: !strings.Contains(filename, ".tmpl")}, nil
+				    	} else return nil,err
 				    }
 				    body, err := Asset(filename)
 				    if err != nil {
@@ -1967,10 +1984,10 @@ EXPOSE %s
 				          if strings.Contains(title, ".tmpl") || title == "/" {
 				              return nil,nil
 				          }
-				          return &page{Title: title, Body: body,isResource: true}, nil
+				          return &page{ Body: body,isResource: true}, nil
 				         }
 				      } else {
-				         return &page{Title: title, Body: body,isResource: true}, nil
+				         return &page{Body: body,isResource: true}, nil
 				      }
 				    } 
 				    //load custom struts
