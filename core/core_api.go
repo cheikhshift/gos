@@ -1039,6 +1039,7 @@ import (`
 
 				}
 			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session) {
+				  var p *Page
 				  p,err := loadPage(r.URL.Path)
 				  if err != nil {	
 				  		log.Println(err.Error())
@@ -1102,15 +1103,16 @@ import (`
 					    	return  &Page{ Body: body,isResource: true}, nil
 					    		    		
 				     } 
-				    filename := fmt.Sprintf("%s%%s.tmpl", title) 
-				    body, err := Asset(filename)
-				    if err != nil {
-				    	 filename := fmt.Sprintf("%s%%s.html", title) 
-				    	 body, err = Asset(filename)
-				    if err != nil {
+				     
+				    filename := fmt.Sprintf("%s%%s.tmpl", title)
+
+				   if body, err := Asset(filename) ;err != nil {
+				    	 filename = fmt.Sprintf("%s%%s.html", title) 
+				    	
+				    	if  body, err = Asset(filename); err != nil {
 				         filename = fmt.Sprintf("%s%%s", title) 
-				         body, err = Asset(filename)
-				         if err != nil {
+				         
+				         if  body, err = Asset(filename); err != nil {
 				            return nil, err
 				         } else {
 				          if strings.Contains(title, ".tmpl")  {
@@ -1121,10 +1123,12 @@ import (`
 				      } else {
 				         return &Page{ Body: body,isResource: true}, nil
 				      }
+				    } else {
+				    	  return &Page{Body: body,isResource:false}, nil
 				    }
  
 				       %s
-				    return &Page{Body: body,isResource:false}, nil
+				  
 				 } 
 				
 				   
