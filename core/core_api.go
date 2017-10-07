@@ -1401,7 +1401,7 @@ import (`
 					 %s
 					 port := ":%s"
 						if envport := os.ExpandEnv("$PORT"); envport != "" {
-							port = fmt.Sprintf(":%s", envport)
+							port = fmt.Sprintf(":%%s", envport)
 						}
 					 log.Printf("Listenning on Port %%v\n", port)
 					 http.HandleFunc( "/",  makeHandler(handler))
