@@ -719,22 +719,18 @@ import (`
 					        }
 					    }()
 
-				    filename :=  fmt.Sprintf("%%s%%s",tmpl , ".tmpl")
-				    body, err := Asset(filename)
+
 				    
 				    p.Session = session
 				    p.R = r
-				    if err != nil {
-				      // log.Print(err)
-				    	return false
-				    } else {
+				  
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(%s)
-				    t, _ = t.Parse(ReadyTemplate(body))
+				    t, _ = t.Parse(ReadyTemplate(p.Body))
 				    outp := new(bytes.Buffer)
-				    error := t.Execute(outp, p)
-				    if error != nil {
-				    log.Println(error.Error())
+				    err := t.Execute(outp, p)
+				    if err != nil {
+				        log.Println(err.Error())
 				    	DebugTemplate( w,r , fmt.Sprintf("%s%%s", r.URL.Path))
 				    	w.WriteHeader(http.StatusInternalServerError)
 					    w.Header().Set("Content-Type",  "text/html")
@@ -750,14 +746,16 @@ import (`
 				     
 				    	}
 				    	return false
-				    }  else {
+				    } 
+
+
 				    p.Session.Save(r, w)
 
 				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
 				    %s
 				    return true
-					}
-				    }
+					
+				    
 				}
 
 				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
@@ -1057,9 +1055,7 @@ import (`
 				        	w.Write(pag.Body)
 				    	} else {
 				    		renderTemplate(w, r, "%s%s" , pag,session)
-				     
 				    	}
-				        //context.Clear(r)
 				        return
 				  }
 
@@ -1089,35 +1085,35 @@ import (`
 				}
 
 				func loadPage(title string) (*Page,error) {
-				    filename := fmt.Sprintf("%s%%s.tmpl", title) 
-				    
 				   
-				    body, err := Asset(filename)
-				    if err != nil {
-				      filename = fmt.Sprintf("%s%%s.html", title) 
-				      if title == "/" {
+				    if roottitle := (title == "/"); roottitle  {
 				    	webbase := "%s/"
-					    	filename = fmt.Sprintf("%%s%%s", webbase, "index.tmpl")
-					    	body, err := Asset(filename)
+					    	fname := fmt.Sprintf("%%s%%s", webbase, "index.html")
+					    	body, err := Asset(fname)
 					    	if err != nil {
-					    		filename = fmt.Sprintf("%%s%%s", webbase, "index.html")
-					    		body , err = Asset(filename)
+					    		fname = fmt.Sprintf("%%s%%s", webbase, "index.tmpl")
+					    		body , err = Asset(fname)
+					    		if err != nil {
+					    			return nil,err
+					    		}
+					    		return  &Page{ Body: body,isResource: false}, nil
 					    	}
 
-					    	if err != nil {
-					    			return nil,err
-					    	}  
-					    	return  &Page{ Body: body,isResource: !strings.Contains(filename, ".tmpl")}, nil
-					    		
-				    	}
-				      body, err = Asset(filename)
-				      if err != nil {
+					    	return  &Page{ Body: body,isResource: true}, nil
+					    		    		
+				     } 
+				    filename := fmt.Sprintf("%s%%s.tmpl", title) 
+				    body, err := Asset(filename)
+				    if err != nil {
+				    	 filename := fmt.Sprintf("%s%%s.html", title) 
+				    	 body, err = Asset(filename)
+				    if err != nil {
 				         filename = fmt.Sprintf("%s%%s", title) 
 				         body, err = Asset(filename)
 				         if err != nil {
 				            return nil, err
 				         } else {
-				          if strings.Contains(title, ".tmpl") || title == "/" {
+				          if strings.Contains(title, ".tmpl")  {
 				              return nil,nil
 				          }
 				          return &Page{ Body: body,isResource: true }, nil
@@ -1125,11 +1121,14 @@ import (`
 				      } else {
 				         return &Page{ Body: body,isResource: true}, nil
 				      }
-				    } 
-				    //load custom struts
-				    %s
+				    }
+ 
+				       %s
 				    return &Page{Body: body,isResource:false}, nil
-				}
+				 } 
+				
+				   
+				
 				func BytesToString(b []byte) string {
 				    bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
 				    sh := reflect.StringHeader{bh.Data, bh.Len}
