@@ -28,7 +28,7 @@ type gosArch struct {
 type gos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
-	Domain           string          `xml:"domain"`
+	Domain           string            `xml:"domain"`
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`
@@ -55,12 +55,11 @@ type gos struct {
 	FolderRoot, Name string
 	Prod             bool
 }
-
 
 type Pgos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
-	Domain           string          `xml:"domain"`
+	Domain           string            `xml:"domain"`
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`
@@ -87,6 +86,7 @@ type Pgos struct {
 	FolderRoot, Name string
 	Prod             bool
 }
+
 /*
 type Pgos struct {
 	XMLName       xml.Name          `xml:"gos"`
@@ -222,5 +222,5 @@ type Endpoint struct {
 	Path    string   `xml:"path,attr"`
 	Method  string   `xml:",innerxml"`
 	Type    string   `xml:"type,attr"`
-	Id 		string	 `xml:"id,attr"`
+	Id      string   `xml:"id,attr"`
 }

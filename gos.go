@@ -1,17 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/cheikhshift/gos/core"
-	"io/ioutil"
-	"os"
-	"strings"
-	"runtime"
-	"bufio"
 	"github.com/fatih/color"
 	"github.com/howeyc/fsnotify"
+	"io/ioutil"
 	"log"
+	"os"
+	"runtime"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -1477,8 +1477,8 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 }
 
-func WatchForUpdate(path string){
-	
+func WatchForUpdate(path string) {
+
 	done := make(chan bool)
 
 	watcher, err := fsnotify.NewWatcher()
@@ -1492,14 +1492,14 @@ func WatchForUpdate(path string){
 		for {
 			select {
 			case ev := <-watcher.Event:
-				
+
 				if !reloading {
 					fname := fmt.Sprintf("%v", ev)
-					if  TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
-					//Build( GOHOME + "/" + serverconfig )
-					reloading = true
-					done <- true
-					break
+					if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
+						//Build( GOHOME + "/" + serverconfig )
+						reloading = true
+						done <- true
+						break
 					}
 				}
 
@@ -1528,7 +1528,7 @@ func TriggerType(typ string) (is bool) {
 func JBuild(path string, out string) {
 
 	log.Println("Invoking go-bindata")
-	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...",webroot,templateroot))
+	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 	//time.Sleep(time.Second*100 )
 	//core.RunFile(GOHOME, coreTemplate.Output)
 	log_build, err := core.RunCmdSmart("go build")
@@ -1561,7 +1561,7 @@ func JBuild(path string, out string) {
 							if inm == lnumber {
 								acT_line := GetLine(serverconfig, lin)
 								if acT_line > -1 {
-									color.Magenta( fmt.Sprintf("Verify your file %s on line : %v | %s" , serverconfig, acT_line, strings.Join(line_part[2:], " - ")  ) )
+									color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
 								} else {
 									color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
@@ -1618,16 +1618,16 @@ func JBuild(path string, out string) {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				
+
 				if !reloading {
 					fname := fmt.Sprintf("%v", ev)
-					
-					if TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
-					//Build( GOHOME + "/" + serverconfig )
-					reloading = true
-					process <- true
-					done <- true
-					break
+
+					if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
+						//Build( GOHOME + "/" + serverconfig )
+						reloading = true
+						process <- true
+						done <- true
+						break
 					}
 				}
 
@@ -1640,7 +1640,7 @@ func JBuild(path string, out string) {
 		log.Fatal(err)
 	}
 	log.Println("Ready!")
-	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1] ) , process)
+	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 	<-done
 	defer close(process)
 	defer close(done)
@@ -1679,14 +1679,11 @@ func Build(path string) {
 		os.Exit(1)
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
-
-	if !strings.Contains(os.Args[1], "run") && os.Args[1] != "--t" && !strings.Contains(os.Args[1], "-f") {
-		os.Remove("bindata.go") //speed
-		if isWin := strings.Contains(runtime.GOOS, "indows"); isWin { 
-			core.RunCmd("gofmt -w " + pkgpath[len(pkgpath)-1])
-		} else {
-			core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
-		}
+	os.Remove("bindata.go")
+	if isWin := strings.Contains(runtime.GOOS, "indows"); isWin {
+		core.RunCmd("gofmt -w " + pkgpath[len(pkgpath)-1])
+	} else {
+		core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
 	}
 
 	if os.Args[1] == "--t" {
@@ -1805,9 +1802,9 @@ func Build(path string) {
 					case ev := <-watcher.Event:
 						if !reloading {
 							fname := fmt.Sprintf("%v", ev)
-							
-							if TriggerType(fname) && !strings.Contains(fname,"bindata.go") && !strings.Contains(fname, appout) {
-							//Build( GOHOME + "/" + serverconfig )
+
+							if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
+								//Build( GOHOME + "/" + serverconfig )
 								reloading = true
 								process <- true
 								//	done <- true
@@ -1826,7 +1823,7 @@ func Build(path string) {
 				log.Fatal(err)
 			}
 			log.Println("Ready!")
-			go core.Exe_Stall(fmt.Sprintf("./%s",pk[len(pk)-1]), process)
+			go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 			//process <- false
 			<-done
 
@@ -1959,8 +1956,8 @@ func Build(path string) {
 }
 
 func main() {
-	if tpath := os.ExpandEnv("$USERPROFILE") ; tpath != "" && os.ExpandEnv("$GOPATH") == "" {
-		os.Setenv("GOPATH", tpath + "/go")
+	if tpath := os.ExpandEnv("$USERPROFILE"); tpath != "" && os.ExpandEnv("$GOPATH") == "" {
+		os.Setenv("GOPATH", tpath+"/go")
 	}
 	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
 	//log.Println( os.Args)
@@ -1971,7 +1968,7 @@ func main() {
 			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 			core.RunCmd("go get github.com/gorilla/sessions")
 			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-			
+
 			core.RunCmd("go get github.com/gorilla/context")
 			core.RunCmd("go get gopkg.in/mgo.v2")
 			core.RunCmd("go get github.com/asaskevich/govalidator")

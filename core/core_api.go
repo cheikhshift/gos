@@ -17,10 +17,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"unicode"
-	"runtime"
 	//"go/types"
 )
 
@@ -122,13 +122,13 @@ func IsInSlice(qry string, slic []string) bool {
 
 func (d *gos) DeleteEnd(id string) {
 
-		temp := []Endpoint{}
-		for _, v := range d.Endpoints.Endpoints {
-			if v.Id != id  {
-				temp = append(temp, v)
-			}
+	temp := []Endpoint{}
+	for _, v := range d.Endpoints.Endpoints {
+		if v.Id != id {
+			temp = append(temp, v)
 		}
-		d.Endpoints.Endpoints = temp
+	}
+	d.Endpoints.Endpoints = temp
 
 }
 
@@ -359,20 +359,19 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 			 }
 
 	`
-	
-	 if template.Type == "webapp" {
+
+	if template.Type == "webapp" {
 		local_string = `package main 
 import (`
 
 		// if template.Type == "webapp" {
-	
 
 		var TraceOpt string
 		if template.Debug == "on" {
 			TraceOpt = ``
 		}
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log","io/ioutil"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "io/ioutil"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -410,12 +409,12 @@ import (`
 						    	}
 								 callmet = true
 					        }
-						}()`, imp.Path, template.Name,template.Name, TraceOpt, template.ErrorPage,web,template.ErrorPage)
+						}()`, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, web, template.ErrorPage)
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
-				line = strings.TrimSpace(line)
+					line = strings.TrimSpace(line)
 					if len(line) > 0 {
-					est += fmt.Sprintf("lastLine =  `%s`\n%s" , line,line)
+						est += fmt.Sprintf("\nlastLine =  `%s`\n%s", line, line)
 					}
 				}
 
@@ -458,12 +457,12 @@ import (`
 							    	}
 					           callmet = true
 					        }
-						}()`, imp.Path, template.Name,template.Name, TraceOpt, template.ErrorPage,web,template.ErrorPage) 
+						}()`, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, web, template.ErrorPage)
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
-				line = strings.TrimSpace(line)
+					line = strings.TrimSpace(line)
 					if len(line) > 0 {
-						est += fmt.Sprintf("lastLine =  `%s`\n%s" , line,line)
+						est += fmt.Sprintf("\nlastLine =  `%s`\n%s", line, line)
 					}
 				}
 
@@ -478,7 +477,7 @@ import (`
 					%s
 					callmet = true
 				}
-				`, imp.Path, est,TraceOpt)
+				`, imp.Path, est, TraceOpt)
 			} else if imp.Type != "f" {
 
 				apiraw += fmt.Sprintf(` 
@@ -487,7 +486,7 @@ import (`
 					%s
 					callmet = true
 				}
-				`,imp.Path, imp.Type,est,TraceOpt)
+				`, imp.Path, imp.Type, est, TraceOpt)
 			}
 
 		}
@@ -508,7 +507,7 @@ import (`
 		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-				netMa += fmt.Sprintf(`,"%s" : net_%s` ,imp,imp)
+				netMa += fmt.Sprintf(`,"%s" : net_%s`, imp, imp)
 			}
 		}
 		//int_lok := []string{}
@@ -551,21 +550,21 @@ import (`
 		}
 
 		/*
-		enable if needed
-		for _, imp := range template.Header.Objects {
-			//struct return and function
+			enable if needed
+			for _, imp := range template.Header.Objects {
+				//struct return and function
 
-			if !contains(int_lok, imp.Name) {
-				int_lok = append(int_lok, imp.Name)
-				netMa += `,"` + imp.Name + `" : net_` + imp.Name
-			}
-		} */
+				if !contains(int_lok, imp.Name) {
+					int_lok = append(int_lok, imp.Name)
+					netMa += `,"` + imp.Name + `" : net_` + imp.Name
+				}
+			} */
 
 		for _, imp := range template.Templates.Templates {
 
-			netMa += fmt.Sprintf(`,"%s" : net_%s` , imp.Name,imp.Name)
-			netMa += fmt.Sprintf(`,"b%s" : net_b%s` , imp.Name,imp.Name)
-			netMa += fmt.Sprintf(`,"c%s" : net_c%s` , imp.Name ,imp.Name)
+			netMa += fmt.Sprintf(`,"%s" : net_%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"b%s" : net_b%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"c%s" : net_c%s`, imp.Name, imp.Name)
 		}
 
 		//	log.Println(template.Methods.Methods[0].Name)
@@ -574,9 +573,9 @@ import (`
 
 			if hasQts := strings.Contains(imp, `"`); hasQts {
 				local_string += fmt.Sprintf(`
-			 %s`, imp) 
+			 %s`, imp)
 			} else {
-			local_string += fmt.Sprintf(`
+				local_string += fmt.Sprintf(`
 			"%s"`, imp)
 			}
 		}
@@ -585,7 +584,7 @@ import (`
 		structs_string = ``
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
-				log.Println("🔧 Processing Struct : " , imp.Name)
+				log.Println("🔧 Processing Struct : ", imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
 				structs_string += fmt.Sprintf(`
 			type %s struct {`, imp.Name)
@@ -609,10 +608,10 @@ import (`
 				
 				return &s
 			}
-			func net_struct%s() *%s{ return &%s{} }`, imp.Name ,imp.Name,imp.Name,imp.Name,imp.Name,imp.Name )
+			func net_struct%s() *%s{ return &%s{} }`, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
 
-				netMa += fmt.Sprintf(`,"%s : net_struct%s` ,imp.Name, imp.Name)
-				netMa += fmt.Sprintf(`,"is%s" : net_cast%s`, imp.Name, imp.Name )
+				netMa += fmt.Sprintf(`,"%s" : net_struct%s`, imp.Name, imp.Name)
+				netMa += fmt.Sprintf(`,"is%s" : net_cast%s`, imp.Name, imp.Name)
 
 			}
 		}
@@ -878,7 +877,7 @@ import (`
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(%s)
-					    	t, _ = t.Parse( )
+					    	t, _ = t.Parse(ReadyTemplate(body))
 					    	lastline = i
 					    	linestring =  line
 					    	error := t.Execute(outp, p)
@@ -1022,7 +1021,7 @@ import (`
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(%s)
-					    t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
+					    t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer))) )
 				    	lastline = i
 				    	linestring = line
 				    	error := t.Execute(outp, intrf)
@@ -1198,10 +1197,10 @@ import (`
 				 }
 
 				 %s
-				 ` , template.Key, mathFuncs, web, web, template.ErrorPage, web, template.ErrorPage, netMa, web,template.ErrorPage,web, template.ErrorPage, TraceOpt, apiraw, template.ErrorPage, netMa,netMa,netMa,template.ErrorPage, netMa, netMa, netMa, TraceOpt, template.NPage, web, template.ErrorPage, web, web,web,web,web,TraceOpt,ReadyTemplate )
+				 `, template.Key, mathFuncs, web, web, template.ErrorPage, web, template.ErrorPage, netMa, web, template.ErrorPage, web, template.ErrorPage, TraceOpt, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceOpt, template.NPage, web, template.ErrorPage, web, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
-						var %s %s` , imp.Name, imp.Type )
+						var %s %s`, imp.Name, imp.Type)
 		}
 		if template.Init_Func != "" {
 			local_string += fmt.Sprintf(`
@@ -1215,32 +1214,31 @@ import (`
 
 		for _, imp := range template.Header.Objects {
 			local_string += fmt.Sprintf(`
-			type %s %s`, imp.Name ,imp.Templ)
+			type %s %s`, imp.Name, imp.Templ)
 		}
 
-
-			for _, imp := range available_methods {
-				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					log.Println("🚰 Processing : " , imp)
-					meth := template.findMethod(imp)
-					addedit := false
-					if meth.Returntype == "" {
-						meth.Returntype = "string"
-						addedit = true
-					}
-					local_string += fmt.Sprintf(`
+		for _, imp := range available_methods {
+			if !contains(int_methods, imp) && !contains(api_methods, imp) {
+				log.Println("🚰 Processing : ", imp)
+				meth := template.findMethod(imp)
+				addedit := false
+				if meth.Returntype == "" {
+					meth.Returntype = "string"
+					addedit = true
+				}
+				local_string += fmt.Sprintf(`
 						func net_%s(args ...interface{}) %s {
-							`, meth.Name, meth.Returntype )
-					for k, nam := range strings.Split(meth.Variables, ",") {
-						if nam != "" {
-							local_string += fmt.Sprintf(`%s := args[%v]
+							`, meth.Name, meth.Returntype)
+				for k, nam := range strings.Split(meth.Variables, ",") {
+					if nam != "" {
+						local_string += fmt.Sprintf(`%s := args[%v]
 								`, nam, k)
-						}
 					}
-					meth.Method = strings.Replace(meth.Method,"&lt;","<", -1)
-					est := ``
-					if !template.Prod {
-						est = fmt.Sprintf(`	
+				}
+				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
+				est := ``
+				if !template.Prod {
+					est = fmt.Sprintf(`	
 							lastLine := ""
 							defer func() {
 							       if n := recover(); n != nil {
@@ -1248,34 +1246,34 @@ import (`
 							          log.Println("Reason : ",n)
 							         
 							        }
-								}()`, template.Name,template.Name)
-						setv := strings.Split(meth.Method, "\n")
-						for _, line := range setv {
-							line = strings.TrimSpace(line)
-							if len(line) > 0 {
-								est += fmt.Sprintf("lastLine = `%s`\n%s" ,line ,line)
-							}
+								}()`, template.Name, template.Name)
+					setv := strings.Split(meth.Method, "\n")
+					for _, line := range setv {
+						line = strings.TrimSpace(line)
+						if len(line) > 0 {
+							est += fmt.Sprintf("\nlastLine = `%s`\n%s", line, line)
 						}
-
-					} else {
-						est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
 					}
-					local_string += est
-					if addedit {
-						local_string += `
+
+				} else {
+					est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
+				}
+				local_string += est
+				if addedit {
+					local_string += `
 						 return ""
 						 `
-					}
-					local_string += `
+				}
+				local_string += `
 						}`
-				}
 			}
+		}
 
-			for _, imp := range template.Templates.Templates {
-				if imp.Struct == "" {
-					imp.Struct = "NoStruct"
-				}
-				local_string += fmt.Sprintf(`
+		for _, imp := range template.Templates.Templates {
+			if imp.Struct == "" {
+				imp.Struct = "NoStruct"
+			}
+			local_string += fmt.Sprintf(`
 
 
 				func  net_%s(args ...interface{}) string {
@@ -1373,33 +1371,33 @@ import (`
 						d = %s{}
 					}
     				return
-				}`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl,  imp.TemplateFile, imp.Name,netMa, imp.Name, imp.Name, imp.Struct,imp.Struct, imp.Name, imp.Struct, imp.Struct )
-			}
+				}`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct)
+		}
 
-			//Methods have been added
+		//Methods have been added
 
-			local_string += `
+		local_string += `
 			func dummy_timer(){
 				dg := time.Second *5
 				log.Println(dg)
 			}`
 
-			local_string += fmt.Sprintf(`
+		local_string += fmt.Sprintf(`
 			func main() {
 				fmt.Fprintf(os.Stdout, "%%v\n", os.Getpid())
 				%s`, template.Main)
-				if template.Prod {
-					local_string += fmt.Sprintf(` store.Options = &sessions.Options{
+		if template.Prod {
+			local_string += fmt.Sprintf(` store.Options = &sessions.Options{
 						    Path:     "/",
 						    MaxAge:   86400 * 7,
 						    HttpOnly: true,
 						    Secure : true,
 						    Domain : "%s",
-						}`, template.Domain )
+						}`, template.Domain)
 
-					//todo timeouts
-				}
-			local_string += fmt.Sprintf(` 
+			//todo timeouts
+		}
+		local_string += fmt.Sprintf(` 
 					 %s
 					 log.Printf("Listenning on Port %%v\n", "%s")
 					 http.HandleFunc( "/",  makeHandler(handler))
@@ -1411,11 +1409,12 @@ import (`
 						log.Fatal(errgos)
 					} 
 
-					}`, timeline, template.Port, web, template.Port )
+					}`, timeline, template.Port, web, template.Port)
 
-			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r , "/" , template.Output))
-			d1 := []byte(local_string)
-			_ = ioutil.WriteFile(fmt.Sprint("%s/%s",r,template.Output ), d1, 0644)
+		log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
+		d1 := []byte(local_string)
+
+		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
 	} else if template.Type == "bind" {
 		local_string = `package ` + template.Package + ` 
@@ -1477,8 +1476,6 @@ import (`
 			netMa += `,"c` + imp.Name + `" : c` + imp.Name
 		}
 		netMa += `}`
-
-	
 
 		//log.Println(template.Methods.Methods[0].Name)
 
@@ -2384,7 +2381,7 @@ func RunCmdSmartB(cmd string) ([]byte, error) {
 
 func RunCmdSmart(cmd string) (string, error) {
 	parts := strings.Fields(cmd)
-		//log.Println(parts)
+	//log.Println(parts)
 	var out *exec.Cmd
 
 	if len(parts) == 4 {
@@ -2546,7 +2543,7 @@ func RunCmdA(cm string) error {
 func exe_cmd(cmd string) {
 	defer func() {
 		if n := recover(); n != nil {
-			
+
 			log.Println(n)
 		}
 	}()
@@ -2587,14 +2584,14 @@ func Exe_Stall(cmd string, chn chan bool) {
 	//stdout, err := out.StdoutPipe()
 
 	out.Stdout = os.Stdout
-    out.Stderr = os.Stderr
+	out.Stderr = os.Stderr
 	out.Start()
 	//r := bufio.NewReader(stdout)
 	<-chn
 	log.Println("💣 Killing proc.")
 	out.Process.Kill()
 	/* _, err = RunCmdSmart("kill -3 " + strconv.Itoa(out.Process.Pid) )
-	
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -2786,7 +2783,7 @@ func (d *gos) MMethod(ne []Method) {
 }
 
 func PLoadGos(pathraw string) (*gos, error) {
-	path := strings.Replace(pathraw, "\\", "/" , -1 )
+	path := strings.Replace(pathraw, "\\", "/", -1)
 	log.Println("🎁 loading " + path)
 	v := &gos{}
 	body, err := ioutil.ReadFile(path)
@@ -2820,9 +2817,9 @@ func (d *gos) Add(sec, typ, name string) {
 	if sec == "var" {
 		d.Variables = append(d.Variables, GlobalVariables{Name: name, Type: typ})
 	} else if sec == "import" {
-				d.RootImports = append(d.RootImports, Import{Src: name})
+		d.RootImports = append(d.RootImports, Import{Src: name})
 	} else if sec == "end" {
-		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints, Endpoint{Path: name,Id: NewID(15)})
+		d.Endpoints.Endpoints = append(d.Endpoints.Endpoints, Endpoint{Path: name, Id: NewID(15)})
 	} else if sec == "timer" {
 		d.Timers.Timers = append(d.Timers.Timers, Timer{Name: name})
 	}
@@ -2848,18 +2845,18 @@ func Decode64(decBuf, enc []byte) []byte {
 }
 
 func (d *gos) UpdateMethod(id string, data string) {
-	
-		temp := []Endpoint{}
-		for _, v := range d.Endpoints.Endpoints {
-			if id == v.Id {
-				v.Method = data
-				temp = append(temp, v)
-			} else {
-				temp = append(temp, v)
-			}
+
+	temp := []Endpoint{}
+	for _, v := range d.Endpoints.Endpoints {
+		if id == v.Id {
+			v.Method = data
+			temp = append(temp, v)
+		} else {
+			temp = append(temp, v)
 		}
-		d.Endpoints.Endpoints = temp
-	
+	}
+	d.Endpoints.Endpoints = temp
+
 }
 
 func (d *gos) Update(sec, id string, update interface{}) {
@@ -2939,7 +2936,7 @@ func (d *gos) Set(attr, value string) {
 }
 
 func VLoadGos(pathraw string) (gos, error) {
-	path := strings.Replace(pathraw, "\\", "/" , -1 )
+	path := strings.Replace(pathraw, "\\", "/", -1)
 	log.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
@@ -2968,36 +2965,36 @@ func VLoadGos(pathraw string) (gos, error) {
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
-			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src, ".") {
 				// path/to/whatever does not exist
 				//log.Println("")
 				color.Red("Package not found")
 				log.Println("🎁 Downloading Package " + imp.Src)
-				logg,err := RunCmdSmart("go get -v " + dir)
+				logg, err := RunCmdSmart("go get -v " + dir)
 				if err != nil {
-							log.Println("Error :"  , logg)
-				}  else {
-						   log.Println("go get ", dir , "Ok :" , logg)
+					log.Println("Error :", logg)
+				} else {
+					log.Println("go get ", dir, "Ok :", logg)
 				}
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
 			if strings.Contains(imp.Src, "\"") {
-				tpset := strings.Split(imp.Src,"\"")
+				tpset := strings.Split(imp.Src, "\"")
 				dir = strings.Replace(dir, imp.Src, tpset[1], -1)
-			} 
-			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
+			}
+			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src, ".") {
 				// path/to/whatever does not exist
 				//log.Println("")
-						color.Red("Package not found")
-						log.Println("🎁 Downloading Package " + imp.Src)
-						logg,err := RunCmdSmart("go get -v " + imp.Src)
-						if err != nil {
-							log.Println("Error :"  , logg)
-						}  else {
-							log.Println("go get ", imp.Src , "Ok :" , logg)
-						}
-					
+				color.Red("Package not found")
+				log.Println("🎁 Downloading Package " + imp.Src)
+				logg, err := RunCmdSmart("go get -v " + imp.Src)
+				if err != nil {
+					log.Println("Error :", logg)
+				} else {
+					log.Println("go get ", imp.Src, "Ok :", logg)
+				}
+
 			}
 		}
 
@@ -3012,29 +3009,29 @@ func VLoadGos(pathraw string) (gos, error) {
 }
 
 func EscpaseGXML(data []byte) []byte {
-	lines := strings.Split( string(data) , "\n" )
+	lines := strings.Split(string(data), "\n")
 	infunc := false
 
-	for i,line := range lines {
-		if !infunc && (strings.Contains(line, "<method ") || strings.Contains(line,"<end ") ) && !strings.Contains(line, "<!--") {
+	for i, line := range lines {
+		if !infunc && (strings.Contains(line, "<method ") || strings.Contains(line, "<end ")) && !strings.Contains(line, "<!--") {
 			infunc = true
-			
-		} 
-		if infunc &&  (strings.Contains(line,"</method>") || strings.Contains(line,"</end>") ) {
+
+		}
+		if infunc && (strings.Contains(line, "</method>") || strings.Contains(line, "</end>")) {
 			infunc = false
-			
-		} 
-		if strings.Contains(line,"<") && strings.Contains(line, "{") && infunc {
-			lines[i] = strings.Replace(line,"<","&lt;", -1)
+
+		}
+		if strings.Contains(line, "<") && strings.Contains(line, "{") && infunc {
+			lines[i] = strings.Replace(line, "<", "&lt;", -1)
 		}
 
 	}
-	
+
 	return []byte(strings.Join(lines, "\n"))
 }
 
 func LoadGos(pathraw string) (*gos, error) {
-	path := strings.Replace(pathraw, "\\", "/" , -1 )
+	path := strings.Replace(pathraw, "\\", "/", -1)
 	log.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
@@ -3063,41 +3060,41 @@ func LoadGos(pathraw string) (*gos, error) {
 		if strings.Contains(imp.Src, ".gxml") {
 			srcP := strings.Split(imp.Src, "/")
 			dir := strings.Join(srcP[:len(srcP)-1], "/")
-			dir = fmt.Sprintf("%s%s",dir,"/")
-			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
+			dir = fmt.Sprintf("%s%s", dir, "/")
+			if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(imp.Src, ".") {
 				// path/to/whatever does not exist
 				//log.Println("")
 
 				color.Red("Package not found")
-						log.Println("🎁 Downloading Package " + imp.Src)
-			
-				logg,err := RunCmdSmart("go get -v " + dir)
+				log.Println("🎁 Downloading Package " + imp.Src)
+
+				logg, err := RunCmdSmart("go get -v " + dir)
 				if err != nil {
-							log.Println("Error :"  , logg)
-				}  else {
-							log.Println("go get ", dir , "Ok :" , logg)
+					log.Println("Error :", logg)
+				} else {
+					log.Println("go get ", dir, "Ok :", logg)
 				}
 			}
 		} else {
 			dir := TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + strings.Trim(imp.Src, "/")
 			if strings.Contains(imp.Src, "\"") {
-				tpset := strings.Split(imp.Src,"\"")
+				tpset := strings.Split(imp.Src, "\"")
 				dir = strings.Replace(dir, imp.Src, tpset[1], -1)
-				
-			} 
-			dir = fmt.Sprintf("%s%s",dir,"/")
-			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src,".") {
+
+			}
+			dir = fmt.Sprintf("%s%s", dir, "/")
+			if _, err := os.Stat(dir); os.IsNotExist(err) && strings.Contains(imp.Src, ".") {
 				// path/to/whatever does not exist
 				//log.Println("")
-						color.Red("Package not found")
-						log.Println("🎁 Ddownloading Package " + imp.Src)
-						logg,err := RunCmdSmart("go get -v " + imp.Src)
-						if err != nil {
-							log.Println("Error :"  , logg)
-						}  else {
-							log.Println("go get ", imp.Src , "Ok :" , logg)
-						}
-					
+				color.Red("Package not found")
+				log.Println("🎁 Ddownloading Package " + imp.Src)
+				logg, err := RunCmdSmart("go get -v " + imp.Src)
+				if err != nil {
+					log.Println("Error :", logg)
+				} else {
+					log.Println("go get ", imp.Src, "Ok :", logg)
+				}
+
 			}
 		}
 
@@ -3167,18 +3164,18 @@ func (d *gos) MergeWith(target string) {
 			if strings.Contains(im.Src, ".gxml") {
 				srcP := strings.Split(im.Src, "/")
 				dir := strings.Join(srcP[:len(srcP)-1], "/")
-				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src,".") {
+				if _, err := os.Stat(TrimSuffix(os.ExpandEnv("$GOPATH"), "/") + "/src/" + dir); os.IsNotExist(err) && strings.Contains(im.Src, ".") {
 					// path/to/whatever does not exist
 					//log.Println("")
 
 					color.Red("Package not found")
 					log.Println("🎁 Downloading Package " + im.Src)
-			
-					logg,err := RunCmdSmart("go get -v " + dir)
+
+					logg, err := RunCmdSmart("go get -v " + dir)
 					if err != nil {
-							log.Println("Error :"  , logg)
-					}  else {
-							log.Println("go get ", dir , "Ok :" , logg)
+						log.Println("Error :", logg)
+					} else {
+						log.Println("go get ", dir, "Ok :", logg)
 					}
 				}
 			}
