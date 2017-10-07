@@ -760,15 +760,16 @@ import (`
 
 				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
-				
-				  	session, er := store.Get(r, "session-")
-				  	if er != nil {
+					var session *sessions.Session
+				  	var er error
+				  	if 	session, er = store.Get(r, "session-"); er != nil {
 						session,_ = store.New(r, "session-")
 					}
 				  	if !apiAttempt(w,r,session) {
 				      fn(w, r, "",session)
 				  	}
 				  	
+				  	session = nil
 				  	context.Clear(r)
 				  }
 				} 
@@ -778,8 +779,8 @@ import (`
 					return string(data)
 				}
 				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) (callmet bool) {
-					
-					response := ""
+					var response string
+					response = ""
 					
 					
 
