@@ -1545,6 +1545,7 @@ func JBuild(path string, out string) {
 					if line != "" {
 						line_part := strings.Split(line, ":")
 						lnumber, _ := strconv.Atoi(line_part[1])
+
 						file, err := os.Open(out)
 						if err != nil {
 							color.Red("Could not find a source file")
@@ -1560,7 +1561,7 @@ func JBuild(path string, out string) {
 							lin := scanner.Text()
 							if inm == lnumber {
 								acT_line := GetLine(serverconfig, lin)
-								if acT_line > -1 {
+								if acT_line > -1 && strings.Contains(line_part[0],out) {
 									color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
 								} else {
@@ -1738,7 +1739,7 @@ func Build(path string) {
 									if inm == lnumber {
 
 										acT_line := GetLine(serverconfig, lin)
-										if acT_line > -1 {
+										if acT_line > -1 && strings.Contains(line_part[0],appout)  {
 											color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line) + " | " + strings.Join(line_part[2:], " - "))
 
 										} else {
