@@ -362,7 +362,8 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 
 	if template.Type == "webapp" {
 		local_string = `package main 
-import (`
+import (
+	 	//iogos-replace`
 
 		// if template.Type == "webapp" {
 
@@ -371,7 +372,7 @@ import (`
 			TraceOpt = ``
 		}
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "io/ioutil"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -543,7 +544,7 @@ import (`
 		for _, imp := range template.RootImports {
 			if !strings.Contains(imp.Src, ".gxml") {
 				//log.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-				if !contains(net_imports, imp.Src) {
+				if validimport := (!contains(net_imports, imp.Src) && imp.Src != "io/ioutil"); validimport {
 					net_imports = append(net_imports, imp.Src)
 				}
 			}
@@ -1441,6 +1442,10 @@ import (`
 					}`, timeline, template.Port, web)
 
 		log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
+		if strings.Contains(local_string, "ioutil") {
+			local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
+		}
+
 		d1 := []byte(local_string)
 
 		var hostname string
