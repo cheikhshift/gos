@@ -2,9 +2,8 @@
 
 - [x] Template engine.
 - [x] Applications are generated with built-in debuggers.
-- [x] Simple web service creation.
+- [x] Simple web service development.
 - [x] Generate tests of your application.
-- [x] Application and resources exported as one binary.
 - [x] Choose from the 50,000+ go packages online to build your application.
 - [x] Build and use ready-for-use GXML extensions.
 - [x] Live reload on project source file updates.
