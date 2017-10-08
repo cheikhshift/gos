@@ -862,9 +862,14 @@ import (`
 				    	if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
 				    		linebuffer += line
 				    		waitend = true
-				    		open++;
+				    		
 				    		endstr := ""
 				    		processd = true
+				    		if !(strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}") ) {
+				    
+				    			open++;
+					    		
+				    		}
 				    		for i := 0; i < open; i++ {
 				    			endstr += "\n{{end}}"
 				    		}
@@ -968,12 +973,19 @@ import (`
 				   		if strings.Contains(line, "{{with") || strings.Contains(line, "{{ with") || strings.Contains(line, "with}}") || strings.Contains(line, "with }}") || strings.Contains(line, "{{range") || strings.Contains(line, "{{ range") || strings.Contains(line, "range }}") || strings.Contains(line, "range}}") || strings.Contains(line, "{{if") || strings.Contains(line, "{{ if") || strings.Contains(line, "if }}") || strings.Contains(line, "if}}") || strings.Contains(line, "{{block") || strings.Contains(line, "{{ block") || strings.Contains(line, "block }}") || strings.Contains(line, "block}}") {
 				    		linebuffer += line
 				    		waitend = true
-				    		open++;
+				    		
 				    		endstr := ""
-				    		for i := 0; i < open; i++ {
-				    			endstr += "\n{{end}}"
+				    		if !(strings.Contains(line, "{{end") || strings.Contains(line, "{{ end") || strings.Contains(line, "end}}") || strings.Contains(line, "end }}") ) {
+				    
+				    			open++;
+					    		
 				    		}
+
+				    		for i := 0; i < open; i++ {
+					    			endstr += "\n{{end}}"
+					    	}
 				    		//exec
+
 				    		processd = true
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
