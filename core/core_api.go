@@ -481,7 +481,7 @@ import (`
 			} else if imp.Type != "f" {
 
 				apiraw += fmt.Sprintf(` 
-				if  !callmet && r.URL.Path == "%s" && r.Method == strings.ToUpper("%s") { 
+				if  isURL := (r.URL.Path == "%s" && r.Method == strings.ToUpper("%s") );!callmet && isURL{ 
 					%s
 					%s
 					callmet = true
@@ -765,7 +765,6 @@ import (`
 				  	if 	session, er = store.Get(r, "session-"); er != nil {
 						session,_ = store.New(r, "session-")
 					}
-
 				  	if attmpt := apiAttempt(w,r,session) ;!attmpt {
 				      fn(w, r, "",session)
 				  	}

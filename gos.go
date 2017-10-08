@@ -1654,7 +1654,10 @@ func JBuild(path string, out string) {
 func Build(path string) {
 
 	color.Magenta("😎 Loading project!")
-	coreTemplate, _ := core.LoadGos(path)
+	coreTemplate, err := core.LoadGos(path)
+	if err != nil {
+		log.Fatal(err)
+	}
 	appout = coreTemplate.Output
 	if coreTemplate == nil {
 		return
