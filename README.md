@@ -14,3 +14,6 @@
 ## IDE here :
 [thestrukture/IDE](https://github.com/thestrukture/IDE)
 
+## VIM plugin here :
+Find the `.gxml` plugin [here](https://github.com/cheikhshift/vim-gos)
+
