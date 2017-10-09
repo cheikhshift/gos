@@ -1988,6 +1988,20 @@ func main() {
 			return
 		}
 
+		if os.Args[1] == "--kill" {
+
+			if strings.Contains(runtime.GOOS, "indows") {
+				log.Println("This flag is not support on windows yet...")
+				return
+			}
+			wdir, _ := os.Getwd()
+			processname := strings.Split(wdir, "/")
+			
+			core.RunCmdSmart(fmt.Sprintf("killall -3 %s", processname[len(processname) - 1]) )
+			core.RunCmdSmart("killall -3 gos")
+			return
+		}
+
 		if os.Args[1] == "make" {
 			//2 is project folder
 
