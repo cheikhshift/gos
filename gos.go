@@ -13,8 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"github.com/0xAX/notificator"
 )
 
+var notify *notificator.Notificator
 var webroot string
 var templateroot string
 var gos_root string
@@ -1531,6 +1533,19 @@ func JBuild(path string, out string) {
 	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 	//time.Sleep(time.Second*100 )
 	//core.RunFile(GOHOME, coreTemplate.Output)
+	var pk []string
+	if strings.Contains(os.Args[1], "--") {
+		pwd, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		pwd = strings.Replace(pwd, "\\", "/", -1)
+		pk = strings.Split(strings.Trim(pwd, "/"), "/")
+
+	} else {
+		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
+	}
 	log_build, err := core.RunCmdSmart("go build")
 	if err != nil {
 		//log.Println(err.Error())
@@ -1582,25 +1597,14 @@ func JBuild(path string, out string) {
 				}
 			}
 		}
+		 notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1] ), "", notificator.UR_CRITICAL)
 		color.Red("Full compiler build log : ")
 		log.Println(log_build)
 		WatchForUpdate(path)
 		return
 	}
 
-	var pk []string
-	if strings.Contains(os.Args[1], "--") {
-		pwd, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
-			os.Exit(1)
-		}
-		pwd = strings.Replace(pwd, "\\", "/", -1)
-		pk = strings.Split(strings.Trim(pwd, "/"), "/")
 
-	} else {
-		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
-	}
 	log.Println("Use Ctrl + C to quit")
 
 	process := make(chan bool)
@@ -1640,6 +1644,7 @@ func JBuild(path string, out string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1] ), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
 	log.Println("Ready!")
 	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 	<-done
@@ -1704,6 +1709,20 @@ func Build(path string) {
 			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
+			var pk []string
+			if strings.Contains(os.Args[1], "--") {
+				pwd, err := os.Getwd()
+				if err != nil {
+					log.Println(err)
+					os.Exit(1)
+				}
+				pwd = strings.Replace(pwd, "\\", "/", -1)
+				pk = strings.Split(strings.Trim(pwd, "/"), "/")
+
+			} else {
+				pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
+			}
+
 			log_build, err := core.RunCmdSmart("go build")
 			if err != nil {
 				//log.Println(err.Error())
@@ -1760,6 +1779,7 @@ func Build(path string) {
 						}
 					}
 				}
+				 notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1] ), "", notificator.UR_CRITICAL)
 				color.Red("Full compiler build log : ")
 				log.Println(log_build)
 				WatchForUpdate(path)
@@ -1770,19 +1790,6 @@ func Build(path string) {
 				if os.Args[2] == "--buildcheck" {
 					return
 				}
-			}
-			var pk []string
-			if strings.Contains(os.Args[1], "--") {
-				pwd, err := os.Getwd()
-				if err != nil {
-					log.Println(err)
-					os.Exit(1)
-				}
-				pwd = strings.Replace(pwd, "\\", "/", -1)
-				pk = strings.Split(strings.Trim(pwd, "/"), "/")
-
-			} else {
-				pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 			}
 			log.Println("🤓 Use Ctrl + C to quit")
 
@@ -1826,6 +1833,7 @@ func Build(path string) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1] ),  strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/",-1 ), notificator.UR_NORMAL)
 			log.Println("Ready!")
 			go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 			//process <- false
@@ -1960,10 +1968,18 @@ func Build(path string) {
 }
 
 func main() {
+
+	
+
 	if tpath := os.ExpandEnv("$USERPROFILE"); tpath != "" && os.ExpandEnv("$GOPATH") == "" {
 		os.Setenv("GOPATH", tpath+"/go")
 	}
-	GOHOME = os.ExpandEnv("$GOPATH") + "/src/"
+	GOHOME = fmt.Sprintf("%s/src/", os.ExpandEnv("$GOPATH") )
+
+	notify = notificator.New(notificator.Options{
+    	DefaultIcon: strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")),"//","/",-1),
+    	AppName:     "Gopher Sauce",
+  	})
 	//log.Println( os.Args)
 	if len(os.Args) > 1 {
 		//args := os.Args[1:]

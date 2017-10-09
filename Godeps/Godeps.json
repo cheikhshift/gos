@@ -4,6 +4,10 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/0xAX/notificator",
+			"Rev": "6bcea42e61381c13704c7fb6eb2438950f335832"
+		},
+		{
 			"ImportPath": "github.com/fatih/color",
 			"Comment": "v1.5.0-4-g67c513e",
 			"Rev": "67c513e5729f918f5e69786686770c27141a4490"
