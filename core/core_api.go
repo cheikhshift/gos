@@ -886,9 +886,9 @@ import (
 					    	t, _ = t.Parse(ReadyTemplate(body))
 					    	lastline = i
 					    	linestring =  line
-					    	error := t.Execute(outp, p)
-						    if error != nil {
-						   		log.Println("Error on line :", i + 1,line,error.Error())   
+					    	erro := t.Execute(outp, p)
+						    if erro != nil {
+						   		log.Println("Error on line :", i + 1,line,erro.Error())   
 						    } 
 				    	}
 				   
@@ -907,9 +907,9 @@ import (
 					    	t, _ = t.Parse(ReadyTemplate(body) )
 					    	lastline = i
 					    	linestring =  line
-					    	error := t.Execute(outp, p)
-						    if error != nil {
-						   		log.Println("Error on line :", i + 1,line,error.Error())   
+					    	erro := t.Execute(outp, p)
+						    if erro != nil {
+						   		log.Println("Error on line :", i + 1,line,erro.Error())   
 						    } 
 
 				    	}
@@ -923,9 +923,9 @@ import (
 				    	t, _ = t.Parse(ReadyTemplate(body) )
 				    	lastline = i
 				    	linestring = line
-				    	error := t.Execute(outp, p)
-					    if error != nil {
-					   		log.Println("Error on line :", i + 1,line,error.Error())   
+				    	erro := t.Execute(outp, p)
+					    if erro != nil {
+					   		log.Println("Error on line :", i + 1,line,erro.Error())   
 					    }  
 						}
 
@@ -999,9 +999,9 @@ import (
 					    	t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
 					    	lastline = i
 					    	linestring =  line	    	
-					    	error := t.Execute(outp, intrf)
-						    if error != nil {
-						   		log.Println("Error on line :", i + 1,line,error.Error())   
+					    	erro := t.Execute(outp, intrf)
+						    if erro != nil {
+						   		log.Println("Error on line :", i + 1,line,erro.Error())   
 						    } 
 				    	}
 
@@ -1021,9 +1021,9 @@ import (
 					    	t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
 					    	lastline = i
 					    	linestring =  line
-					    	error := t.Execute(outp, intrf)
-						    if error != nil {
-						   		log.Println("Error on line :", i + 1,line,error.Error())   
+					    	erro := t.Execute(outp, intrf)
+						    if erro != nil {
+						   		log.Println("Error on line :", i + 1,line,erro.Error())   
 						    } 
 
 				    	}
@@ -1037,9 +1037,9 @@ import (
 					    t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer))) )
 				    	lastline = i
 				    	linestring = line
-				    	error := t.Execute(outp, intrf)
-					    if error != nil {
-					   		log.Println("Error on line :", i + 1,line,error.Error())   
+				    	erro := t.Execute(outp, intrf)
+					    if erro != nil {
+					   		log.Println("Error on line :", i + 1,line,erro.Error())   
 					    }  
 						}
 
@@ -1340,8 +1340,8 @@ import (
 				  	t, _ = t.Parse(ReadyTemplate(body) )
 					
 					
-				    error := t.Execute(output, &d)
-				    if error != nil {
+				    erro := t.Execute(output, &d)
+				    if erro != nil {
 				   color.Red(fmt.Sprintf("Error processing template %%s" , filename) )
 				   DebugTemplatePath(filename, &d)	
 				    } 
@@ -1369,9 +1369,9 @@ import (
 					           	DebugTemplatePath(filename, &d)	
 					        }
 					    }()
-				    error := t.Execute(output, &d)
-				    if error != nil {
-				    log.Print(error)
+				    erro := t.Execute(output, &d)
+				    if erro != nil {
+				    log.Println(erro)
 				    } 
 					return html.UnescapeString(output.String())
 				}
@@ -1967,9 +1967,9 @@ EXPOSE %s
 				    t = t.Funcs(` + netMa + `)
 				      t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 				   
-				    error := t.Execute(outp, f)
-				    if error != nil {
-				    log.Print(error)
+				    erro := t.Execute(outp, f)
+				    if erro != nil {
+				    log.Print(erro)
 				    return nil
 				    } 
 
@@ -2290,9 +2290,9 @@ EXPOSE %s
     				t = t.Funcs(` + netMa + `)
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
-				    error := t.Execute(output, &d)
-				    if error != nil {
-				    log.Print(error)
+				    erro := t.Execute(output, &d)
+				    if erro != nil {
+				    log.Println(erro)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
@@ -2311,9 +2311,9 @@ EXPOSE %s
     				t = t.Funcs(` + netMa + `)
 				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
 			
-				    error := t.Execute(output, &d)
-				    if error != nil {
-				    log.Print(error)
+				    erro := t.Execute(output, &d)
+				    if erro != nil {
+				    log.Println(erro)
 				    } 
 					return html.UnescapeString(output.String())
 				}`
