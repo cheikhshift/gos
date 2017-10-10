@@ -1690,9 +1690,9 @@ func Build(path string) {
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 	os.Remove("bindata.go")
 	if isWin := strings.Contains(runtime.GOOS, "indows"); isWin {
-		core.RunCmd("gofmt -w " + pkgpath[len(pkgpath)-1])
+		core.RunCmd(fmt.Sprintf("gofmt -w %s", pkgpath[len(pkgpath)-1] ) )
 	} else {
-		core.RunCmd("gofmt -w ../" + pkgpath[len(pkgpath)-1])
+		core.RunCmd(fmt.Sprintf("gofmt -w ../%s", pkgpath[len(pkgpath)-1]) )
 	}
 
 	if os.Args[1] == "--t" {
@@ -1706,7 +1706,7 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			log.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata -debug " + webroot + "/... " + templateroot + "/...")
+			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...",webroot,templateroot) )
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
 			var pk []string
@@ -2063,7 +2063,7 @@ func main() {
 			serverconfig = os.Args[3]
 		}
 
-		Build(GOHOME + "/" + serverconfig)
+		Build(fmt.Sprintf("%s/%s",GOHOME, serverconfig) )
 
 	} /* else {
 

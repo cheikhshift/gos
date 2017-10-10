@@ -473,7 +473,7 @@ import (
 			if imp.Type == "star" {
 
 				apiraw += fmt.Sprintf(` 
-				if  !callmet &&  strings.Contains(r.URL.Path, "%s")  { 
+				if  !callmet &&  UrlAtZ(r.URL.Path, "%s")  { 
 					%s			
 					%s
 					callmet = true
@@ -631,6 +631,11 @@ import (
 
 				func net_sessionGet(key string,s *sessions.Session) string {
 					return s.Values[key].(string)
+				}
+
+				func UrlAtZ(url,base string) (isURL bool) {
+					isURL = strings.Index(url, base) == 0 
+					return
 				}
 
 
