@@ -1100,6 +1100,9 @@ import (
 				      w.Write(p.Body)
 				  }
 
+				  p.R = nil
+				  p.Session = nil
+				  p = nil
 				  //context.Clear(r)
 				  
 				}
