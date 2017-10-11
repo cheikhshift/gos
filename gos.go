@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/0xAX/notificator"
 	"github.com/cheikhshift/gos/core"
 	"github.com/fatih/color"
 	"github.com/howeyc/fsnotify"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-	"github.com/0xAX/notificator"
 )
 
 var notify *notificator.Notificator
@@ -1559,51 +1559,54 @@ func JBuild(path string, out string) {
 				} else {
 					if line != "" {
 						line_part := strings.Split(line, ":")
-						lnumber, _ := strconv.Atoi(line_part[1])
+						if len(line_part) > 3 && strings.Contains(line_part[0], out) {
+							lnumber, _ := strconv.Atoi(line_part[1])
 
-						file, err := os.Open(out)
-						if err != nil {
-							color.Red("Could not find a source file")
-							return
-						}
-
-						//log.Println(line_part[len(line_part) - 1])
-						scanner := bufio.NewScanner(file)
-						inm := 0
-						for scanner.Scan() {
-							inm++
-							//log.Println("%+V", inm)
-							lin := scanner.Text()
-							if inm == lnumber {
-								acT_line := GetLine(serverconfig, lin)
-								if acT_line > -1 && strings.Contains(line_part[0],out) {
-									color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
-
-								} else {
-									color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
-
-								}
+							file, err := os.Open(out)
+							if err != nil {
+								color.Red("Could not find a source file")
+								return
 							}
-							// log.Println("data : " + scanner.Text())
-						}
 
-						if err := scanner.Err(); err != nil {
-							color.Red("Could not find a source file")
-							return
-						}
+							//log.Println(line_part[len(line_part) - 1])
+							scanner := bufio.NewScanner(file)
+							inm := 0
+							for scanner.Scan() {
+								inm++
+								//log.Println("%+V", inm)
+								lin := scanner.Text()
+								if inm == lnumber {
+									acT_line := GetLine(serverconfig, lin)
+									if acT_line > -1 {
+										color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
-						file.Close()
+									} else {
+										color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
+
+									}
+								}
+								// log.Println("data : " + scanner.Text())
+							}
+
+							if err := scanner.Err(); err != nil {
+								color.Red("Could not find a source file")
+								return
+							}
+
+							file.Close()
+						} else {
+							color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
+						}
 					}
 				}
 			}
 		}
-		 notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1] ), "", notificator.UR_CRITICAL)
+		notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
 		color.Red("Full compiler build log : ")
 		log.Println(log_build)
 		WatchForUpdate(path)
 		return
 	}
-
 
 	log.Println("Use Ctrl + C to quit")
 
@@ -1644,7 +1647,7 @@ func JBuild(path string, out string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1] ), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
+	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
 	log.Println("Ready!")
 	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 	<-done
@@ -1664,10 +1667,11 @@ func Build(path string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	appout = coreTemplate.Output
+
 	if coreTemplate == nil {
 		return
 	}
+	appout = coreTemplate.Output
 	//log.Println(coreTemplate.Methods.Methods)
 	coreTemplate.WriteOut = false
 	coreTemplate.Name = path
@@ -1690,9 +1694,9 @@ func Build(path string) {
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
 	os.Remove("bindata.go")
 	if isWin := strings.Contains(runtime.GOOS, "indows"); isWin {
-		core.RunCmd(fmt.Sprintf("gofmt -w %s", pkgpath[len(pkgpath)-1] ) )
+		core.RunCmd(fmt.Sprintf("gofmt -w %s", pkgpath[len(pkgpath)-1]))
 	} else {
-		core.RunCmd(fmt.Sprintf("gofmt -w ../%s", pkgpath[len(pkgpath)-1]) )
+		core.RunCmd(fmt.Sprintf("gofmt -w ../%s", pkgpath[len(pkgpath)-1]))
 	}
 
 	if os.Args[1] == "--t" {
@@ -1706,7 +1710,7 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			log.Println("📦 Invoking go-bindata")
-			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...",webroot,templateroot) )
+			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
 			var pk []string
@@ -1736,50 +1740,47 @@ func Build(path string) {
 						} else {
 							if line != "" {
 								line_part := strings.Split(line, ":")
-								var lnumber int
-								if len(line_part) == 1 {
-									log.Println(line)
-								} else {
-									lnumber, _ = strconv.Atoi(line_part[1])
-								}
-								file, err := os.Open(coreTemplate.Output)
-								if err != nil {
-									color.Red("Could not find a source file")
-									return
-								}
 
-								//log.Println(line_part[len(line_part) - 1])
-								scanner := bufio.NewScanner(file)
-								inm := 0
-								for scanner.Scan() {
-									inm++
-									//log.Println("%+V", inm)
-									lin := scanner.Text()
-									if inm == lnumber {
+								if len(line_part) > 3 && strings.Contains(line_part[0], appout) {
+									lnumber, _ := strconv.Atoi(line_part[1])
 
-										acT_line := GetLine(serverconfig, lin)
-										if acT_line > -1 && strings.Contains(line_part[0],appout)  {
-											color.Magenta("Verify your file " + serverconfig + " on line : " + strconv.Itoa(acT_line) + " | " + strings.Join(line_part[2:], " - "))
-
-										} else {
-											color.Magenta("Verify your golang WebApp libraries (linked libraries) ")
-
-										}
+									file, err := os.Open(appout)
+									if err != nil {
+										color.Red("Could not find a source file")
+										return
 									}
-									// log.Println("data : " + scanner.Text())
-								}
 
-								if err := scanner.Err(); err != nil {
-									color.Red("Could not find a source file")
-									return
-								}
+									//log.Println(line_part[len(line_part) - 1])
+									scanner := bufio.NewScanner(file)
+									inm := 0
+									for scanner.Scan() {
+										inm++
+										//log.Println("%+V", inm)
+										lin := scanner.Text()
+										if inm == lnumber {
+											acT_line := GetLine(serverconfig, lin)
+											if acT_line > -1 {
+												color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
-								file.Close()
+											}
+										}
+										// log.Println("data : " + scanner.Text())
+									}
+
+									if err := scanner.Err(); err != nil {
+										color.Red("Could not find a source file")
+										return
+									}
+
+									file.Close()
+								} else if len(line_part) > 3 {
+									color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s reason : %s", line_part[0], line_part[1], line_part[2:]))
+								}
 							}
 						}
 					}
 				}
-				 notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1] ), "", notificator.UR_CRITICAL)
+				notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
 				color.Red("Full compiler build log : ")
 				log.Println(log_build)
 				WatchForUpdate(path)
@@ -1833,7 +1834,7 @@ func Build(path string) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1] ),  strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/",-1 ), notificator.UR_NORMAL)
+			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1), notificator.UR_NORMAL)
 			log.Println("Ready!")
 			go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
 			//process <- false
@@ -1969,17 +1970,15 @@ func Build(path string) {
 
 func main() {
 
-	
-
 	if tpath := os.ExpandEnv("$USERPROFILE"); tpath != "" && os.ExpandEnv("$GOPATH") == "" {
 		os.Setenv("GOPATH", tpath+"/go")
 	}
-	GOHOME = fmt.Sprintf("%s/src/", os.ExpandEnv("$GOPATH") )
+	GOHOME = fmt.Sprintf("%s/src/", os.ExpandEnv("$GOPATH"))
 
 	notify = notificator.New(notificator.Options{
-    	DefaultIcon: strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")),"//","/",-1),
-    	AppName:     "Gopher Sauce",
-  	})
+		DefaultIcon: strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1),
+		AppName:     "Gopher Sauce",
+	})
 	//log.Println( os.Args)
 	if len(os.Args) > 1 {
 		//args := os.Args[1:]
@@ -2012,8 +2011,8 @@ func main() {
 			}
 			wdir, _ := os.Getwd()
 			processname := strings.Split(wdir, "/")
-			
-			core.RunCmdSmart(fmt.Sprintf("killall -3 %s", processname[len(processname) - 1]) )
+
+			core.RunCmdSmart(fmt.Sprintf("killall -3 %s", processname[len(processname)-1]))
 			core.RunCmdSmart("killall -3 gos")
 			return
 		}
@@ -2063,7 +2062,7 @@ func main() {
 			serverconfig = os.Args[3]
 		}
 
-		Build(fmt.Sprintf("%s/%s",GOHOME, serverconfig) )
+		Build(fmt.Sprintf("%s/%s", GOHOME, serverconfig))
 
 	} /* else {
 

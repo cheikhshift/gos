@@ -397,6 +397,8 @@ import (
 					         	w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("%s")
+								 pag.R = r
+						         pag.Session = session					
 								 if err != nil {
 								        	log.Println(err.Error())
 								        	callmet = true	        	
@@ -405,7 +407,7 @@ import (
 								if pag.isResource {
 				        			w.Write(pag.Body)
 						    	} else {
-						    		renderTemplate(w, r, "%s%s" , pag,session)
+						    		// renderTemplate(w, pag) /"%s%s" 
 						     
 						    	}
 								 callmet = true
@@ -445,6 +447,8 @@ import (
 					        	 w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("%s")
+								 pag.R = r
+						         pag.Session = session					   
 								 if err != nil {
 								        	log.Println(err.Error())
 								        	callmet = true	        	
@@ -453,7 +457,7 @@ import (
 								   if pag.isResource {
 							        	w.Write(pag.Body)
 							    	} else {
-							    		renderTemplate(w, r, "%s%s" , pag,session)
+							    		renderTemplate(w, pag) //"%s%s" 
 							     
 							    	}
 					           callmet = true
@@ -703,15 +707,18 @@ import (
 
 
 			
-				func renderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, p *Page,session *sessions.Session)  bool {
+				func renderTemplate(w http.ResponseWriter, p *Page)  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
-					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", r.URL.Path,n)  )
+					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
 					           	 
-					           	 DebugTemplate( w,r , fmt.Sprintf("%s%%s", r.URL.Path) )
+					           	 DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path) )
 					           	 w.WriteHeader(http.StatusInternalServerError)
 					           	 
 						         pag,err := loadPage("%s" )
+						         pag.R = p.R
+						         pag.Session = p.Session
+						         p = nil
 						        if err != nil {
 						        	log.Println(err.Error())	        	
 						        	return
@@ -719,16 +726,14 @@ import (
 						         if pag.isResource {
 						        	w.Write(pag.Body)
 						    	} else {
-						    		renderTemplate(w, r, "%s%s" , pag,session)
+						    		renderTemplate(w, pag) //"%s%s"
 						     
 						    	}
 					        }
 					    }()
 
 
-				    
-				    p.Session = session
-				    p.R = r
+				  
 				  
 				    t := template.New("PageWrapper")
 				    t = t.Funcs(%s)
@@ -737,10 +742,13 @@ import (
 				    err := t.Execute(outp, p)
 				    if err != nil {
 				        log.Println(err.Error())
-				    	DebugTemplate( w,r , fmt.Sprintf("%s%%s", r.URL.Path))
+				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
 				    	w.WriteHeader(http.StatusInternalServerError)
 					    w.Header().Set("Content-Type",  "text/html")
 						pag,err := loadPage("%s" )
+						 pag.R = p.R
+						         pag.Session = p.Session
+						         p = nil
 						 if err != nil {
 						        	log.Println(err.Error())	        	
 						        	return false
@@ -748,14 +756,14 @@ import (
 						  if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
-				    		renderTemplate(w, r, "%s%s" , pag,session)
+				    		renderTemplate(w, pag) // "%s%s" 
 				     
 				    	}
 				    	return false
 				    } 
 
 
-				    p.Session.Save(r, w)
+				    p.Session.Save(p.R, w)
 
 				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
 				    %s
@@ -1066,6 +1074,9 @@ import (
 				        w.WriteHeader(http.StatusNotFound)				  	
 				       
 				        pag,err := loadPage("%s")
+				         pag.R = p.R
+						         pag.Session = p.Session
+						         p = nil
 				        if err != nil {
 				        	log.Println(err.Error())
 				        	//context.Clear(r)
@@ -1074,7 +1085,7 @@ import (
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
-				    		renderTemplate(w, r, "%s%s" , pag,session)
+				    		renderTemplate(w, pag) //"%s%s" 
 				    	}
 				        return
 				  }
@@ -1082,8 +1093,9 @@ import (
 				   
 				  if !p.isResource {
 				  		w.Header().Set("Content-Type",  "text/html")
-
-				      	renderTemplate(w, r, fmt.Sprintf("%s%%s", r.URL.Path) , p,session)
+				  		p.Session = session
+				  		p.R = r
+				      	renderTemplate(w, p) //fmt.Sprintf("%s%%s", r.URL.Path)
 				     
 				     // log.Println(w)
 				  } else {
