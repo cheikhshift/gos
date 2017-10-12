@@ -7,6 +7,7 @@
 - [x] Choose from the 50,000+ go packages online to build your application.
 - [x] Build and use ready-for-use GXML extensions.
 - [x] Live reload on project source file updates.
+- [x] Open tracing on local port `8700`.
 
 ## Documentation here :
 [Docs](http://golangserver.com)
