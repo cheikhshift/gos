@@ -390,7 +390,7 @@ import (
 `
 			TraceTemplate = ` 
   				var sp opentracing.Span
-			    opName := fmt.Sprintf("Building template %s.%s", p.R.URL.Path, ".tmpl")
+			    opName := fmt.Sprintf("Building template %s%s", p.R.URL.Path, ".tmpl")
 			  
 			  if true {
 			   carrier := opentracing.HTTPHeadersCarrier(p.R.Header)
