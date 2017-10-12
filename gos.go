@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+
 	"strconv"
 	"strings"
 	"unicode"
@@ -1662,7 +1663,7 @@ func JBuild(path string, out string) {
 
 func Build(path string) {
 
-	color.Magenta("😎 Loading project!")
+	color.Green("😎 Loading project!")
 	coreTemplate, err := core.LoadGos(path)
 	if err != nil {
 		log.Fatal(err)
@@ -1991,9 +1992,15 @@ func main() {
 			core.RunCmd("go get github.com/gorilla/context")
 			core.RunCmd("go get gopkg.in/mgo.v2")
 			core.RunCmd("go get github.com/asaskevich/govalidator")
+			core.RunCmd("go get sourcegraph.com/sourcegraph/appdash")
+			core.RunCmd("go get sourcegraph.com/sourcegraph/appdash-data")
 			core.RunCmd("go get github.com/fatih/color")
+			core.RunCmd("go get github.com/opentracing/opentracing-go")
+			core.RunCmd("go get github.com/gorilla/mux")
+			core.RunCmd("go get github.com/opentracing/basictracer-go")
 			core.RunCmd("go get github.com/cheikhshift/db")
 			core.RunCmd("go get gopkg.in/ldap.v2")
+
 			//core.RunCmd("")
 			//log.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
 			//os.Chdir(os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
