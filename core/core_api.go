@@ -420,7 +420,7 @@ import (
 			TraceError = ` span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%s request at %s, reason : %s ", r.Method, r.URL.Path, err) )`
 			net_imports = append(net_imports, "github.com/opentracing/opentracing-go")
-			net_imports = append(net_imports, `net`, `net/url`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
+			net_imports = append(net_imports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`,`appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
 		}
 
 		for _, imp := range template.Methods.Methods {
