@@ -381,7 +381,7 @@ import (
 			TraceParam = `, span)`
 			TraceinFunc = `, span opentracing.Span)`
 			TraceOpt = `//wheredefault`
-			TraceOpen = ` span := opentracing.StartSpan(r.URL.Path)
+			TraceOpen = ` span := opentracing.StartSpan(fmt.Sprintf("%s %s",r.Method,r.URL.Path) )
   				defer span.Finish()
   			  carrier := opentracing.HTTPHeadersCarrier(r.Header)
 			if err := span.Tracer().Inject(span.Context(),opentracing.HTTPHeaders,carrier);  err != nil {
@@ -436,7 +436,7 @@ import (
 				est = fmt.Sprintf(`	
 					lastLine := ""
 						var sp opentracing.Span
-					    opName := fmt.Sprintf("Web service : [%s]%%s", r.URL.Path)
+					    opName := fmt.Sprintf(" [%s]%%s %%s", r.Method,r.URL.Path)
 					  
 					  if true {
 					   carrier := opentracing.HTTPHeadersCarrier(r.Header)
@@ -502,7 +502,7 @@ import (
 				est = fmt.Sprintf(`	
 					lastLine := ""
 					var sp opentracing.Span
-					    opName := fmt.Sprintf("Web service : [%s] %%s", r.URL.Path)
+					    opName := fmt.Sprintf(" [%s]%%s %%s", r.Method,r.URL.Path)
 					  
 					  if true {
 					   carrier := opentracing.HTTPHeadersCarrier(r.Header)
