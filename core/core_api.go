@@ -375,6 +375,7 @@ import (
 		*/
 		TraceParam = `)`
 		TraceinFunc = `)`
+		TraCFt = `)`
 		if !template.Prod {
 			TraCFt = `, opentracing.Span)`
 			TraceParam = `, span)`
