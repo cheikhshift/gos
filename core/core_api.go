@@ -367,20 +367,26 @@ import (
 
 		// if template.Type == "webapp" {
 
-		var TraceOpt, TraceOpen, TraceGet, TraceTemplate, TraceError string
+		var TraceOpt, TraceOpen, TraceParam,TraceinFunc,TraCFt, TraceGet, TraceTemplate, TraceError string
 
 		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "github.com/elazarl/go-bindata-assetfs", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
+		TraceParam = `)`
+		TraceinFunc = `)`
 		if !template.Prod {
+			TraCFt = `, opentracing.Span)`
+			TraceParam = `, span)`
+			TraceinFunc = `, span opentracing.Span)`
 			TraceOpt = `//wheredefault`
 			TraceOpen = ` span := opentracing.StartSpan(r.URL.Path)
   				defer span.Finish()
   			  carrier := opentracing.HTTPHeadersCarrier(r.Header)
-			if err := opentracing.GlobalTracer().Inject(span.Context(),opentracing.HTTPHeaders,carrier);  err != nil {
+			if err := span.Tracer().Inject(span.Context(),opentracing.HTTPHeaders,carrier);  err != nil {
 		        log.Fatalf("Could not inject span context into header: %v", err)
 		    }
+
 `
 			TraceTemplate = ` 
   				var sp opentracing.Span
@@ -397,24 +403,23 @@ import (
 			  defer sp.Finish()
 		`
 			TraceGet = ` 
-  				var span opentracing.Span
+  				var sp opentracing.Span
 			    opName := fmt.Sprintf(fmt.Sprintf("Web:/%s", r.URL.Path) )
 			  
 			  if true {
 			   carrier := opentracing.HTTPHeadersCarrier(r.Header)
 			wireContext, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, carrier); if err != nil {
-			        span = opentracing.StartSpan(opName)
+			        sp = opentracing.StartSpan(opName)
 			    } else {
-			        span = opentracing.StartSpan(opName, opentracing.ChildOf(wireContext))
+			        sp = opentracing.StartSpan(opName, opentracing.ChildOf(wireContext))
 			    }
 			}
-			  defer span.Finish()
+			  defer sp.Finish()
 		`
-			TraceError = `ext.Error.Set(span, true) 
-        span.LogEventWithPayload(fmt.Sprintf("%s request at %s", r.Method, r.URL.Path), err)`
+			TraceError = ` span.SetTag("error", true)
+            span.LogEvent(fmt.Sprintf("%s request at %s, reason : %s ", r.Method, r.URL.Path, err) )`
 			net_imports = append(net_imports, "github.com/opentracing/opentracing-go")
-			net_imports = append(net_imports, "github.com/opentracing/opentracing-go/ext")
-			net_imports = append(net_imports, `net/http`, `net`, `net/url`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
+			net_imports = append(net_imports, `net`, `net/url`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
 		}
 
 		for _, imp := range template.Methods.Methods {
@@ -446,27 +451,29 @@ import (
 					          log.Println("Web request (%s) failed at line :",GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
 					          log.Println("Reason : ",n)
 					         %s
-					         	 	ext.Error.Set(sp, true)
-		sp.LogEventWithPayload(fmt.Sprintf("%s request at %s", r.Method, r.URL.Path), n)
+					          span.SetTag("error", true)
+            span.LogEvent(fmt.Sprintf("%%s request at %%s, reason : %%s ", r.Method, r.URL.Path, n) )
+					         	 
 					         	w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("%s")
-								 pag.R = r
-						         pag.Session = session					
+											
 								 if err != nil {
 								        	log.Println(err.Error())
 								        	callmet = true	        	
 								        	return
 								 }
+								 	 pag.R = r
+						         pag.Session = session	
 								if pag.isResource {
 				        			w.Write(pag.Body)
 						    	} else {
-						    		// renderTemplate(w, pag) /"%s%s" 
+						    		// renderTemplate(w, pag%s
 						     
 						    	}
 								 callmet = true
 					        }
-						}()`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, web, template.ErrorPage)
+						}()`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, TraceParam)
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
 					line = strings.TrimSpace(line)
@@ -510,28 +517,29 @@ import (
 					          log.Println("Web request (%s) failed at line :",GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
 					          log.Println("Reason : ",n)
 					          %s
-					          	ext.Error.Set(sp, true)
-		sp.LogEventWithPayload(fmt.Sprintf("%s request at %s", r.Method, r.URL.Path), n)
+					       	 span.SetTag("error", true)
+            span.LogEvent(fmt.Sprintf("%%s request at %%s, reason : %%s ", r.Method, r.URL.Path, n) )
 					        	 w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
 								pag,err := loadPage("%s")
-								 pag.R = r
-						         pag.Session = session					   
+				   
 								 if err != nil {
 								        	log.Println(err.Error())
 								        	callmet = true	        	
 								        	return 
 								 }
+								  pag.R = r
+						         pag.Session = session	
 								   if pag.isResource {
 							        	w.Write(pag.Body)
 							    	} else {
-							    		renderTemplate(w, pag) //"%s%s" 
+							    		renderTemplate(w, pag%s //"s" 
 							     
 							    	}
 					           callmet = true
 					        }
 						}()
-						`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, web, template.ErrorPage)
+						`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, TraceParam)
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
 					line = strings.TrimSpace(line)
@@ -776,7 +784,7 @@ import (
 
 
 			
-				func renderTemplate(w http.ResponseWriter, p *Page)  bool {
+				func renderTemplate(w http.ResponseWriter, p *Page%s  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
 					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
@@ -797,7 +805,7 @@ import (
 						    	} else {
 						    		pag.R = p.R
 						         	pag.Session = p.Session
-						    		renderTemplate(w, pag) //"%s%s"
+						    		renderTemplate(w, pag%s //%s"
 						     
 						    	}
 					        }
@@ -828,7 +836,7 @@ import (
 						  if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
-				    		renderTemplate(w, pag) // "%s%s" 
+				    		renderTemplate(w, pag%s // "%s" 
 				     
 				    	}
 				    	return false
@@ -844,7 +852,7 @@ import (
 				    
 				}
 
-				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session)) http.HandlerFunc {
+				func makeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session%s) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
 				  	 %s
 					var session *sessions.Session
@@ -852,8 +860,8 @@ import (
 				  	if 	session, er = store.Get(r, "session-"); er != nil {
 						session,_ = store.New(r, "session-")
 					}
-				  	if attmpt := apiAttempt(w,r,session) ;!attmpt {
-				      fn(w, r, "",session)
+				  	if attmpt := apiAttempt(w,r,session%s ;!attmpt {
+				      fn(w, r, "",session%s
 				  	}
 				  	
 				  	session = nil
@@ -865,7 +873,7 @@ import (
 					data,_ := json.Marshal(&v)
 					return string(data)
 				}
-				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session) (callmet bool) {
+				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session%s (callmet bool) {
 					var response string
 					response = ""
 					
@@ -1138,7 +1146,7 @@ import (
 				    }
 
 				}
-			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session) {
+			func handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session%s {
 				  var p *Page
 				  p,err := loadPage(r.URL.Path)
 				  %s
@@ -1160,7 +1168,7 @@ import (
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
-				    		renderTemplate(w, pag) //"%s%s" 
+				    		renderTemplate(w, pag%s //"%s" 
 				    	}
 				        return
 				  }
@@ -1170,7 +1178,7 @@ import (
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		p.Session = session
 				  		p.R = r
-				      	renderTemplate(w, p) //fmt.Sprintf("%s%%s", r.URL.Path)
+				      	renderTemplate(w, p%s //fmt.Sprintf("%s%%s", r.URL.Path)
 				     
 				     // log.Println(w)
 				  } else {
@@ -1317,7 +1325,7 @@ import (
 				 }
 
 				 %s
-				 `, template.Key, mathFuncs, web, web, template.ErrorPage, web, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, web, template.ErrorPage, TraceOpen, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceGet, TraceError, template.NPage, web, template.ErrorPage, web, web, web, web, web, TraceOpt, ReadyTemplate)
+				 `, template.Key, mathFuncs, TraceinFunc , web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage,TraCFt, TraceOpen, TraceParam,TraceParam,TraceinFunc,apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam,web, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)
