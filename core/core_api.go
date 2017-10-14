@@ -1599,7 +1599,7 @@ functions:
     handler: ./%s
     image: %s
 
-`,tlc,tlc,tlc)
+`,v.Name,tlc,tlc)
 			
 				
 
