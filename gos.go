@@ -24,6 +24,7 @@ var gos_root string
 var appout string
 var GOHOME string
 var serverconfig string
+var Type string
 
 func LowerInitial(str string) string {
 	for i, v := range str {
@@ -684,7 +685,7 @@ func VmdOne() {
 
 		if len(cmd_set) > 2 {
 			templat += `"bytes"`
-			params = `bytes.NewReader( []byte("` + cmd_set[2] + `") )`
+			params = ``
 		}
 
 		templat += `
@@ -1529,11 +1530,6 @@ func TriggerType(typ string) (is bool) {
 }
 
 func JBuild(path string, out string) {
-
-	log.Println("Invoking go-bindata")
-	core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
-	//time.Sleep(time.Second*100 )
-	//core.RunFile(GOHOME, coreTemplate.Output)
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
 		pwd, err := os.Getwd()
@@ -1547,69 +1543,75 @@ func JBuild(path string, out string) {
 	} else {
 		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 	}
-	log_build, err := core.RunCmdSmart("go build")
-	if err != nil {
-		//log.Println(err.Error())
-		color.Red("Your build failed, Here is why :>")
-		lines := strings.Split(log_build, "\n")
-		for i, line := range lines {
-			if i > 0 {
-				if strings.Contains(line, "imported and") {
-					line_part := strings.Split(line, ":")
-					color.Red(strings.Join(line_part[2:], " - "))
-				} else {
-					if line != "" {
+	//time.Sleep(time.Second*100 )
+	//core.RunFile(GOHOME, coreTemplate.Output)
+
+	if Type == "webapp" {
+		log_build, err := core.RunCmdSmart("go build")
+		if err != nil {
+			//log.Println(err.Error())
+			color.Red("Your build failed, Here is why :>")
+			lines := strings.Split(log_build, "\n")
+			for i, line := range lines {
+				if i > 0 {
+					if strings.Contains(line, "imported and") {
 						line_part := strings.Split(line, ":")
-						if len(line_part) > 3 && strings.Contains(line_part[0], out) {
-							lnumber, _ := strconv.Atoi(line_part[1])
+						color.Red(strings.Join(line_part[2:], " - "))
+					} else {
+						if line != "" {
+							line_part := strings.Split(line, ":")
+							if len(line_part) > 3 && strings.Contains(line_part[0], out) {
+								lnumber, _ := strconv.Atoi(line_part[1])
 
-							file, err := os.Open(out)
-							if err != nil {
-								color.Red("Could not find a source file")
-								return
-							}
-
-							//log.Println(line_part[len(line_part) - 1])
-							scanner := bufio.NewScanner(file)
-							inm := 0
-							for scanner.Scan() {
-								inm++
-								//log.Println("%+V", inm)
-								lin := scanner.Text()
-								if inm == lnumber {
-									acT_line := GetLine(serverconfig, lin)
-									if acT_line > -1 {
-										color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
-
-									} else {
-										color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
-
-									}
+								file, err := os.Open(out)
+								if err != nil {
+									color.Red("Could not find a source file")
+									return
 								}
-								// log.Println("data : " + scanner.Text())
-							}
 
-							if err := scanner.Err(); err != nil {
-								color.Red("Could not find a source file")
-								return
-							}
+								//log.Println(line_part[len(line_part) - 1])
+								scanner := bufio.NewScanner(file)
+								inm := 0
+								for scanner.Scan() {
+									inm++
+									//log.Println("%+V", inm)
+									lin := scanner.Text()
+									if inm == lnumber {
+										acT_line := GetLine(serverconfig, lin)
+										if acT_line > -1 {
+											color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
-							file.Close()
-						} else {
-							color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
+										} else {
+											color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
+
+										}
+									}
+									// log.Println("data : " + scanner.Text())
+								}
+
+								if err := scanner.Err(); err != nil {
+									color.Red("Could not find a source file")
+									return
+								}
+
+								file.Close()
+							} else {
+								color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s", line_part[0], line_part[1]))
+							}
 						}
 					}
 				}
 			}
+			notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
+			color.Red("Full compiler build log : ")
+			log.Println(log_build)
+			WatchForUpdate(path)
+			return
 		}
-		notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
-		color.Red("Full compiler build log : ")
-		log.Println(log_build)
-		WatchForUpdate(path)
-		return
-	}
 
-	log.Println("Use Ctrl + C to quit")
+		log.Println("Use Ctrl + C to quit")
+
+	}
 
 	process := make(chan bool)
 	done := make(chan bool)
@@ -1650,13 +1652,24 @@ func JBuild(path string, out string) {
 	}
 	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
 	log.Println("Ready!")
-	go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+	if !strings.Contains(Type, "faas") {
+		go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+	}
 	<-done
 	defer close(process)
 	defer close(done)
 	watcher.RemoveWatch(path)
 	watcher.Close()
 	log.Println("🤔 Refreshing")
+	log.Println("📦 Invoking go-bindata")
+
+	if strings.Contains(Type, "faas") {
+
+		core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+
+	} else {
+		core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+	}
 	core.RunCmd("gos --t")
 	JBuild(path, out)
 }
@@ -1671,6 +1684,39 @@ func Build(path string) {
 
 	if coreTemplate == nil {
 		return
+	}
+	Type = coreTemplate.Type
+	var pk []string
+	if strings.Contains(os.Args[1], "--") {
+		pwd, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		pwd = strings.Replace(pwd, "\\", "/", -1)
+		pk = strings.Split(strings.Trim(pwd, "/"), "/")
+
+	} else {
+		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
+	}
+	if !strings.Contains(os.Args[1], "export") {
+		log.Println("📦 Invoking go-bindata")
+
+		if strings.Contains(Type, "faas") {
+			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+
+		} else {
+			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+		}
+	} else {
+
+		if strings.Contains(Type, "faas") {
+
+			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...",pk[len(pk)-1], webroot, templateroot))
+
+		} else {
+			core.RunCmd(fmt.Sprintf("go-bindata %s/... %s/...", webroot, templateroot))
+		}
 	}
 	appout = coreTemplate.Output
 	//log.Println(coreTemplate.Methods.Methods)
@@ -1693,7 +1739,7 @@ func Build(path string) {
 		os.Exit(1)
 	}
 	pkgpath := strings.Split(strings.Trim(cwd, "/"), "/")
-	os.Remove("bindata.go")
+
 	if isWin := strings.Contains(runtime.GOOS, "indows"); isWin {
 		core.RunCmd(fmt.Sprintf("gofmt -w %s", pkgpath[len(pkgpath)-1]))
 	} else {
@@ -1703,98 +1749,86 @@ func Build(path string) {
 	if os.Args[1] == "--t" {
 		return
 	}
-	if coreTemplate.Type == "webapp" || coreTemplate.Type == "locale" {
+
+	if coreTemplate.Type == "webapp" || coreTemplate.Type == "faas" {
 
 		if os.Args[1] == "run" || os.Args[1] == "run-sub" || os.Args[1] == "--run" || os.Args[1] == "--serv" {
 			//
 			if !strings.Contains(os.Args[1], "run-") && !strings.Contains(os.Args[1], "--") {
 				os.Chdir(GOHOME)
 			}
-			log.Println("📦 Invoking go-bindata")
-			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+
 			//time.Sleep(time.Second*100 )
 			//core.RunFile(GOHOME, coreTemplate.Output)
-			var pk []string
-			if strings.Contains(os.Args[1], "--") {
-				pwd, err := os.Getwd()
+
+			if coreTemplate.Type == "webapp" {
+				log_build, err := core.RunCmdSmart("go build")
 				if err != nil {
-					log.Println(err)
-					os.Exit(1)
-				}
-				pwd = strings.Replace(pwd, "\\", "/", -1)
-				pk = strings.Split(strings.Trim(pwd, "/"), "/")
-
-			} else {
-				pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
-			}
-
-			log_build, err := core.RunCmdSmart("go build")
-			if err != nil {
-				//log.Println(err.Error())
-				color.Red("😎 Your build failed, Here is why :>")
-				lines := strings.Split(log_build, "\n")
-				for i, line := range lines {
-					if i > 0 {
-						if strings.Contains(line, "imported and") {
-							line_part := strings.Split(line, ":")
-							color.Red(strings.Join(line_part[2:], " - "))
-						} else {
-							if line != "" {
+					//log.Println(err.Error())
+					color.Red("😎 Your build failed, Here is why :>")
+					lines := strings.Split(log_build, "\n")
+					for i, line := range lines {
+						if i > 0 {
+							if strings.Contains(line, "imported and") {
 								line_part := strings.Split(line, ":")
+								color.Red(strings.Join(line_part[2:], " - "))
+							} else {
+								if line != "" {
+									line_part := strings.Split(line, ":")
 
-								if len(line_part) > 3 && strings.Contains(line_part[0], appout) {
-									lnumber, _ := strconv.Atoi(line_part[1])
+									if len(line_part) > 3 && strings.Contains(line_part[0], appout) {
+										lnumber, _ := strconv.Atoi(line_part[1])
 
-									file, err := os.Open(appout)
-									if err != nil {
-										color.Red("Could not find a source file")
-										return
-									}
-
-									//log.Println(line_part[len(line_part) - 1])
-									scanner := bufio.NewScanner(file)
-									inm := 0
-									for scanner.Scan() {
-										inm++
-										//log.Println("%+V", inm)
-										lin := scanner.Text()
-										if inm == lnumber {
-											acT_line := GetLine(serverconfig, lin)
-											if acT_line > -1 {
-												color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
-
-											}
+										file, err := os.Open(appout)
+										if err != nil {
+											color.Red("Could not find a source file")
+											return
 										}
-										// log.Println("data : " + scanner.Text())
-									}
 
-									if err := scanner.Err(); err != nil {
-										color.Red("Could not find a source file")
-										return
-									}
+										//log.Println(line_part[len(line_part) - 1])
+										scanner := bufio.NewScanner(file)
+										inm := 0
+										for scanner.Scan() {
+											inm++
+											//log.Println("%+V", inm)
+											lin := scanner.Text()
+											if inm == lnumber {
+												acT_line := GetLine(serverconfig, lin)
+												if acT_line > -1 {
+													color.Magenta(fmt.Sprintf("Verify your file %s on line : %v | %s", serverconfig, acT_line, strings.Join(line_part[2:], " - ")))
 
-									file.Close()
-								} else if len(line_part) > 3 {
-									color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s reason : %s", line_part[0], line_part[1], line_part[2:]))
+												}
+											}
+											// log.Println("data : " + scanner.Text())
+										}
+
+										if err := scanner.Err(); err != nil {
+											color.Red("Could not find a source file")
+											return
+										}
+
+										file.Close()
+									} else if len(line_part) > 3 {
+										color.Blue(fmt.Sprintf("Verify your golang WebApp libraries (linked libraries) file : %s line : %s reason : %s", line_part[0], line_part[1], line_part[2:]))
+									}
 								}
 							}
 						}
 					}
-				}
-				notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
-				color.Red("Full compiler build log : ")
-				log.Println(log_build)
-				WatchForUpdate(path)
-				return
-			}
-
-			if len(os.Args) > 2 {
-				if os.Args[2] == "--buildcheck" {
+					notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
+					color.Red("Full compiler build log : ")
+					log.Println(log_build)
+					WatchForUpdate(path)
 					return
 				}
-			}
-			log.Println("🤓 Use Ctrl + C to quit")
 
+				if len(os.Args) > 2 {
+					if os.Args[2] == "--buildcheck" {
+						return
+					}
+				}
+				log.Println("🤓 Use Ctrl + C to quit")
+			}
 			process := make(chan bool)
 			done := make(chan bool)
 			//log_console := make(chan string)
@@ -1837,7 +1871,9 @@ func Build(path string) {
 			}
 			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1), notificator.UR_NORMAL)
 			log.Println("Ready!")
-			go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+			if !strings.Contains(Type, "faas") {
+				go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+			}
 			//process <- false
 			<-done
 
@@ -1846,6 +1882,15 @@ func Build(path string) {
 			watcher.RemoveWatch(path)
 			watcher.Close()
 			log.Println("🤔 Refreshing")
+			log.Println("📦 Invoking go-bindata")
+
+			if strings.Contains(Type, "faas") {
+
+				core.RunCmd(fmt.Sprintf("go-bindata  -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+
+			} else {
+				core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+			}
 			core.RunCmd("gos --t")
 			JBuild(path, coreTemplate.Output)
 
@@ -1911,8 +1956,6 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			//create both zips
-			log.Println("📦 Invoking go-bindata")
-			core.RunCmd("go-bindata  " + webroot + "/... " + templateroot + "/...")
 			core.RunCmd("go build")
 		}
 	} else if coreTemplate.Type == "bind" {
@@ -1988,7 +2031,7 @@ func main() {
 			core.RunCmd("go get -u github.com/jteeuwen/go-bindata/...")
 			core.RunCmd("go get github.com/gorilla/sessions")
 			core.RunCmd("go get github.com/elazarl/go-bindata-assetfs")
-
+			core.RunCmd("go get -u github.com/golang/dep/cmd/dep")
 			core.RunCmd("go get github.com/gorilla/context")
 			core.RunCmd("go get gopkg.in/mgo.v2")
 			core.RunCmd("go get github.com/asaskevich/govalidator")

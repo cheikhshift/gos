@@ -197,6 +197,8 @@ type Method struct {
 	Object     string   `xml:"object,attr"`
 	Autoface   string   `xml:"autoface,attr"`
 	Keeplocal  string   `xml:"keep-local,attr"`
+	Testi    string   `xml:"testi,attr"`
+	Testo    string   `xml:"testo,attr"`
 	Returntype string   `xml:"return,attr"`
 }
 
@@ -222,5 +224,7 @@ type Endpoint struct {
 	Path    string   `xml:"path,attr"`
 	Method  string   `xml:",innerxml"`
 	Type    string   `xml:"type,attr"`
+	Testi    string   `xml:"testi,attr"`
+	Testo    string   `xml:"testo,attr"`
 	Id      string   `xml:"id,attr"`
 }
