@@ -18,6 +18,9 @@
 ## IDE here :
 [thestrukture/IDE](https://github.com/thestrukture/IDE)
 
+## Deploying to FaaS
+Read the FaaS deployment/integration guide [here](faas.md)
+
 ## VIM plugin here :
 Find the `.gxml` plugin [here](https://github.com/cheikhshift/vim-gos)
 
