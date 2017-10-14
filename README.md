@@ -1,3 +1,6 @@
+
+ [![Go Report Card](https://goreportcard.com/badge/github.com/cheikhshift/gos)](https://goreportcard.com/report/github.com/cheikhshift/gos)
+
 # Go server overview :
 
 - [x] Template engine.
