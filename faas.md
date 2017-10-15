@@ -1,6 +1,6 @@
 # Go 'Serverless'
 
-This is a guide to help you build OpenFaaS functions with [Golang server](http://golangserver.com)
+This is a guide to help you build and deploy OpenFaaS functions with [Golang server](http://golangserver.com)
 
 ### Requirements
 1. [Golang server](http://golangserver.com). CLI installed.
