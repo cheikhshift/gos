@@ -26,7 +26,7 @@ Update your `gos.gxml` deploy tag content from `webapp` to `faas`.
 
 # Step 4 - Add
 #### Serverless `<end>` tag
-Add a new `<end>` tag within `<endpoints>` and voila you have a serverless function with full access to `http.Request` data. `<end>` tags with type attribute set to `f` or left blank will not be processed.
+Add a new `<end>` tag within `<endpoints>` and voila you have a serverless function with full access to `http.Request` to retrieve body data. `<end>` tags with type attribute set to `f` or left blank will not be processed.
 
 #### Templates
 Templates are also processed into OpenFaas functions. More information about adding new templates with [Golang server](http://golangserver.com/docs/markup.html#templates).
@@ -45,3 +45,9 @@ Your `<end>`'s path attribute will be stripped of `/` (forward slashes) and the 
 
 #### `<template>` tags :
 Your `<template>`'s name attribute will be the name of your OpenFaaS function. The Stdin of this function is a JSON string which will be converted to the tag's specified `struct` attribute.
+
+
+#### Notes
+With end tags write your response to Stdout directly.
+I used [this](https://github.com/cheikhshift/TestFaas/blob/master/gos.gxml) Go server repository for this guide.
+Template functions compile their linked `.tmpl` (with internal package `html/template`) file then write the output to Stdout. 
