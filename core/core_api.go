@@ -1718,9 +1718,10 @@ functions:
 						fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc)
 				chn := make(chan int)
 				go DoSpin(chn)
-				chn <- 1
+				
 				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc) )
 				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc) )
+				chn <- 1
 				close(chn)
 			}
 
