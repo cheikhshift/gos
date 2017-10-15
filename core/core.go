@@ -29,6 +29,7 @@ type gos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
 	Domain           string            `xml:"domain"`
+	Gate           	 string            `xml:"gateway,attr"`	
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`

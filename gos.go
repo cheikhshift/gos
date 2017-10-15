@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-
 	"strconv"
 	"strings"
 	"unicode"
@@ -1547,7 +1546,11 @@ func JBuild(path string, out string) {
 	//core.RunFile(GOHOME, coreTemplate.Output)
 
 	if Type == "webapp" {
+		chh := make(chan int)
+		go core.DoSpin(chh)
 		log_build, err := core.RunCmdSmart("go build")
+		chh <- 1
+		close(chh)
 		if err != nil {
 			//log.Println(err.Error())
 			color.Red("Your build failed, Here is why :>")
@@ -1636,7 +1639,9 @@ func JBuild(path string, out string) {
 					if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
 						//Build( GOHOME + "/" + serverconfig )
 						reloading = true
-						process <- true
+						if !strings.Contains(Type, "faas") {
+							process <- true
+						}
 						done <- true
 						break
 					}
@@ -1670,9 +1675,16 @@ func JBuild(path string, out string) {
 	} else {
 		core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 	}
+
+	chn :=  make(chan int)
+	go core.DoSpin(chn)
 	core.RunCmd("gos --t")
+	chn <- 1
+	close(chn)
 	JBuild(path, out)
 }
+
+
 
 func Build(path string) {
 
@@ -1685,6 +1697,7 @@ func Build(path string) {
 	if coreTemplate == nil {
 		return
 	}
+	
 	Type = coreTemplate.Type
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
@@ -1700,7 +1713,7 @@ func Build(path string) {
 		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 	}
 	if !strings.Contains(os.Args[1], "export") {
-		log.Println("📦 Invoking go-bindata")
+		log.Println("📦 Invoking go-bindata ")
 
 		if strings.Contains(Type, "faas") {
 			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
@@ -1762,6 +1775,7 @@ func Build(path string) {
 			//core.RunFile(GOHOME, coreTemplate.Output)
 
 			if coreTemplate.Type == "webapp" {
+				//fmt.Printf("\r  \033[36mBuilding\033[m %s ", s.Next())
 				log_build, err := core.RunCmdSmart("go build")
 				if err != nil {
 					//log.Println(err.Error())
@@ -1853,7 +1867,9 @@ func Build(path string) {
 							if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
 								//Build( GOHOME + "/" + serverconfig )
 								reloading = true
-								process <- true
+								if !strings.Contains(Type, "faas") {
+									process <- true
+								}
 								//	done <- true
 								done <- true
 								break
@@ -1891,8 +1907,13 @@ func Build(path string) {
 			} else {
 				core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 			}
+			chn :=  make(chan int)
+			go core.DoSpin(chn)
 			core.RunCmd("gos --t")
+			chn <- 1
+			close(chn)
 			JBuild(path, coreTemplate.Output)
+			return
 
 		}
 

@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"time"
+	"github.com/tj/go-spin"
 	//"go/types"
 )
 
@@ -118,6 +120,22 @@ func IsInSlice(qry string, slic []string) bool {
 		}
 	}
 	return false
+}
+
+func DoSpin(chn chan int){
+	s := spin.New()
+	s.Set(spin.Spin4)
+	var lck bool
+	go func(){
+		 <-chn
+		lck = true
+	}()
+	for !lck {
+	  	fmt.Printf("\r  \033[36mcomputing\033[m %s ", s.Next())
+	  	time.Sleep(160 * time.Millisecond)
+	}
+	fmt.Printf("\n")
+	return
 }
 
 func (d *gos) DeleteEnd(id string) {
@@ -1552,6 +1570,7 @@ import (
 			local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
 		}
 
+		
 	
 		d1 := []byte(local_string)
 
@@ -1572,7 +1591,9 @@ import (
 
 
 			os.Chdir(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")) )
-
+				if template.Gate == ""{
+					template.Gate = "http://localhost:8080"
+				}
 			for _,v := range template.Templates.Templates {
 				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name) )
 				os.RemoveAll(tlc)
@@ -1589,9 +1610,10 @@ func Handle(req []byte) string {
 }
 `,appname,v.Name)
 
+			
 				yamlTemp := fmt.Sprintf(`provider:
   name: faas
-  gateway: http://localhost:8080
+  gateway: %s
 
 functions:
   %s:
@@ -1599,7 +1621,7 @@ functions:
     handler: ./%s
     image: %s
 
-`,v.Name,tlc,tlc)
+`,template.Gate,v.Name,tlc,tlc)
 			
 				
 
@@ -1607,9 +1629,12 @@ functions:
 				_ = ioutil.WriteFile(fmt.Sprintf("%s.yml", tlc), []byte(yamlTemp), 0700)
 			
 				os.Chdir(fmt.Sprintf("%s", tlc))
-				if _,err := RunCmdSmart("dep init -gopath"); err != nil {
-					RunCmd("dep ensure ")
-				}
+				chn := make(chan int)
+				go DoSpin(chn)
+				
+				RunCmd("dep init -gopath")
+				chn <- 1
+				close(chn)
 
 				os.RemoveAll("vendor/golang.org/x/tools")
 				RunCmd( fmt.Sprintf("gofmt -w -s ../%s", tlc ) )
@@ -1647,7 +1672,7 @@ func Handle(req []byte) string {
 
 				yamlTemp := fmt.Sprintf(`provider:
   name: faas
-  gateway: http://localhost:8080
+  gateway: %s
 
 functions:
   %s:
@@ -1655,7 +1680,7 @@ functions:
     handler: ./%s
     image: %s
 
-`,tlc,tlc,strings.ToLower(tlc) )
+`,template.Gate,tlc,tlc,strings.ToLower(tlc) )
 			
 				
 
@@ -1663,10 +1688,12 @@ functions:
 				_ = ioutil.WriteFile(fmt.Sprintf("%s.yml", tlc), []byte(yamlTemp), 0700)
 			
 				os.Chdir(fmt.Sprintf("%s", tlc))
-				if _,err := RunCmdSmart("dep init -gopath"); err != nil {
-					RunCmd("dep ensure ")
-				}
-
+				chn := make(chan int)
+				go DoSpin(chn)
+				
+				RunCmd("dep init -gopath")
+				chn <- 1	
+				close(chn)	
 				os.RemoveAll("vendor/golang.org/x/tools")
 				RunCmd( fmt.Sprintf("gofmt -w -s ../%s", tlc ) )
 
@@ -1688,15 +1715,26 @@ functions:
 
 			for _,v := range template.Templates.Templates {
 				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name) )
+						fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc)
+				chn := make(chan int)
+				go DoSpin(chn)
+				chn <- 1
 				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc) )
 				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc) )
+				close(chn)
 			}
 
 			for _,v := range template.Endpoints.Endpoints {
 				if v.Type != "f" {
 				var tlc = strings.Replace(fmt.Sprintf("%s%s", v.Type, strings.Replace(strings.Title(strings.Replace(v.Path,"/", " ",-1) ), " ","" ,-1 ) ), "star", "",-1 )
+				fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc )
+				chn := make(chan int)
+				go DoSpin(chn)
+			
 				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc) )
 				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc) )
+				chn <- 1
+				close(chn)
 				}
 			}
 
