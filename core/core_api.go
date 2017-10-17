@@ -409,7 +409,7 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam,TraceinFunc,TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log","github.com/elazarl/go-bindata-assetfs"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -417,9 +417,7 @@ import (
 		TraceinFunc = `)`
 		TraCFt = `)`
 
-		if template.Type != "faas" {
-			net_imports = append(net_imports,"github.com/elazarl/go-bindata-assetfs")
-		}
+	
 		if !template.Prod && template.Type != "faas"{
 			TraCFt = `, opentracing.Span)`
 			TraceParam = `, span)`
@@ -1570,14 +1568,19 @@ import (
 			local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
 		}
 
+		local_string += `
 		
+		func MakeFSHandle(root string){
+			http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: root}))
+		}
+		`
 	
 		d1 := []byte(local_string)
 
 		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
 		
-			var appname = strings.Split(strings.Join(pk, "/"),"/src/")[1]
+			var appname = strings.TrimSuffix( strings.Split(strings.Join(pk, "/"),"/src/")[1], "/" )
 			if _, err := os.Stat(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")) ); os.IsNotExist(err) {
 				os.MkdirAll(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH") ) ,0700)
 			}	
@@ -1594,6 +1597,8 @@ import (
 				if template.Gate == ""{
 					template.Gate = "http://localhost:8080"
 				}
+
+			var sourcedep string
 			for _,v := range template.Templates.Templates {
 				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name) )
 				os.RemoveAll(tlc)
@@ -1630,14 +1635,31 @@ functions:
 			
 				os.Chdir(fmt.Sprintf("%s", tlc))
 				chn := make(chan int)
+
 				go DoSpin(chn)
-				
-				RunCmd("dep init -gopath")
+				if sourcedep == "" {
+					RunCmd("dep init -gopath")
+
+					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//" ,"/" , -1 )
+					vendpath := fmt.Sprintf("vendor/%s/", appname)
+					os.RemoveAll(vendpath)
+					os.MkdirAll(vendpath, 0700)
+					CopyDir(appath, vendpath )
+					if _, err := os.Stat("vendor/github.com/elazarl/go-bindata-assetfs/"); os.IsNotExist(err) {
+						CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH")), "//", "/", -1 ),"vendor/github.com/elazarl/go-bindata-assetfs/")
+					}
+					os.RemoveAll("vendor/golang.org/x/tools")
+					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
+					sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"),tlc)
+				} else {
+					CopyDir(fmt.Sprintf("%s/vendor/", sourcedep), "vendor/")
+					CopyFile(fmt.Sprintf("%s/Gopkg.lock", sourcedep), "Gopkg.lock")
+					CopyFile(fmt.Sprintf("%s/Gopkg.toml", sourcedep), "Gopkg.toml")
+					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
+				}
 				chn <- 1
 				close(chn)
 
-				os.RemoveAll("vendor/golang.org/x/tools")
-				RunCmd( fmt.Sprintf("gofmt -w -s ../%s", tlc ) )
 
 				os.Chdir("../")
 			}
@@ -1655,20 +1677,23 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"fmt"
 )
 
 func Handle(req []byte) string {
+
 	readr := bytes.NewReader( req )
 	request, err := http.NewRequest("%s", "%s", readr)
 	if err != nil {
-		return "ERROR Creating request..."
+		return err.Error()
 	 }
 	rr := httptest.NewRecorder()
 	handle := http.HandlerFunc(app.MakeHandler(app.Handler))
 	handle.ServeHTTP(rr, request)
-	return rr.Body.String()
+	rr.Flush()
+	return fmt.Sprintf("%%s", rr.Body.String())
 }
-`,appname,v.Type, v.Path)
+`,appname,v.Type, strings.TrimPrefix(v.Path, "/") )
 
 				yamlTemp := fmt.Sprintf(`provider:
   name: faas
@@ -1691,11 +1716,30 @@ functions:
 				chn := make(chan int)
 				go DoSpin(chn)
 				
-				RunCmd("dep init -gopath")
+				if sourcedep == "" {
+					RunCmd("dep init -gopath")
+					//cleanup bugs found with fmt
+					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//" ,"/" , -1 )
+					vendpath := fmt.Sprintf("vendor/%s/", appname)
+					os.RemoveAll(vendpath)
+					os.MkdirAll(vendpath, 0700)
+					CopyDir(appath, vendpath )
+					if _, err := os.Stat("vendor/github.com/elazarl/go-bindata-assetfs/"); os.IsNotExist(err) {
+						CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH") ), "//", "/",-1 ) ,"vendor/github.com/elazarl/go-bindata-assetfs/")
+					}
+					os.RemoveAll("vendor/golang.org/x/tools")
+					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
+					sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"),tlc)
+				} else {
+					CopyDir(fmt.Sprintf("%s/vendor/", sourcedep), "vendor/")
+					
+					CopyFile(fmt.Sprintf("%s/Gopkg.lock", sourcedep), "Gopkg.lock")
+					CopyFile(fmt.Sprintf("%s/Gopkg.toml", sourcedep), "Gopkg.toml")
+					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
+				}
 				chn <- 1	
 				close(chn)	
-				os.RemoveAll("vendor/golang.org/x/tools")
-				RunCmd( fmt.Sprintf("gofmt -w -s ../%s", tlc ) )
+				
 
 				os.Chdir("../")
 				}
@@ -1823,6 +1867,7 @@ functions:
 		}
 		dockerfile := fmt.Sprintf(`FROM golang:1.8
 RUN mkdir -p /go/src/server
+RUN mkdir -p /var/pool
 COPY . /go/src/server/
 ENV PORT=%s 
 RUN go get github.com/cheikhshift/gos

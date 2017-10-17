@@ -25,18 +25,20 @@ var GOHOME string
 var serverconfig string
 var Type string
 
-func LowerInitial(str string) string {
+func LowerInitial(str string) (reslt string) {
 	for i, v := range str {
-		return string(unicode.ToLower(v)) + str[i+1:]
+		reslt = string(unicode.ToLower(v)) + str[i+1:]
+		return
 	}
-	return ""
+	return
 }
 
-func UpperInitial(str string) string {
+func UpperInitial(str string) (reslt string) {
 	for i, v := range str {
-		return string(unicode.ToUpper(v)) + str[i+1:]
+		reslt = string(unicode.ToUpper(v)) + str[i+1:]
+		return
 	}
-	return ""
+	return 
 }
 
 func prepBindForMobile(body []byte, pkg string) []byte {
@@ -2040,6 +2042,10 @@ func main() {
 	}
 	GOHOME = fmt.Sprintf("%s/src/", os.ExpandEnv("$GOPATH"))
 
+	if GOHOME == "/src/" {
+		log.Println("Please set a GOPATH prior to using this program.")
+		return
+	}
 	notify = notificator.New(notificator.Options{
 		DefaultIcon: strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1),
 		AppName:     "Gopher Sauce",
