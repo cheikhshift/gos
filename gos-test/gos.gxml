@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gos>
+	<!-- xml docs : http://golangserver.com/docs/markup.html -->
+	<deploy>webapp</deploy>
+	<port>8090</port>
+	<package>if-package-is-library</package>
+	<not_found>/your-404-page</not_found>
+	<error>/your-500-page</error>
+
+	<output>application.go</output>
+	<domain></domain><!-- Cookie domain -->
+	<main>	
+	//psss go code here : func main()
+	</main>
+
+
+	<key>a very very very very secret key</key>
+	
+	<header> 
+	</header>
+	<methods>
+		
+	</methods>
+
+	<templates>
+
+	</templates>
+	<endpoints>
+  
+	</endpoints>
+</gos>
