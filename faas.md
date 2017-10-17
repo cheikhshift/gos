@@ -5,8 +5,8 @@ This is a guide to help you build and deploy OpenFaaS functions with [Golang ser
 ### Requirements
 1. [Golang server](http://gophersauce.com). CLI installed.
 2. Docker running on host.
-3. [OpenFaaS Gateway](https://github.com/openfaas/faas). Running & accessible OpenFaaS gateway
-4. [OpenFaaS CLI](https://github.com/openfaas/faas).
+3. [OpenFaaS CLI](https://github.com/openfaas/faas).
+4. [OpenFaaS Gateway (Link to setup-guide) ](https://github.com/openfaas/faas/blob/master/guide/deployment_swarm.md). Running & accessible OpenFaaS gateway.
 
 
 # Step 0
