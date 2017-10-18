@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/tj/go-spin"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -20,9 +21,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"unicode"
 	"time"
-	"github.com/tj/go-spin"
+	"unicode"
 	//"go/types"
 )
 
@@ -122,17 +122,17 @@ func IsInSlice(qry string, slic []string) bool {
 	return false
 }
 
-func DoSpin(chn chan int){
+func DoSpin(chn chan int) {
 	s := spin.New()
 	s.Set(spin.Spin4)
 	var lck bool
-	go func(){
-		 <-chn
+	go func() {
+		<-chn
 		lck = true
 	}()
 	for !lck {
-	  	fmt.Printf("\r  \033[36mcomputing\033[m %s ", s.Next())
-	  	time.Sleep(160 * time.Millisecond)
+		fmt.Printf("\r  \033[36mcomputing\033[m %s ", s.Next())
+		time.Sleep(160 * time.Millisecond)
 	}
 	fmt.Printf("\n")
 	return
@@ -379,37 +379,36 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 	`
 
 	var pk []string
-			if strings.Contains(os.Args[1], "--") {
-				pwd, err := os.Getwd()
-				if err != nil {
-					log.Println(err)
-					os.Exit(1)
-				}
-				pwd = strings.Replace(pwd, "\\", "/", -1)
-				pk = strings.Split(strings.Trim(pwd, "/"), "/")
+	if strings.Contains(os.Args[1], "--") {
+		pwd, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		pwd = strings.Replace(pwd, "\\", "/", -1)
+		pk = strings.Split(strings.Trim(pwd, "/"), "/")
 
-			} else {
-				pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
-			}
-
+	} else {
+		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
+	}
 
 	if template.Type == "webapp" || template.Type == "faas" {
 
 		if template.Type == "webapp" {
-		local_string = `package main 
+			local_string = `package main 
 import (
 	 	//iogos-replace`
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
-	 	//iogos-replace`, pk[len(pk) - 1])
+	 	//iogos-replace`, pk[len(pk)-1])
 		}
 
 		// if template.Type == "webapp" {
 
-		var TraceOpt, TraceOpen, TraceParam,TraceinFunc,TraCFt, TraceGet, TraceTemplate, TraceError string
+		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log","github.com/elazarl/go-bindata-assetfs"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -417,8 +416,7 @@ import (
 		TraceinFunc = `)`
 		TraCFt = `)`
 
-	
-		if !template.Prod && template.Type != "faas"{
+		if !template.Prod && template.Type != "faas" {
 			TraCFt = `, opentracing.Span)`
 			TraceParam = `, span)`
 			TraceinFunc = `, span opentracing.Span)`
@@ -462,7 +460,7 @@ import (
 			TraceError = ` span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%s request at %s, reason : %s ", r.Method, r.URL.Path, err) )`
 			net_imports = append(net_imports, "github.com/opentracing/opentracing-go")
-			net_imports = append(net_imports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`,`appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
+			net_imports = append(net_imports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
 		}
 
 		for _, imp := range template.Methods.Methods {
@@ -530,7 +528,7 @@ import (
 				est = imp.Method
 			}
 			if imp.Type == "f" {
-			
+
 				apiraw += fmt.Sprintf(` 
 				if   strings.Contains(r.URL.Path, "%s")  { 
 					%s
@@ -1367,7 +1365,7 @@ import (
 				 }
 
 				 %s
-				 `, template.Key, mathFuncs, TraceinFunc , web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage,TraCFt, TraceOpen, TraceParam,TraceParam,TraceinFunc,apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam,web, web, web, web, web, TraceOpt, ReadyTemplate)
+				 `, template.Key, mathFuncs, TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)
@@ -1550,7 +1548,7 @@ import (
 				func B%s(intstr interface{}) string {
 					return net_%s(intstr)
 				}
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct,imp.Name,imp.Name)
+				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Name)
 		}
 
 		//Methods have been added
@@ -1564,43 +1562,38 @@ import (
 		if template.Type == "faas" {
 
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
-		if strings.Contains(local_string, "ioutil") {
-			local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
-		}
+			if strings.Contains(local_string, "ioutil") {
+				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
+			}
 
-		local_string += `
+			local_string += `
 		
 		func MakeFSHandle(root string){
 			http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: root}))
 		}
 		`
-	
-		d1 := []byte(local_string)
 
-		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
+			d1 := []byte(local_string)
 
-		
-			var appname = strings.TrimSuffix( strings.Split(strings.Join(pk, "/"),"/src/")[1], "/" )
-			if _, err := os.Stat(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")) ); os.IsNotExist(err) {
-				os.MkdirAll(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH") ) ,0700)
-			}	
-			
-			
+			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
+
+			var appname = strings.TrimSuffix(strings.Split(strings.Join(pk, "/"), "/src/")[1], "/")
+			if _, err := os.Stat(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH"))); os.IsNotExist(err) {
+				os.MkdirAll(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")), 0700)
+			}
 
 			RunCmd("git add .")
-			RunCmd("git commit --allow-empty-message -m ''")
+			RunCmdSmart("git commit --allow-empty-message -m ''")
 			RunCmd("git push .")
 
-
-
-			os.Chdir(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")) )
-				if template.Gate == ""{
-					template.Gate = "http://localhost:8080"
-				}
+			os.Chdir(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")))
+			if template.Gate == "" {
+				template.Gate = "http://localhost:8080"
+			}
 
 			var sourcedep string
-			for _,v := range template.Templates.Templates {
-				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name) )
+			for _, v := range template.Templates.Templates {
+				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name))
 				os.RemoveAll(tlc)
 				os.Mkdir(tlc, 0700)
 
@@ -1613,9 +1606,8 @@ import (
 func Handle(req []byte) string {
 	return app.B%s(string(req))
 }
-`,appname,v.Name)
+`, appname, v.Name)
 
-			
 				yamlTemp := fmt.Sprintf(`provider:
   name: faas
   gateway: %s
@@ -1626,13 +1618,11 @@ functions:
     handler: ./%s
     image: %s
 
-`,template.Gate,v.Name,tlc,tlc)
-			
-				
+`, template.Gate, v.Name, tlc, tlc)
 
 				_ = ioutil.WriteFile(fmt.Sprintf("%s/handler.go", tlc), []byte(handlerTemp), 0700)
 				_ = ioutil.WriteFile(fmt.Sprintf("%s.yml", tlc), []byte(yamlTemp), 0700)
-			
+
 				os.Chdir(fmt.Sprintf("%s", tlc))
 				chn := make(chan int)
 
@@ -1640,37 +1630,36 @@ functions:
 				if sourcedep == "" {
 					RunCmd("dep init -gopath")
 
-					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//" ,"/" , -1 )
+					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//", "/", -1)
 					vendpath := fmt.Sprintf("vendor/%s/", appname)
 					os.RemoveAll(vendpath)
 					os.MkdirAll(vendpath, 0700)
-					CopyDir(appath, vendpath )
+					CopyDir(appath, vendpath)
 					if _, err := os.Stat("vendor/github.com/elazarl/go-bindata-assetfs/"); os.IsNotExist(err) {
-						CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH")), "//", "/", -1 ),"vendor/github.com/elazarl/go-bindata-assetfs/")
+						CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH")), "//", "/", -1), "vendor/github.com/elazarl/go-bindata-assetfs/")
 					}
 					os.RemoveAll("vendor/golang.org/x/tools")
-					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
-					sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"),tlc)
+					RunCmd(fmt.Sprintf("gofmt -s -w ../%s", tlc))
+					sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"), tlc)
 				} else {
 					CopyDir(fmt.Sprintf("%s/vendor/", sourcedep), "vendor/")
 					CopyFile(fmt.Sprintf("%s/Gopkg.lock", sourcedep), "Gopkg.lock")
 					CopyFile(fmt.Sprintf("%s/Gopkg.toml", sourcedep), "Gopkg.toml")
-					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
+					RunCmd(fmt.Sprintf("gofmt -s -w ../%s", tlc))
 				}
 				chn <- 1
 				close(chn)
 
-
 				os.Chdir("../")
 			}
 
-			for _,v := range template.Endpoints.Endpoints {
+			for _, v := range template.Endpoints.Endpoints {
 				if v.Type != "f" {
-				var tlc = strings.Replace(fmt.Sprintf("%s%s", v.Type, strings.Replace(strings.Title(strings.Replace(v.Path,"/", " ",-1) ), " ","" ,-1 ) ), "star", "",-1 )
-				os.RemoveAll(tlc)
-				os.Mkdir(tlc, 0700)
+					var tlc = strings.Replace(fmt.Sprintf("%s%s", v.Type, strings.Replace(strings.Title(strings.Replace(v.Path, "/", " ", -1)), " ", "", -1)), "star", "", -1)
+					os.RemoveAll(tlc)
+					os.Mkdir(tlc, 0700)
 
-				handlerTemp := fmt.Sprintf(`package function
+					handlerTemp := fmt.Sprintf(`package function
 // Handle a serverless request
 import (
 	app "%s"
@@ -1693,9 +1682,9 @@ func Handle(req []byte) string {
 	rr.Flush()
 	return fmt.Sprintf("%%s", rr.Body.String())
 }
-`,appname,v.Type, strings.TrimPrefix(v.Path, "/") )
+`, appname, v.Type, v.Path)
 
-				yamlTemp := fmt.Sprintf(`provider:
+					yamlTemp := fmt.Sprintf(`provider:
   name: faas
   gateway: %s
 
@@ -1705,95 +1694,89 @@ functions:
     handler: ./%s
     image: %s
 
-`,template.Gate,tlc,tlc,strings.ToLower(tlc) )
-			
-				
+`, template.Gate, tlc, tlc, strings.ToLower(tlc))
 
-				_ = ioutil.WriteFile(fmt.Sprintf("%s/handler.go", tlc), []byte(handlerTemp), 0700)
-				_ = ioutil.WriteFile(fmt.Sprintf("%s.yml", tlc), []byte(yamlTemp), 0700)
-			
-				os.Chdir(fmt.Sprintf("%s", tlc))
-				chn := make(chan int)
-				go DoSpin(chn)
-				
-				if sourcedep == "" {
-					RunCmd("dep init -gopath")
-					//cleanup bugs found with fmt
-					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//" ,"/" , -1 )
-					vendpath := fmt.Sprintf("vendor/%s/", appname)
-					os.RemoveAll(vendpath)
-					os.MkdirAll(vendpath, 0700)
-					CopyDir(appath, vendpath )
-					if _, err := os.Stat("vendor/github.com/elazarl/go-bindata-assetfs/"); os.IsNotExist(err) {
-						CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH") ), "//", "/",-1 ) ,"vendor/github.com/elazarl/go-bindata-assetfs/")
+					_ = ioutil.WriteFile(fmt.Sprintf("%s/handler.go", tlc), []byte(handlerTemp), 0700)
+					_ = ioutil.WriteFile(fmt.Sprintf("%s.yml", tlc), []byte(yamlTemp), 0700)
+
+					os.Chdir(fmt.Sprintf("%s", tlc))
+					chn := make(chan int)
+					go DoSpin(chn)
+
+					if sourcedep == "" {
+						RunCmd("dep init -gopath")
+						//cleanup bugs found with fmt
+						appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//", "/", -1)
+						vendpath := fmt.Sprintf("vendor/%s/", appname)
+						os.RemoveAll(vendpath)
+						os.MkdirAll(vendpath, 0700)
+						CopyDir(appath, vendpath)
+						if _, err := os.Stat("vendor/github.com/elazarl/go-bindata-assetfs/"); os.IsNotExist(err) {
+							CopyDir(strings.Replace(fmt.Sprintf("%s/src/github.com/elazarl/go-bindata-assetfs/", os.ExpandEnv("$GOPATH")), "//", "/", -1), "vendor/github.com/elazarl/go-bindata-assetfs/")
+						}
+						os.RemoveAll("vendor/golang.org/x/tools")
+						RunCmd(fmt.Sprintf("gofmt -s -w ../%s", tlc))
+						sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"), tlc)
+					} else {
+						CopyDir(fmt.Sprintf("%s/vendor/", sourcedep), "vendor/")
+
+						CopyFile(fmt.Sprintf("%s/Gopkg.lock", sourcedep), "Gopkg.lock")
+						CopyFile(fmt.Sprintf("%s/Gopkg.toml", sourcedep), "Gopkg.toml")
+						RunCmd(fmt.Sprintf("gofmt -s -w ../%s", tlc))
 					}
-					os.RemoveAll("vendor/golang.org/x/tools")
-					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
-					sourcedep = fmt.Sprintf("%s/src/func/%s/", os.ExpandEnv("$GOPATH"),tlc)
-				} else {
-					CopyDir(fmt.Sprintf("%s/vendor/", sourcedep), "vendor/")
-					
-					CopyFile(fmt.Sprintf("%s/Gopkg.lock", sourcedep), "Gopkg.lock")
-					CopyFile(fmt.Sprintf("%s/Gopkg.toml", sourcedep), "Gopkg.toml")
-					RunCmd( fmt.Sprintf("gofmt -s -w ../%s", tlc ) )
-				}
-				chn <- 1	
-				close(chn)	
-				
+					chn <- 1
+					close(chn)
 
-				os.Chdir("../")
+					os.Chdir("../")
 				}
 			}
 
 			/*if ff {
 				RunCmd("dep init -gopath")
-			}	else { 
+			}	else {
 			 	RunCmd("dep ensure")
 			} */
 
-		
 			//RunCmd( fmt.Sprintf("dep ensure -add lib/goserver/%s", pk[len(pk) - 1] ) )
-			
-			//fix - current pkg generates errors on faas
-			
 
-			for _,v := range template.Templates.Templates {
-				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name) )
-						fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc)
+			//fix - current pkg generates errors on faas
+
+			for _, v := range template.Templates.Templates {
+				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name))
+				fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc)
 				chn := make(chan int)
 				go DoSpin(chn)
-				
-				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc) )
-				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc) )
+
+				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc))
+				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc))
 				chn <- 1
 				close(chn)
 			}
 
-			for _,v := range template.Endpoints.Endpoints {
+			for _, v := range template.Endpoints.Endpoints {
 				if v.Type != "f" {
-				var tlc = strings.Replace(fmt.Sprintf("%s%s", v.Type, strings.Replace(strings.Title(strings.Replace(v.Path,"/", " ",-1) ), " ","" ,-1 ) ), "star", "",-1 )
-				fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc )
-				chn := make(chan int)
-				go DoSpin(chn)
-			
-				RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc) )
-				RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc) )
-				chn <- 1
-				close(chn)
+					var tlc = strings.Replace(fmt.Sprintf("%s%s", v.Type, strings.Replace(strings.Title(strings.Replace(v.Path, "/", " ", -1)), " ", "", -1)), "star", "", -1)
+					fmt.Printf("\r  \033[36mBuilding %s \033[m", tlc)
+					chn := make(chan int)
+					go DoSpin(chn)
+
+					RunCmd(fmt.Sprintf("faas-cli build -f ./%s.yml", tlc))
+					RunCmd(fmt.Sprintf("faas-cli deploy -f ./%s.yml", tlc))
+					chn <- 1
+					close(chn)
 				}
 			}
 
 			os.Chdir(fmt.Sprintf("%s/src/%s", os.ExpandEnv("$GOPATH"), appname))
-	
 
 		} else {
 
-		local_string += fmt.Sprintf(`
+			local_string += fmt.Sprintf(`
 			func main() {
 				fmt.Fprintf(os.Stdout, "%%v\n", os.Getpid())
 				%s`, template.Main)
-		if template.Prod {
-			local_string += fmt.Sprintf(` store.Options = &sessions.Options{
+			if template.Prod {
+				local_string += fmt.Sprintf(` store.Options = &sessions.Options{
 						    Path:     "/",
 						    MaxAge:   86400 * 7,
 						    HttpOnly: true,
@@ -1801,9 +1784,9 @@ functions:
 						    Domain : "%s",
 						}`, template.Domain)
 
-			//todo timeouts
-		} else {
-			local_string += `store := appdash.NewMemoryStore()
+				//todo timeouts
+			} else {
+				local_string += `store := appdash.NewMemoryStore()
 
 				// Listen on any available TCP port locally.
 				l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 0})
@@ -1840,8 +1823,8 @@ functions:
 
 				tracer := appdashot.NewTracer(appdash.NewRemoteCollector(fmt.Sprintf(":%d", collectorPort) ) )
 				opentracing.InitGlobalTracer(tracer)`
-		}
-		local_string += fmt.Sprintf(` 
+			}
+			local_string += fmt.Sprintf(` 
 					 %s
 					 port := ":%s"
 						if envport := os.ExpandEnv("$PORT"); envport != "" {
@@ -1859,13 +1842,13 @@ functions:
 					} 
 
 					}`, timeline, template.Port, web)
-							var hostname string
-		if !template.Prod || (template.Domain == "") {
-			hostname = fmt.Sprintf("http://localhost:%s", template.Port)
-		} else {
-			hostname = fmt.Sprintf("https://%s", template.Domain)
-		}
-		dockerfile := fmt.Sprintf(`FROM golang:1.8
+			var hostname string
+			if !template.Prod || (template.Domain == "") {
+				hostname = fmt.Sprintf("http://localhost:%s", template.Port)
+			} else {
+				hostname = fmt.Sprintf("https://%s", template.Domain)
+			}
+			dockerfile := fmt.Sprintf(`FROM golang:1.8
 RUN mkdir -p /go/src/server
 RUN mkdir -p /var/pool
 COPY . /go/src/server/
@@ -1878,19 +1861,16 @@ EXPOSE %s
 # HEALTHCHECK --interval=20m --timeout=3s \
 #  CMD curl -f %s/ || exit 1`, template.Port, template.Port, hostname)
 
-		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
-		log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
-		if strings.Contains(local_string, "ioutil") {
-			local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
+			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
+			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
+			if strings.Contains(local_string, "ioutil") {
+				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
+			}
+
+			d1 := []byte(local_string)
+
+			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 		}
-
-		d1 := []byte(local_string)
-
-		_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
-		}
-
-
-		
 
 	} else if template.Type == "bind" {
 		local_string = `package ` + template.Package + ` 

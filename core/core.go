@@ -29,7 +29,7 @@ type gos struct {
 	XMLName          xml.Name          `xml:"gos"`
 	Port             string            `xml:"port"`
 	Domain           string            `xml:"domain"`
-	Gate           	 string            `xml:"gateway,attr"`	
+	Gate             string            `xml:"gateway,attr"`
 	Debug            string            `xml:"trace"`
 	Output           string            `xml:"output"`
 	ErrorPage        string            `xml:"error"`
@@ -198,8 +198,8 @@ type Method struct {
 	Object     string   `xml:"object,attr"`
 	Autoface   string   `xml:"autoface,attr"`
 	Keeplocal  string   `xml:"keep-local,attr"`
-	Testi    string   `xml:"testi,attr"`
-	Testo    string   `xml:"testo,attr"`
+	Testi      string   `xml:"testi,attr"`
+	Testo      string   `xml:"testo,attr"`
 	Returntype string   `xml:"return,attr"`
 }
 
@@ -225,7 +225,7 @@ type Endpoint struct {
 	Path    string   `xml:"path,attr"`
 	Method  string   `xml:",innerxml"`
 	Type    string   `xml:"type,attr"`
-	Testi    string   `xml:"testi,attr"`
-	Testo    string   `xml:"testo,attr"`
+	Testi   string   `xml:"testi,attr"`
+	Testo   string   `xml:"testo,attr"`
 	Id      string   `xml:"id,attr"`
 }

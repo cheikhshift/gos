@@ -27,7 +27,7 @@ var Type string
 
 func LowerInitial(str string) (reslt string) {
 	for _, v := range str {
-		reslt = fmt.Sprintf("%s%s",  string(unicode.ToLower(v) ) , str[1:] )
+		reslt = fmt.Sprintf("%s%s", string(unicode.ToLower(v)), str[1:])
 		return
 	}
 	return
@@ -35,10 +35,10 @@ func LowerInitial(str string) (reslt string) {
 
 func UpperInitial(str string) (reslt string) {
 	for _, v := range str {
-		reslt = fmt.Sprintf("%s%s", string( unicode.ToUpper(v) ) ,  str[1:] )
+		reslt = fmt.Sprintf("%s%s", string(unicode.ToUpper(v)), str[1:])
 		return
 	}
-	return 
+	return
 }
 
 func prepBindForMobile(body []byte, pkg string) []byte {
@@ -1678,15 +1678,13 @@ func JBuild(path string, out string) {
 		core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 	}
 
-	chn :=  make(chan int)
+	chn := make(chan int)
 	go core.DoSpin(chn)
 	core.RunCmd("gos --t")
 	chn <- 1
 	close(chn)
 	JBuild(path, out)
 }
-
-
 
 func Build(path string) {
 
@@ -1699,7 +1697,7 @@ func Build(path string) {
 	if coreTemplate == nil {
 		return
 	}
-	
+
 	Type = coreTemplate.Type
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
@@ -1727,7 +1725,7 @@ func Build(path string) {
 
 		if strings.Contains(Type, "faas") {
 
-			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...",pk[len(pk)-1], webroot, templateroot))
+			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 		} else {
 			core.RunCmd(fmt.Sprintf("go-bindata %s/... %s/...", webroot, templateroot))
@@ -1909,7 +1907,7 @@ func Build(path string) {
 			} else {
 				core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
 			}
-			chn :=  make(chan int)
+			chn := make(chan int)
 			go core.DoSpin(chn)
 			core.RunCmd("gos --t")
 			chn <- 1
