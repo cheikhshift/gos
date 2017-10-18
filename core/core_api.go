@@ -527,6 +527,9 @@ import (
 			} else {
 				est = imp.Method
 			}
+			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response"){
+				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
+			}
 			if imp.Type == "f" {
 
 				apiraw += fmt.Sprintf(` 
@@ -593,6 +596,9 @@ import (
 
 			} else {
 				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
+			}
+			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response"){
+				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
 			}
 			if imp.Type == "star" {
 				apiraw += fmt.Sprintf(` 
