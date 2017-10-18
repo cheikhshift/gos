@@ -50,6 +50,7 @@ Your `<template>`'s name attribute will be the name of your OpenFaaS function. T
 
 #### Notes
 With end tags write your response as usual with `*http.ResponseWriter`'s `Write` func.
+Return JSON of your interfaces with this [guide](https://github.com/cheikhshift/jsonfaas).
 I used [this](https://github.com/cheikhshift/TestFaas/blob/master/gos.gxml) Go server repository for this guide.
 Template functions compile their linked `.tmpl` (with internal package `html/template`) file then write the output to Stdout.
 The `session` variable availble by default to `<end>` tags, only spans the scope of the request.
