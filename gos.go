@@ -512,7 +512,7 @@ var gosTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <gos>
 	<!-- xml docs : http://golangserver.com/docs/markup.html -->
 	<deploy>webapp</deploy>
-	<port>8090</port>
+	<port>8080</port>
 	<package>if-package-is-library</package>
 	<not_found>/your-404-page</not_found>
 	<error>/your-500-page</error>
