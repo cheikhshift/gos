@@ -26,16 +26,16 @@ var serverconfig string
 var Type string
 
 func LowerInitial(str string) (reslt string) {
-	for i, v := range str {
-		reslt = string(unicode.ToLower(v)) + str[i+1:]
+	for _, v := range str {
+		reslt = fmt.Sprintf("%s%s",  string(unicode.ToLower(v) ) , str[1:] )
 		return
 	}
 	return
 }
 
 func UpperInitial(str string) (reslt string) {
-	for i, v := range str {
-		reslt = string(unicode.ToUpper(v)) + str[i+1:]
+	for _, v := range str {
+		reslt = fmt.Sprintf("%s%s", string( unicode.ToUpper(v) ) ,  str[1:] )
 		return
 	}
 	return 
@@ -2036,7 +2036,6 @@ func Build(path string) {
 }
 
 func main() {
-
 	if tpath := os.ExpandEnv("$USERPROFILE"); tpath != "" && os.ExpandEnv("$GOPATH") == "" {
 		os.Setenv("GOPATH", tpath+"/go")
 	}
