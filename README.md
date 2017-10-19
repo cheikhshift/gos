@@ -13,7 +13,7 @@
 - [x] Open tracing on local port `8700`.
 
 ## Documentation here :
-[Docs](http://golangserver.com)
+[Docs](http://gophersauce.com)
 
 ## IDE here :
 [thestrukture/IDE](https://github.com/thestrukture/IDE)
