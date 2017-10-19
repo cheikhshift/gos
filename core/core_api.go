@@ -815,11 +815,11 @@ import (
 
 				
 				func net_importcss(s string) string {
-					return "<link rel=\"stylesheet\" href=\"" + s + "\" /> "
+					return fmt.Sprintf("<link rel=\"stylesheet\" href=\"%%s\" /> ",s)
 				}
 
 				func net_importjs(s string) string {
-					return "<script type=\"text/javascript\" src=\"" + s + "\" ></script> "
+					return fmt.Sprintf("<script type=\"text/javascript\" src=\"%%s\" ></script> ", s)
 				}
 
 
