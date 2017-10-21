@@ -24,3 +24,8 @@ Read the FaaS deployment/integration guide [here](faas.md)
 ## VIM plugin here :
 Find the `.gxml` plugin [here](https://github.com/cheikhshift/vim-gos)
 
+## Bugs
+
+Please report all bugs to Github issue tracker.
+
+Thank you for your patience.
