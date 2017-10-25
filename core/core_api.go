@@ -408,7 +408,7 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
+		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -527,9 +527,7 @@ import (
 			} else {
 				est = imp.Method
 			}
-			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response"){
-				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
-			}
+
 			if imp.Type == "f" {
 
 				apiraw += fmt.Sprintf(` 
@@ -597,7 +595,7 @@ import (
 			} else {
 				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
 			}
-			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response"){
+			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response") && imp.Type != "f"{
 				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
 			}
 			if imp.Type == "star" {
@@ -900,18 +898,20 @@ import (
 
 				func MakeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session%s) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
+				  
 				  	 %s
+				  	
 					var session *sessions.Session
 				  	var er error
 				  	if 	session, er = store.Get(r, "session-"); er != nil {
 						session,_ = store.New(r, "session-")
 					}
 				  	if attmpt := apiAttempt(w,r,session%s ;!attmpt {
-				      fn(w, r, "",session%s
+				       fn(w, r, "",session%s
+				  	} else {
+				  		context.Clear(r)
 				  	}
 				  	
-				  	session = nil
-				  	context.Clear(r)
 				  }
 				} 
 
@@ -1216,6 +1216,7 @@ import (
 				    	} else {
 				    		renderTemplate(w, pag%s //"%s" 
 				    	}
+				    	context.Clear(r)
 				        return
 				  }
 
@@ -1244,8 +1245,8 @@ import (
 				  p.R = nil
 				  p.Session = nil
 				  p = nil
-				  //context.Clear(r)
-				  
+				  context.Clear(r)
+				  return
 				}
 
 				func loadPage(title string) (*Page,error) {
@@ -1830,7 +1831,15 @@ functions:
 				tracer := appdashot.NewTracer(appdash.NewRemoteCollector(fmt.Sprintf(":%d", collectorPort) ) )
 				opentracing.InitGlobalTracer(tracer)`
 			}
-			local_string += fmt.Sprintf(` 
+
+			defhandler := ""
+			if !strings.Contains(template.Main, "http.ListenAndServeTLS"){
+				defhandler = `errgos := http.ListenAndServe(port, nil)
+					if errgos != nil {
+						log.Fatal(errgos)
+					}`
+			}
+			local_string += fmt.Sprintf(`
 					 %s
 					 port := ":%s"
 						if envport := os.ExpandEnv("$PORT"); envport != "" {
@@ -1842,12 +1851,9 @@ functions:
 
 					http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
 					
-					errgos := http.ListenAndServe(port, nil)
-					if errgos != nil {
-						log.Fatal(errgos)
-					} 
+					%s
 
-					}`, timeline, template.Port, web)
+					}`, timeline, template.Port, web, defhandler)
 			var hostname string
 			if !template.Prod || (template.Domain == "") {
 				hostname = fmt.Sprintf("http://localhost:%s", template.Port)

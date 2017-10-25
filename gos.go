@@ -1548,11 +1548,8 @@ func JBuild(path string, out string) {
 	//core.RunFile(GOHOME, coreTemplate.Output)
 
 	if Type == "webapp" {
-		chh := make(chan int)
-		go core.DoSpin(chh)
-		log_build, err := core.RunCmdSmart("go build")
-		chh <- 1
-		close(chh)
+		log.Println("Building... One moment.")
+		log_build, err := core.RunCmdSmart("go install")
 		if err != nil {
 			//log.Println(err.Error())
 			color.Red("Your build failed, Here is why :>")
@@ -1660,7 +1657,7 @@ func JBuild(path string, out string) {
 	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
 	log.Println("Ready!")
 	if !strings.Contains(Type, "faas") {
-		go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+		go core.Exe_Stall(fmt.Sprintf("%s", pk[len(pk)-1]), process)
 	}
 	<-done
 	defer close(process)
@@ -1776,7 +1773,8 @@ func Build(path string) {
 
 			if coreTemplate.Type == "webapp" {
 				//fmt.Printf("\r  \033[36mBuilding\033[m %s ", s.Next())
-				log_build, err := core.RunCmdSmart("go build")
+				log.Println("Building... One moment.")
+				log_build, err := core.RunCmdSmart("go install")
 				if err != nil {
 					//log.Println(err.Error())
 					color.Red("😎 Your build failed, Here is why :>")
@@ -1888,7 +1886,7 @@ func Build(path string) {
 			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1), notificator.UR_NORMAL)
 			log.Println("Ready!")
 			if !strings.Contains(Type, "faas") {
-				go core.Exe_Stall(fmt.Sprintf("./%s", pk[len(pk)-1]), process)
+				go core.Exe_Stall(fmt.Sprintf("%s", pk[len(pk)-1]), process)
 			}
 			//process <- false
 			<-done
