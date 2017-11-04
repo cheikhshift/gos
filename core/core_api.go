@@ -360,19 +360,19 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 
 	mathFuncs := ` 
 
-			 func net_add(x,v float64) float64 {
+			 func Netadd(x,v float64) float64 {
 					return v + x				   
 			 }
 
-			 func net_subs(x,v float64) float64 {
+			 func Netsubs(x,v float64) float64 {
 				   return v - x
 			 }
 
-			 func net_multiply(x,v float64) float64 {
+			 func Netmultiply(x,v float64) float64 {
 				   return v * x
 			 }
 
-			 func net_divided(x,v float64) float64 {
+			 func Netdivided(x,v float64) float64 {
 				   return v/x
 			 }
 
@@ -405,10 +405,24 @@ import (
 		}
 
 		// if template.Type == "webapp" {
+		log.Println("Checking templates")
+
+		if _, err := os.Stat(fmt.Sprintf("%s%s", TrimSuffix(os.ExpandEnv("$GOPATH"), "/") , "/src/github.com/gotpl/gtfmt/"  ) ); os.IsNotExist(err)  {
+			RunCmd("go get github.com/gotpl/gtfmt")
+		}
+
+		for _, templ := range template.Templates.Templates {
+			log.Println("Checking : ", templ.Name)
+			goatResponse, _ := RunCmdSmart(fmt.Sprintf("gtfmt %s/%s.tmpl", tmpl ,templ.TemplateFile))
+			if goatResponse != "" {
+				color.Yellow("Warning!!!!!!")
+				log.Println(goatResponse)
+			}
+		} 
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		net_imports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -459,8 +473,8 @@ import (
 		`
 			TraceError = ` span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%s request at %s, reason : %s ", r.Method, r.URL.Path, err) )`
-			net_imports = append(net_imports, "github.com/opentracing/opentracing-go")
-			net_imports = append(net_imports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
+			Netimports = append(Netimports, "github.com/opentracing/opentracing-go")
+			Netimports = append(Netimports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
 		}
 
 		for _, imp := range template.Methods.Methods {
@@ -630,10 +644,10 @@ import (
 		}
 
 		//log.Printf("APi Methods %v\n",api_methods)
-		netMa := `template.FuncMap{"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sd" : net_sessionDelete,"sr" : net_sessionRemove,"sc": net_sessionKey,"ss" : net_sessionSet,"sso": net_sessionSetInt,"sgo" : net_sessionGetInt,"sg" : net_sessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		netMa := `template.FuncMap{"a":Netadd,"s":Netsubs,"m":Netmultiply,"d":Netdivided,"js" : Netimportjs,"css" : Netimportcss,"sd" : NetsessionDelete,"sr" : NetsessionRemove,"sc": NetsessionKey,"ss" : NetsessionSet,"sso": NetsessionSetInt,"sgo" : NetsessionGetInt,"sg" : NetsessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-				netMa += fmt.Sprintf(`,"%s" : net_%s`, imp, imp)
+				netMa += fmt.Sprintf(`,"%s" : Net%s`, imp, imp)
 			}
 		}
 		//int_lok := []string{}
@@ -669,8 +683,8 @@ import (
 		for _, imp := range template.RootImports {
 			if !strings.Contains(imp.Src, ".gxml") {
 				//log.Println(TrimSuffix(os.ExpandEnv("$GOPATH"), "/" ) + "/src/" + imp.Src )
-				if validimport := (!contains(net_imports, imp.Src) && imp.Src != "io/ioutil"); validimport {
-					net_imports = append(net_imports, imp.Src)
+				if validimport := (!contains(Netimports, imp.Src) && imp.Src != "io/ioutil"); validimport {
+					Netimports = append(Netimports, imp.Src)
 				}
 			}
 		}
@@ -682,20 +696,20 @@ import (
 
 				if !contains(int_lok, imp.Name) {
 					int_lok = append(int_lok, imp.Name)
-					netMa += `,"` + imp.Name + `" : net_` + imp.Name
+					netMa += `,"` + imp.Name + `" : Net` + imp.Name
 				}
 			} */
 
 		for _, imp := range template.Templates.Templates {
 
-			netMa += fmt.Sprintf(`,"%s" : net_%s`, imp.Name, imp.Name)
-			netMa += fmt.Sprintf(`,"b%s" : net_b%s`, imp.Name, imp.Name)
-			netMa += fmt.Sprintf(`,"c%s" : net_c%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"%s" : Net%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"b%s" : Netb%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"c%s" : Netc%s`, imp.Name, imp.Name)
 		}
 
 		//	log.Println(template.Methods.Methods[0].Name)
 
-		for _, imp := range net_imports {
+		for _, imp := range Netimports {
 
 			if hasQts := strings.Contains(imp, `"`); hasQts {
 				local_string += fmt.Sprintf(`
@@ -718,7 +732,7 @@ import (
 				structs_string += fmt.Sprintf(`
 			}
 
-			func  net_cast%s(args ...interface{}) *%s  {
+			func  Netcast%s(args ...interface{}) *%s  {
 				
 				s := %s{}
 				mapp := args[0].(db.O)
@@ -734,10 +748,10 @@ import (
 				
 				return &s
 			}
-			func net_struct%s() *%s{ return &%s{} }`, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
+			func Netstruct%s() *%s{ return &%s{} }`, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
 
-				netMa += fmt.Sprintf(`,"%s" : net_struct%s`, imp.Name, imp.Name)
-				netMa += fmt.Sprintf(`,"is%s" : net_cast%s`, imp.Name, imp.Name)
+				netMa += fmt.Sprintf(`,"%s" : Netstruct%s`, imp.Name, imp.Name)
+				netMa += fmt.Sprintf(`,"is%s" : Netcast%s`, imp.Name, imp.Name)
 
 			}
 		}
@@ -754,7 +768,7 @@ import (
 					/* emptystruct */
 				}
 
-				func net_sessionGet(key string,s *sessions.Session) string {
+				func NetsessionGet(key string,s *sessions.Session) string {
 					return s.Values[key].(string)
 				}
 
@@ -764,24 +778,24 @@ import (
 				}
 
 
-				func net_sessionDelete(s *sessions.Session) string {
+				func NetsessionDelete(s *sessions.Session) string {
 						//keys := make([]string, len(s.Values))
 
 						//i := 0
 						for k := range s.Values {
 						   // keys[i] = k.(string)
-						    net_sessionRemove(k.(string), s)
+						    NetsessionRemove(k.(string), s)
 						    //i++
 						}
 
 					return ""
 				}
 
-				func net_sessionRemove(key string,s *sessions.Session) string {
+				func NetsessionRemove(key string,s *sessions.Session) string {
 					delete(s.Values, key)
 					return ""
 				}
-				func net_sessionKey(key string,s *sessions.Session) bool {					
+				func NetsessionKey(key string,s *sessions.Session) bool {					
 				 if _, ok := s.Values[key]; ok {
 					    //do something here
 				 		return true
@@ -792,15 +806,15 @@ import (
 
 				%s
 
-				func net_sessionGetInt(key string,s *sessions.Session) interface{} {
+				func NetsessionGetInt(key string,s *sessions.Session) interface{} {
 					return s.Values[key]
 				}
 
-				func net_sessionSet(key string, value string,s *sessions.Session) string {
+				func NetsessionSet(key string, value string,s *sessions.Session) string {
 					 s.Values[key] = value
 					 return ""
 				}
-				func net_sessionSetInt(key string, value interface{},s *sessions.Session) string {
+				func NetsessionSetInt(key string, value interface{},s *sessions.Session) string {
 					 s.Values[key] = value
 					 return ""
 				}
@@ -812,11 +826,11 @@ import (
 				}
 
 				
-				func net_importcss(s string) string {
+				func Netimportcss(s string) string {
 					return fmt.Sprintf("<link rel=\"stylesheet\" href=\"%%s\" /> ",s)
 				}
 
-				func net_importjs(s string) string {
+				func Netimportjs(s string) string {
 					return fmt.Sprintf("<script type=\"text/javascript\" src=\"%%s\" ></script> ", s)
 				}
 
@@ -1402,7 +1416,7 @@ import (
 					addedit = true
 				}
 				local_string += fmt.Sprintf(`
-						func net_%s(args ...interface{}) %s {
+						func Net%s(args ...interface{}) %s {
 							`, meth.Name, meth.Returntype)
 				for k, nam := range strings.Split(meth.Variables, ",") {
 					if nam != "" {
@@ -1453,7 +1467,7 @@ import (
 			local_string += fmt.Sprintf(`
 
 
-				func  net_%s(args ...interface{}) string {
+				func  Net%s(args ...interface{}) string {
 					
 					var d %s
 					filename :=  "%s/%s.tmpl"
@@ -1497,10 +1511,10 @@ import (
 					
 				}
 				func  b%s(d %s) string {
-						return net_b%s(d)
+						return Netb%s(d)
 				}
 
-				func  net_b%s(d %s) string {
+				func  Netb%s(d %s) string {
 					
 					filename :=  "%s/%s.tmpl"
 					
@@ -1524,7 +1538,7 @@ import (
 				    } 
 					return html.UnescapeString(output.String())
 				}
-				func  net_c%s(args ...interface{}) (d %s) {
+				func  Netc%s(args ...interface{}) (d %s) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)
@@ -1553,7 +1567,7 @@ import (
 				}
 
 				func B%s(intstr interface{}) string {
-					return net_%s(intstr)
+					return Net%s(intstr)
 				}
 				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Name)
 		}
@@ -1579,9 +1593,8 @@ import (
 			http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: root}))
 		}
 		`
-
+			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
-
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
 			var appname = strings.TrimSuffix(strings.Split(strings.Join(pk, "/"), "/src/")[1], "/")
@@ -1879,8 +1892,9 @@ EXPOSE %s
 				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
 			}
 
+			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
-
+			
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 		}
 
@@ -1889,7 +1903,7 @@ EXPOSE %s
 				
 	import (`
 
-		net_imports := []string{"time", "os", "bytes", "encoding/json", "fmt", "html", "html/template", "io/ioutil", "strings", "reflect", "unsafe", "crypto/aes", "crypto/cipher", "crypto/rand", "io", "encoding/base64", "errors"}
+		Netimports := []string{"time", "os", "bytes", "encoding/json", "fmt", "html", "html/template", "io/ioutil", "strings", "reflect", "unsafe", "crypto/aes", "crypto/cipher", "crypto/rand", "io", "encoding/base64", "errors"}
 
 		/*
 			Methods before so that we can create to correct delegate method for each object
@@ -1916,10 +1930,10 @@ EXPOSE %s
 		}
 
 		log.Printf("APi Methods %v\n", api_methods)
-		netMa := `template.FuncMap{"GetLocation": net_supportGetLocation,"Run": net_supportRunjs,"PlaySound" : net_supportSoundPlay,"StopSound" : net_supportSoundStop,"SetVolume" : net_supportSoundSetVolume,"GetVolume" : net_supportSoundGetVolume, "isPlaying" : net_supportSoundisPlaying,"trackMotion": net_supportMotionStart,"stopMotion" : net_supportMotionStop,"ShowLoad" : net_supportShowload, "HideLoad" : net_supportHideLoad, "Device": net_supportDevice,"TakePicture" : net_supportTakePicture, "Notify" : net_supportNotify,"AbsolutePath" : net_supportFileAbsPath,"Download" : net_supportFileDownload,"Download_lg" : net_supportFileDownloadLarge,"Base64" : net_supportBase64,"DeleteRes" : net_supportDeleteFile , "Height":net_layerHeight,"Width": net_layerWidth,"push":net_pushView,"dismiss":net_dismissView,"dismissAt": net_dismissViewatInt,"a":net_add,"s":net_subs,"m":net_multiply,"d":net_divided,"js" : net_importjs,"css" : net_importcss,"sDelete" : deleteSession,"sRemove" : net_RemoveSessionKey,"sExist": net_SessionKeyExists,"sSet" : net_SetSessionKey,"sSetField": net_SetSessionField,"sGet" : net_GetSession,"sGetString" : net_GetSessionString, "sGetN" : net_GetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		netMa := `template.FuncMap{"GetLocation": NetsupportGetLocation,"Run": NetsupportRunjs,"PlaySound" : NetsupportSoundPlay,"StopSound" : NetsupportSoundStop,"SetVolume" : NetsupportSoundSetVolume,"GetVolume" : NetsupportSoundGetVolume, "isPlaying" : NetsupportSoundisPlaying,"trackMotion": NetsupportMotionStart,"stopMotion" : NetsupportMotionStop,"ShowLoad" : NetsupportShowload, "HideLoad" : NetsupportHideLoad, "Device": NetsupportDevice,"TakePicture" : NetsupportTakePicture, "Notify" : NetsupportNotify,"AbsolutePath" : NetsupportFileAbsPath,"Download" : NetsupportFileDownload,"Download_lg" : NetsupportFileDownloadLarge,"Base64" : NetsupportBase64,"DeleteRes" : NetsupportDeleteFile , "Height":NetlayerHeight,"Width": NetlayerWidth,"push":NetpushView,"dismiss":NetdismissView,"dismissAt": NetdismissViewatInt,"a":Netadd,"s":Netsubs,"m":Netmultiply,"d":Netdivided,"js" : Netimportjs,"css" : Netimportcss,"sDelete" : deleteSession,"sRemove" : NetRemoveSessionKey,"sExist": NetSessionKeyExists,"sSet" : NetSetSessionKey,"sSetField": NetSetSessionField,"sGet" : NetGetSession,"sGetString" : NetGetSessionString, "sGetN" : NetGetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-				netMa += `,"` + imp + `" : net_` + imp
+				netMa += `,"` + imp + `" : Net` + imp
 			}
 		}
 		int_lok := []string{}
@@ -1929,17 +1943,17 @@ EXPOSE %s
 
 			if !contains(int_lok, imp.Name) {
 				int_lok = append(int_lok, imp.Name)
-				netMa += `,"` + imp.Name + `" : net_` + imp.Name
+				netMa += `,"` + imp.Name + `" : Net` + imp.Name
 			}
 		}
 
 		for _, imp := range template.Header.Structs {
-			netMa += `,"is` + imp.Name + `":net_is` + imp.Name
+			netMa += `,"is` + imp.Name + `":Netis` + imp.Name
 		}
 
 		for _, imp := range template.Templates.Templates {
 
-			netMa += `,"` + imp.Name + `" : net_` + imp.Name
+			netMa += `,"` + imp.Name + `" : Net` + imp.Name
 			netMa += `,"b` + imp.Name + `" : b` + imp.Name
 			netMa += `,"c` + imp.Name + `" : c` + imp.Name
 		}
@@ -1947,7 +1961,7 @@ EXPOSE %s
 
 		//log.Println(template.Methods.Methods[0].Name)
 
-		for _, imp := range net_imports {
+		for _, imp := range Netimports {
 			local_string += `
 			"` + imp + `"`
 		}
@@ -1996,73 +2010,73 @@ EXPOSE %s
          		
 
 
-         		func net_supportGetLocation(flow Flow) string {
+         		func NetsupportGetLocation(flow Flow) string {
          			flow.RequestLocation()
          			return ""
          		}
 
-         		func net_supportRunjs(jss string,flow Flow) string {
+         		func NetsupportRunjs(jss string,flow Flow) string {
          			flow.RunJS(jss)
          			return ""
          		}
 
          		// sound funcs 
 
-         		func net_supportSoundPlay(file string,flow Flow) string {
+         		func NetsupportSoundPlay(file string,flow Flow) string {
          			flow.PlayFromWebRoot(file)
          			return ""
          		}
 
-         		func net_supportSoundStop(flow Flow) string {
+         		func NetsupportSoundStop(flow Flow) string {
          			flow.Stop()
          			return ""
          		}
 
-         		func net_supportSoundSetVolume(level int, flow Flow) string {
+         		func NetsupportSoundSetVolume(level int, flow Flow) string {
          			flow.SetVolume(level)
          			return ""
          		}
 
-         		func net_supportSoundGetVolume(flow Flow) int {
+         		func NetsupportSoundGetVolume(flow Flow) int {
          			return flow.GetVolume()
          		}
 
-         		func net_supportSoundisPlaying(flow Flow) bool {
+         		func NetsupportSoundisPlaying(flow Flow) bool {
          			return flow.IsPlaying()
          		}
 
          		// end sound funcs 
 
-         		func net_supportMotionStart(flow Flow) string {
+         		func NetsupportMotionStart(flow Flow) string {
          			flow.TrackMotion()
          			return ""
          		}
 
-         		func net_supportMotionStop(flow Flow) string {
+         		func NetsupportMotionStop(flow Flow) string {
          			flow.StopMotion()
          			return ""
          		}
 
-         		func net_supportDevice(flow Flow) int {
+         		func NetsupportDevice(flow Flow) int {
          			return flow.Device()
          		}
 
-         		func net_supportShowload(flow Flow) string {
+         		func NetsupportShowload(flow Flow) string {
          			flow.ShowLoad()
          			return ""
          		}
 
-         		func net_supportHideLoad(flow Flow) string {
+         		func NetsupportHideLoad(flow Flow) string {
          			flow.HideLoad()
          			return ""
          		}
 
-         		func net_supportTakePicture(pic string,flow Flow) string {
+         		func NetsupportTakePicture(pic string,flow Flow) string {
          			flow.CreatePictureNamed(pic)
          			return ""
          		}
 
-         		func net_supportNotify(title string,message string,flow Flow) string {
+         		func NetsupportNotify(title string,message string,flow Flow) string {
          			flow.Notify(title,message)
          			return ""
          		}
@@ -2070,70 +2084,70 @@ EXPOSE %s
          		// start file manager 
      
 
-         		func net_supportFileAbsPath(path string, file Flow) string {
+         		func NetsupportFileAbsPath(path string, file Flow) string {
          			return file.AbsolutePath(path)
          		}
 
-         		func net_supportFileDownload(url string,target string, file Flow) bool {
+         		func NetsupportFileDownload(url string,target string, file Flow) bool {
          			return file.Download(url,target);
          		}
 
-         		func net_supportFileDownloadLarge(url string, target string, file Flow) string {
+         		func NetsupportFileDownloadLarge(url string, target string, file Flow) string {
          			file.DownloadLarge(url, target)
          			return ""
          		}
 
-         		func net_supportBase64(path string,file Flow) string {
+         		func NetsupportBase64(path string,file Flow) string {
          			return file.Base64String(path)
          		}
 
-         		func net_supportGetBytes(target string, file Flow) []byte {
+         		func NetsupportGetBytes(target string, file Flow) []byte {
          			return file.GetBytes(target)
          		}
 
-         		func net_supportGetBytesFromUrl(target string, file Flow) []byte {
+         		func NetsupportGetBytesFromUrl(target string, file Flow) []byte {
          			return file.GetBytesFromUrl(target)
          		}
 
-         		func net_supportDeleteFolder(path string,file Flow) bool {
+         		func NetsupportDeleteFolder(path string,file Flow) bool {
          			return file.DeleteDirectory(path)
          		}
 
-         		func net_supportDeleteFile(path string,file Flow) bool {
+         		func NetsupportDeleteFile(path string,file Flow) bool {
          			return file.DeleteFile(path)
          		}
 
 
          		// End file manager 
-         		func net_pushView(url string,flow Flow) string {
+         		func NetpushView(url string,flow Flow) string {
          			flow.PushView(url)
          			return ""
          		}
 
-         		func net_dismissView(flow Flow) string {
+         		func NetdismissView(flow Flow) string {
          			flow.DismissView()
          			return ""
          		}
 
-         		func net_layerWidth(flow Flow) float64 {
+         		func NetlayerWidth(flow Flow) float64 {
          			return flow.Width()
          		}
-         		func net_layerHeight(flow Flow) float64 {
+         		func NetlayerHeight(flow Flow) float64 {
          			return flow.Height()
          		}
 
-         		func net_dismissViewatInt(ind int,flow Flow) string {
+         		func NetdismissViewatInt(ind int,flow Flow) string {
          			flow.DismissViewatInt(ind)
          			return ""
          		}
 				
 				var key = []byte("` + template.Key + `")
 
-				func net_importcss(s string) string {
+				func Netimportcss(s string) string {
 					return "<link rel=\"stylesheet\" href=\"" + s + "\" /> "
 				}
 
-				func net_importjs(s string) string {
+				func Netimportjs(s string) string {
 					return "<script type=\"text/javascript\" src=\"" + s + "\" ></script> "
 				}
 
@@ -2200,20 +2214,20 @@ EXPOSE %s
 								 
 				}
 
-				func net_SetSessionField(key string, arg interface{}) string {
+				func NetSetSessionField(key string, arg interface{}) string {
 					s := openSessionMap()
 					s[key] = arg
 					keepSessionMap(s)
 					return ""
 				}
-				func net_SetSessionKey(key string, arg interface{}) string {
+				func NetSetSessionKey(key string, arg interface{}) string {
 					s := openSession()
 					s.Values[key] = arg
 					keepSession(s)
 					return ""
 				}
 
-				func net_SessionKeyExists(key string) bool {
+				func NetSessionKeyExists(key string) bool {
 					s := openSession()
 					 if _, ok := s.Values[key]; ok {
 					    //do something here
@@ -2225,11 +2239,11 @@ EXPOSE %s
 
 				` + mathFuncs + `
 
-				func net_GetSession(key string) interface{} {
+				func NetGetSession(key string) interface{} {
 					s := openSession() 
 					return s.Values[key]
 				}
-				func net_GetSessionString(key string) string {
+				func NetGetSessionString(key string) string {
 					s := openSession() 
 					if _, ok := s.Values[key]; ok {
 					return s.Values[key].(string)
@@ -2237,7 +2251,7 @@ EXPOSE %s
 						return ""
 					}
 				}
-				func net_GetSessionFloat(key string) float64 {
+				func NetGetSessionFloat(key string) float64 {
 					s := openSession() 
 					if _, ok := s.Values[key]; ok {
 					return s.Values[key].(float64)
@@ -2246,7 +2260,7 @@ EXPOSE %s
 					}
 				}
 
-				func net_RemoveSessionField(key string) string {
+				func NetRemoveSessionField(key string) string {
 					s := openSessionMap()
 					delete(s,key)
 					//save here
@@ -2254,7 +2268,7 @@ EXPOSE %s
 					return ""
 				}
 
-				func net_RemoveSessionKey(key string) string {
+				func NetRemoveSessionKey(key string) string {
 					s := openSession()
 					delete(s.Values,key)
 					//save here
@@ -2530,7 +2544,7 @@ EXPOSE %s
 			}`
 
 				local_string += `
-			func net_is` + imp.Name + ` (arg interface{}) ` + imp.Name + ` {`
+			func Netis` + imp.Name + ` (arg interface{}) ` + imp.Name + ` {`
 				local_string += `
 				return arg.(` + imp.Name + `)
 			}`
@@ -2551,7 +2565,7 @@ EXPOSE %s
 				available_methods = append(available_methods, imp.Name)
 				int_methods = append(int_methods, imp.Name)
 				local_string += `
-				func  net_` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
+				func  Net` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -2610,7 +2624,7 @@ EXPOSE %s
 									int_methods = append(int_methods, stripSpaces(funcsp[0]))
 								}
 								local_string += `
-					  	func  net_` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
+					  	func  Net` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
 								if stripSpaces(function_map[1]) == "" {
 									local_string += ` string`
 								}
@@ -2655,7 +2669,7 @@ EXPOSE %s
 						addedit = true
 					}
 					local_string += `
-						func net_` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
+						func Net` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
 							`
 					for k, nam := range strings.Split(meth.Variables, ",") {
 						if nam != "" {
@@ -2675,7 +2689,7 @@ EXPOSE %s
 			}
 			for _, imp := range template.Templates.Templates {
 				local_string += `
-				func  net_` + imp.Name + `(args ...interface{}) string {
+				func  Net` + imp.Name + `(args ...interface{}) string {
 					var d ` + imp.Struct + `
 					if len(args) > 0 {
 					jso := args[0].(string)
@@ -2706,7 +2720,7 @@ EXPOSE %s
 					return html.UnescapeString(output.String())
 				}`
 				local_string += `
-				func net_b` + imp.Name + `(d ` + imp.Struct + `) string {
+				func Netb` + imp.Name + `(d ` + imp.Struct + `) string {
 					return  b` + imp.Name + `(d)
 				}
 				func  b` + imp.Name + `(d ` + imp.Struct + `) string {
@@ -2740,7 +2754,7 @@ EXPOSE %s
 					}
     				return
 				}
-				func  net_c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
+				func  Netc` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
 					if len(args) > 0 {
 					var jsonBlob = []byte(args[0].(string))
 					err := json.Unmarshal(jsonBlob, &d)

@@ -595,9 +595,9 @@ func VmdOne() {
 
 			import "testing"
 
-			func Testnet_` + cmd_set[1] + `(t *testing.T){
-				usr := net_` + cmd_set[1] + ` (` + args_c + `)
-				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+			func TestNet` + cmd_set[1] + `(t *testing.T){
+				usr := Net` + cmd_set[1] + ` (` + args_c + `)
+				if Net` + cmd_set[1] + `(` + args_c + `) != usr {
 					t.Error("...")
 				}
 			}`
@@ -648,9 +648,9 @@ func VmdOne() {
 
 			import "testing"
 
-			func Testnet_` + cmd_set[1] + `(t *testing.T){
-				usr := net_` + cmd_set[1] + ` (` + args_c + `)
-				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+			func TestNet` + cmd_set[1] + `(t *testing.T){
+				usr := Net` + cmd_set[1] + ` (` + args_c + `)
+				if Net` + cmd_set[1] + `(` + args_c + `) != usr {
 					t.Error("...")
 				}
 			}`
@@ -787,9 +787,9 @@ func Vmd() {
 
 			import "testing"
 
-			func Testnet_` + cmd_set[1] + `(t *testing.T){
-				usr := net_` + cmd_set[1] + ` (` + args_c + `)
-				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+			func TestNet` + cmd_set[1] + `(t *testing.T){
+				usr := Net` + cmd_set[1] + ` (` + args_c + `)
+				if Net` + cmd_set[1] + `(` + args_c + `) != usr {
 					t.Error("...")
 				}
 			}`
@@ -840,9 +840,9 @@ func Vmd() {
 
 			import "testing"
 
-			func Testnet_` + cmd_set[1] + `(t *testing.T){
-				usr := net_` + cmd_set[1] + ` (` + args_c + `)
-				if net_` + cmd_set[1] + `(` + args_c + `) != usr {
+			func TestNet` + cmd_set[1] + `(t *testing.T){
+				usr := Net` + cmd_set[1] + ` (` + args_c + `)
+				if Net` + cmd_set[1] + `(` + args_c + `) != usr {
 					t.Error("...")
 				}
 			}`
@@ -1088,12 +1088,12 @@ import "testing"
 
 var result int
 
-func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+func BenchmarkNet` + cmd_set[1] + `(b *testing.B) {  
 	var r int
 	for n := 0; n < b.N; n++ {
 		
 		r = 0
-		net_` + cmd_set[1] + `(` + args_c + `)
+		Net` + cmd_set[1] + `(` + args_c + `)
 	}
 	
 	result = r
@@ -1158,12 +1158,12 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 			var result int
 
-			func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+			func BenchmarkNet` + cmd_set[1] + `(b *testing.B) {  
 				var r int
 				for n := 0; n < b.N; n++ {
 					
 					r = 0
-					net_` + cmd_set[1] + `(` + args_c + `)
+					Net` + cmd_set[1] + `(` + args_c + `)
 				}
 				
 				result = r
@@ -1303,12 +1303,12 @@ import "testing"
 
 var result int
 
-func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+func BenchmarkNet` + cmd_set[1] + `(b *testing.B) {  
 	var r int
 	for n := 0; n < b.N; n++ {
 		
 		r = 0
-		net_` + cmd_set[1] + `(` + args_c + `)
+		Net` + cmd_set[1] + `(` + args_c + `)
 	}
 	
 	result = r
@@ -1373,12 +1373,12 @@ func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {
 
 			var result int
 
-			func BenchmarkNet_` + cmd_set[1] + `(b *testing.B) {  
+			func BenchmarkNet` + cmd_set[1] + `(b *testing.B) {  
 				var r int
 				for n := 0; n < b.N; n++ {
 					
 					r = 0
-					net_` + cmd_set[1] + `(` + args_c + `)
+					Net` + cmd_set[1] + `(` + args_c + `)
 				}
 				
 				result = r
