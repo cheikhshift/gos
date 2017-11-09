@@ -50,6 +50,7 @@ type gos struct {
 	Init_Func        string    `xml:"init"`
 	Header           Header    `xml:"header"`
 	Methods          Methods   `xml:"methods"`
+	PostCommand		 []string	`xml:"run"`
 	Timers           Timers    `xml:"timers"`
 	Templates        Templates `xml:"templates"`
 	Endpoints        Endpoints `xml:"endpoints"`
@@ -82,6 +83,7 @@ type Pgos struct {
 	Header           Header    `xml:"header"`
 	Methods          Methods   `xml:"methods"`
 	Timers           Timers    `xml:"timers"`
+	PostCommand		 []string	`xml:"run"`
 	Templates        Templates `xml:"templates"`
 	Endpoints        Endpoints `xml:"endpoints"`
 	FolderRoot, Name string
@@ -200,6 +202,7 @@ type Method struct {
 	Keeplocal  string   `xml:"keep-local,attr"`
 	Testi      string   `xml:"testi,attr"`
 	Testo      string   `xml:"testo,attr"`
+	Man 	   string 	`xml:"m,attr"`
 	Returntype string   `xml:"return,attr"`
 }
 

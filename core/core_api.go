@@ -317,6 +317,10 @@ func TrimSuffix(s, suffix string) string {
 	return s
 }
 
+func Config() (*gos,error) {
+	return LoadGos("./gos.gxml")
+}
+
 func NewID(length int) string {
 	return NewLenChars(length, StdNums)
 }
@@ -1415,6 +1419,11 @@ import (
 					meth.Returntype = "string"
 					addedit = true
 				}
+				if meth.Man == "true"  {
+					local_string += fmt.Sprintf(`
+						func Net%s(%s) %s {
+							`, meth.Name,meth.Variables, meth.Returntype)
+				} else {
 				local_string += fmt.Sprintf(`
 						func Net%s(args ...interface{}) %s {
 							`, meth.Name, meth.Returntype)
@@ -1423,6 +1432,7 @@ import (
 						local_string += fmt.Sprintf(`%s := args[%v]
 								`, nam, k)
 					}
+				}
 				}
 				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
 				est := ``
@@ -2454,6 +2464,8 @@ EXPOSE %s
 
 					` + apiraw + `
 				
+
+					//++api-space
 
 					if callmet {
 						keepSession(session)
