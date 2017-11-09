@@ -1829,7 +1829,7 @@ func Build(path string) {
 					}
 					notify.Push("Build failed!", fmt.Sprintf("Your project %s failed to build!", pk[len(pk)-1]), "", notificator.UR_CRITICAL)
 					color.Red("Full compiler build log : ")
-					log.Println(log_build)
+					fmt.Println(log_build)
 					if len(os.Args) > 2 {
 						if os.Args[2] != "--buildcheck" {
 						WatchForUpdate(path)
