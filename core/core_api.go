@@ -418,7 +418,7 @@ import (
 		for _, templ := range template.Templates.Templates {
 			log.Println("Checking : ", templ.Name)
 			var goatResponse string
-			if strings.Contains(runtime.GOOS, "indows") {
+			if !strings.Contains(runtime.GOOS, "indows") {
 				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s/%s.tmpl", tmpl ,templ.TemplateFile))
 			} else {
 				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s\\%s.tmpl", tmpl ,strings.Replace(templ.TemplateFile, "/", "\\", -1) ) )
