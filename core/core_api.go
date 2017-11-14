@@ -361,7 +361,6 @@ func NewLenChars(length int, chars []byte) string {
 func Process(template *gos, r string, web string, tmpl string) (local_string string) {
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
-
 	mathFuncs := ` 
 
 			 func Netadd(x,v float64) float64 {
@@ -1418,13 +1417,15 @@ import (
 		for _, imp := range available_methods {
 			if !contains(int_methods, imp) && !contains(api_methods, imp) {
 				log.Println("🚰 Processing : ", imp)
+
 				meth := template.findMethod(imp)
+				
 				addedit := false
 				if meth.Returntype == "" {
 					meth.Returntype = "string"
 					addedit = true
 				}
-				if meth.Man == "true"  {
+				if meth.Man == "exp"  {
 					local_string += fmt.Sprintf(`
 						func Net%s(%s) %s {
 							`, meth.Name,meth.Variables, meth.Returntype)
@@ -1883,10 +1884,13 @@ functions:
 
 					}`, timeline, template.Port, web, defhandler)
 			var hostname string
+			var port string
 			if !template.Prod || (template.Domain == "") {
 				hostname = fmt.Sprintf("http://localhost:%s", template.Port)
+				port = fmt.Sprintf("%s\nExpose 8700\n", template.Port)
 			} else {
 				hostname = fmt.Sprintf("https://%s", template.Domain)
+				port = template.Port
 			}
 			dockerfile := fmt.Sprintf(`FROM golang:1.8
 RUN mkdir -p /go/src/server
@@ -1899,7 +1903,7 @@ EXPOSE %s
 CMD server
 # healthcheck requires docker 1.12 and up.
 # HEALTHCHECK --interval=20m --timeout=3s \
-#  CMD curl -f %s/ || exit 1`, template.Port, template.Port, hostname)
+#  CMD curl -f %s/ || exit 1`, template.Port, port, hostname)
 
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
@@ -3534,8 +3538,10 @@ func EscpaseGXML(data []byte) []byte {
 		}
 
 	}
-
-	return []byte(strings.Join(lines, "\n"))
+	str := strings.Join(lines, "\n")
+	str = strings.Replace(str, "<func ", "<method m=\"exp\"", -1)
+	str = strings.Replace(str, "</func", "</method", -1)
+	return []byte(str)
 }
 
 func LoadGos(pathraw string) (*gos, error) {
