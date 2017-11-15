@@ -1527,8 +1527,7 @@ import (
 					var jsonBlob = []byte(jso)
 					err := json.Unmarshal(jsonBlob, &d)
 					if err != nil {
-						log.Println("error:", err)
-						return ""
+						return err.Error()
 					}
 					} else {
 						d = %s{}
