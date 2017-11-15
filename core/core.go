@@ -26,15 +26,26 @@ type gosArch struct {
 }
 
 type gos struct {
+	// 
 	XMLName          xml.Name          `xml:"gos"`
+	// Port your webapplication will liston on
 	Port             string            `xml:"port"`
+	// Valid hostname to be used with secure cookies.
 	Domain           string            `xml:"domain"`
+	// OpenFaaS gateway to deploy application to.
 	Gate             string            `xml:"gateway,attr"`
+	// 
 	Debug            string            `xml:"trace"`
+	// name of written Gofile
 	Output           string            `xml:"output"`
+	// URI to 500 code page.
 	ErrorPage        string            `xml:"error"`
+	// URI to 400 code page.
 	NPage            string            `xml:"not_found"`
+	// GoS deployment type. : faas, webapp, package
 	Type             string            `xml:"deploy"`
+	// Block of code to be ran on application start.
+	// Only applies to files with deploy type : webapp
 	Main             string            `xml:"main"`
 	Variables        []GlobalVariables `xml:"var"`
 	WriteOut         bool
@@ -49,73 +60,24 @@ type gos struct {
 	RootImports      []Import  `xml:"import"`
 	Init_Func        string    `xml:"init"`
 	Header           Header    `xml:"header"`
+	// Web server functions. As well as any <func>
+	// tag.
 	Methods          Methods   `xml:"methods"`
 	PostCommand		 []string	`xml:"sh"`
 	Timers           Timers    `xml:"timers"`
 	Templates        Templates `xml:"templates"`
+	// Web service endpoints.
 	Endpoints        Endpoints `xml:"endpoints"`
 	FolderRoot, Name string
+	// Set Prod to true to build your application in production mode.
 	Prod             bool
 }
 
 type Pgos struct {
-	XMLName          xml.Name          `xml:"gos"`
-	Port             string            `xml:"port"`
-	Domain           string            `xml:"domain"`
-	Debug            string            `xml:"trace"`
-	Output           string            `xml:"output"`
-	ErrorPage        string            `xml:"error"`
-	NPage            string            `xml:"not_found"`
-	Type             string            `xml:"deploy"`
-	Main             string            `xml:"main"`
-	Variables        []GlobalVariables `xml:"var"`
-	WriteOut         bool
-	Export           string    `xml:"export"`
-	Key              string    `xml:"key"`
-	Session          string    `xml:"session"`
-	Template_path    string    `xml:"templatePath"`
-	Web_root         string    `xml:"webroot"`
-	Package          string    `xml:"package"`
-	Web              string    `xml:"web"`
-	Tmpl             string    `xml:"tmpl"`
-	RootImports      []Import  `xml:"import"`
-	Init_Func        string    `xml:"init"`
-	Header           Header    `xml:"header"`
-	Methods          Methods   `xml:"methods"`
-	Timers           Timers    `xml:"timers"`
-	PostCommand		 []string	`xml:"run"`
-	Templates        Templates `xml:"templates"`
-	Endpoints        Endpoints `xml:"endpoints"`
-	FolderRoot, Name string
-	Prod             bool
+	gos
 }
 
-/*
-type Pgos struct {
-	XMLName       xml.Name          `xml:"gos"`
-	Port          string            `xml:"port"`
-	Output        string            `xml:"output"`
-	Type          string            `xml:"deploy"`
-	Main          string            `xml:"main"`
-	Variables     []GlobalVariables `xml:"var"`
-	WriteOut      bool
-	Export        string    `xml:"export"`
-	Key           string    `xml:"key"`
-	Session       string    `xml:"session"`
-	Template_path string    `xml:"templatePath"`
-	Web_root      string    `xml:"webroot"`
-	Package       string    `xml:"package"`
-	Web           string    `xml:"web"`
-	Tmpl          string    `xml:"tmpl"`
-	RootImports   []Import  `xml:"import"`
-	Init_Func     string    `xml:"init"`
-	Header        Header    `xml:"header"`
-	Methods       Methods   `xml:"methods"`
-	Timers        Timers    `xml:"timers"`
-	Templates     Templates `xml:"templates"`
-	Endpoints     Endpoints `xml:"endpoints"`
-	FolderRoot    string
-} */
+
 
 type GlobalVariables struct {
 	XMLName xml.Name `xml:"var"`
@@ -123,22 +85,9 @@ type GlobalVariables struct {
 	Type    string   `xml:"type,attr"`
 }
 
-type Error struct {
-	reason string
-	code   int
-}
-
-/*
-	Root Types to GoS xml File
-*/
-type gosConfig struct {
-	template_path string
-	web_root      string
-}
 type Import struct {
 	XMLName  xml.Name `xml:"import"`
 	Src      string   `xml:"src,attr"`
-	Download string   `xml:"fetch,attr"`
 }
 
 type Header struct {
@@ -162,8 +111,10 @@ type Templates struct {
 	Templates []Template `xml:"template"`
 }
 
+// Webservice endpoints.
 type Endpoints struct {
 	XMLName   xml.Name   `xml:"endpoints"`
+	// Array of Web service URIs.
 	Endpoints []Endpoint `xml:"end"`
 }
 
@@ -216,17 +167,27 @@ type Timer struct {
 
 type Template struct {
 	XMLName      xml.Name `xml:"template"`
+	// User-entered template identifier.
 	Name         string   `xml:"name,attr"`
+	// Template file relative to tmpl folder,
+	// without .tmpl suffix as well.
 	TemplateFile string   `xml:"tmpl,attr"`
+	//
 	Bundle       string   `xml:"bundle,attr"`
+	// Interface to use with template.
 	Struct       string   `xml:"struct,attr"`
 	ForcePath    bool
 }
 
 type Endpoint struct {
 	XMLName xml.Name `xml:"end"`
+	// User-entered endpoint URI.
 	Path    string   `xml:"path,attr"`
+	// Code block to run on URI load.
 	Method  string   `xml:",innerxml"`
+	// User-entered endpoint request verb type.
+	// If a URI matches a request but the verb does not
+	// the endpoint will not load.
 	Type    string   `xml:"type,attr"`
 	Testi   string   `xml:"testi,attr"`
 	Testo   string   `xml:"testo,attr"`

@@ -317,6 +317,8 @@ func TrimSuffix(s, suffix string) string {
 	return s
 }
 
+
+//Get config of current project.
 func Config() (*gos,error) {
 	return LoadGos("./gos.gxml")
 }
@@ -955,7 +957,7 @@ import (
 				  	} else {
 				  		context.Clear(r)
 				  	}
-				  	r = nil
+				  	
 				  }
 				} 
 
@@ -3679,6 +3681,7 @@ func (d *gos) MergeWithV(target string) {
 		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
 		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
 		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+		d.PostCommand = append(imp.PostCommand, d.PostCommand...)
 		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
 		//Specialize method for templates
 		//d.Variables = append(imp.Variables, d.Variables...)
@@ -3738,6 +3741,7 @@ func (d *gos) MergeWith(target string) {
 		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
 		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
 		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+		d.PostCommand = append(imp.PostCommand, d.PostCommand...)		
 		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
 		//Specialize method for templates
 		d.Variables = append(imp.Variables, d.Variables...)
