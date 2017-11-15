@@ -50,7 +50,7 @@ type gos struct {
 	Init_Func        string    `xml:"init"`
 	Header           Header    `xml:"header"`
 	Methods          Methods   `xml:"methods"`
-	PostCommand		 []string	`xml:"run"`
+	PostCommand		 []string	`xml:"sh"`
 	Timers           Timers    `xml:"timers"`
 	Templates        Templates `xml:"templates"`
 	Endpoints        Endpoints `xml:"endpoints"`

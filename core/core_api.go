@@ -321,6 +321,24 @@ func Config() (*gos,error) {
 	return LoadGos("./gos.gxml")
 }
 
+func (template * gos) AddToMainFunc(str string) error {
+	body, err := ioutil.ReadFile(template.Output)
+	if err != nil {
+		return err
+	}
+
+	strnew := strings.Replace(string(body),"//+++extendgxmlmain+++", fmt.Sprintf(`
+		%s
+		//+++extendgxmlmain+++`, str), 1)
+	var strbytes = []byte(strnew)
+	_ = ioutil.WriteFile(template.Output, strbytes, 0700)
+
+	return nil
+}
+
+
+
+
 func NewID(length int) string {
 	return NewLenChars(length, StdNums)
 }
@@ -638,6 +656,7 @@ import (
 			}
 
 		}
+
 		timeline := ``
 		for _, imp := range template.Timers.Timers {
 
@@ -912,7 +931,10 @@ import (
 				    p.Session.Save(p.R, w)
 
 				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
-				  
+				  	p.Session = nil
+				  	p.Body = nil
+				  	p.R = nil
+				  	p = nil
 				    return true
 					
 				    
@@ -933,7 +955,7 @@ import (
 				  	} else {
 				  		context.Clear(r)
 				  	}
-				  	
+				  	r = nil
 				  }
 				} 
 
@@ -1232,7 +1254,10 @@ import (
 				        }
 				         pag.R = r
 						         pag.Session = session
-						         p = nil
+						p.Session = nil
+				  		p.Body = nil
+				  		p.R = nil
+				  		p = nil
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
@@ -1264,9 +1289,10 @@ import (
 				      w.Write(p.Body)
 				  }
 
-				  p.R = nil
-				  p.Session = nil
-				  p = nil
+			  	 p.Session = nil
+				 p.Body = nil
+				 p.R = nil
+				 p = nil
 				  context.Clear(r)
 				  return
 				}
@@ -1387,7 +1413,6 @@ import (
 				 type Page struct {
 					    Title string
 					    Body  []byte
-					    request *http.Request
 					    isResource bool
 					    R *http.Request
 					    Session *sessions.Session
@@ -1877,12 +1902,14 @@ functions:
 					 log.Printf("Listenning on Port %%v\n", port)
 					 http.HandleFunc( "/",  MakeHandler(Handler))
 
-
+					//+++extendgxmlmain+++
 					http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
 					
 					%s
 
-					}`, timeline, template.Port, web, defhandler)
+					}
+
+					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler)
 			var hostname string
 			var port string
 			if !template.Prod || (template.Domain == "") {
@@ -1915,6 +1942,12 @@ CMD server
 			d1 := []byte(local_string)
 			
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
+		}
+
+		var logfull string
+		for _,sh := range template.PostCommand {
+			logfull,_ = RunCmdSmart(sh)
+			log.Println(logfull)
 		}
 
 	} else if template.Type == "bind" {
