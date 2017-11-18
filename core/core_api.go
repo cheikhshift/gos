@@ -1255,11 +1255,13 @@ import (
 				        	return
 				        }
 				         pag.R = r
-						         pag.Session = session
+						 pag.Session = session
+						if p != nil {
 						p.Session = nil
 				  		p.Body = nil
 				  		p.R = nil
 				  		p = nil
+				  		}
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
