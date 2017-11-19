@@ -1638,7 +1638,7 @@ func JBuild(path string, out string) {
 					if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
 						//Build( GOHOME + "/" + serverconfig )
 						reloading = true
-						if !strings.Contains(Type, "faas") {
+						if strings.Contains(Type, "webapp") {
 							process <- true
 						}
 						done <- true
@@ -1656,7 +1656,7 @@ func JBuild(path string, out string) {
 	}
 	notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), notificator.UR_NORMAL)
 	log.Println("Ready!")
-	if !strings.Contains(Type, "faas") {
+	if strings.Contains(Type, "webapp") {
 		go core.Exe_Stall(fmt.Sprintf("%s", pk[len(pk)-1]), process)
 	}
 	<-done
@@ -1667,7 +1667,7 @@ func JBuild(path string, out string) {
 	log.Println("🤔 Refreshing")
 	log.Println("📦 Invoking go-bindata")
 
-	if strings.Contains(Type, "faas") {
+	if !strings.Contains(Type, "webapp") {
 
 		core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
@@ -1712,7 +1712,7 @@ func Build(path string) {
 	if !strings.Contains(os.Args[1], "export") {
 		log.Println("📦 Invoking go-bindata ")
 
-		if strings.Contains(Type, "faas") {
+		if !strings.Contains(Type, "webapp") {
 			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 		} else {
@@ -1720,7 +1720,7 @@ func Build(path string) {
 		}
 	} else {
 
-		if strings.Contains(Type, "faas") {
+		if !strings.Contains(Type, "webapp") {
 
 			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
@@ -1760,8 +1760,8 @@ func Build(path string) {
 		return
 	}
 
-	if coreTemplate.Type == "webapp" || coreTemplate.Type == "faas" {
-
+	if coreTemplate.Type == "webapp" || coreTemplate.Type == "faas" || coreTemplate.Type == "package" {
+ 
 		if os.Args[1] == "run" || os.Args[1] == "run-sub" || os.Args[1] == "--run" || os.Args[1] == "--serv" {
 			//
 			if !strings.Contains(os.Args[1], "run-") && !strings.Contains(os.Args[1], "--") {
@@ -1871,7 +1871,7 @@ func Build(path string) {
 							if TriggerType(fname) && !strings.Contains(fname, "bindata.go") && !strings.Contains(fname, appout) {
 								//Build( GOHOME + "/" + serverconfig )
 								reloading = true
-								if !strings.Contains(Type, "faas") {
+								if strings.Contains(Type, "webapp") {
 									process <- true
 								}
 								//	done <- true
@@ -1891,7 +1891,7 @@ func Build(path string) {
 			}
 			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1), notificator.UR_NORMAL)
 			log.Println("Ready!")
-			if !strings.Contains(Type, "faas") {
+			if strings.Contains(Type, "faas") {
 				go core.Exe_Stall(fmt.Sprintf("%s", pk[len(pk)-1]), process)
 			}
 			//process <- false
@@ -1904,7 +1904,7 @@ func Build(path string) {
 			log.Println("🤔 Refreshing")
 			log.Println("📦 Invoking go-bindata")
 
-			if strings.Contains(Type, "faas") {
+			if !strings.Contains(Type, "webapp") {
 
 				core.RunCmd(fmt.Sprintf("go-bindata  -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 

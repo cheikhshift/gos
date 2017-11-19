@@ -415,7 +415,7 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 	}
 
-	if template.Type == "webapp" || template.Type == "faas" {
+	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
 		if template.Type == "webapp" {
 			local_string = `package main 
