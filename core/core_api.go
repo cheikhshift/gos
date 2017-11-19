@@ -1833,6 +1833,18 @@ functions:
 
 			os.Chdir(fmt.Sprintf("%s/src/%s", os.ExpandEnv("$GOPATH"), appname))
 
+		} else if template.Type == "package" {
+
+			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
+			if strings.Contains(local_string, "ioutil") {
+				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
+			}
+
+			local_string = strings.Replace(local_string, "net_", "Net", -1)
+			d1 := []byte(local_string)
+			
+			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
+
 		} else {
 
 			local_string += fmt.Sprintf(`
