@@ -1622,20 +1622,15 @@ import (
 
 				func  c%s(args ...interface{}) (d %s) {
 					if len(args) > 0 {
-					var jsonBlob = []byte(args[0].(string))
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return 
-					}
+					d = Netc%s(args[0])
 					} else {
-						d = %s{}
+						d = Netc%s()
 					}
     				return
 				}
 
 			
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct)
+				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct,imp.Name,imp.Name)
 		}
 
 		//Methods have been added
