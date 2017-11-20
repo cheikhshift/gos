@@ -1581,6 +1581,7 @@ import (
 						return Netb%s(d)
 				}
 
+				%s
 				func  Netb%s(d %s) string {
 					
 					filename :=  "%s/%s.tmpl"
@@ -1633,11 +1634,8 @@ import (
     				return
 				}
 
-				%s
-				func B%s(intstr %s) string {
-					return Netb%s(intstr)
-				}
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct, commentstring,imp.Name, imp.Struct,imp.Name)
+			
+				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct)
 		}
 
 		//Methods have been added
@@ -1692,7 +1690,7 @@ import (
 )
 
 func Handle(req []byte) string {
-	return app.B%s(string(req))
+	return app.Netb%s(string(req))
 }
 `, appname, v.Name)
 
