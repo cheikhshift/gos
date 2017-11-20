@@ -1981,7 +1981,9 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			//create both zips
-			core.RunCmd("go build")
+			if strings.Contains(coreTemplate.Type,"webapp"){
+				core.RunCmd("go build")
+			}
 		}
 	} else if coreTemplate.Type == "bind" {
 

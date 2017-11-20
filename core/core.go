@@ -145,6 +145,7 @@ type Object struct {
 type Method struct {
 	XMLName    xml.Name `xml:"method"`
 	Method     string   `xml:",innerxml"`
+	Comment    xml.Comment   `xml:",comment"`
 	Name       string   `xml:"name,attr"`
 	Variables  string   `xml:"var,attr"`
 	Limit      string   `xml:"limit,attr"`
@@ -177,6 +178,7 @@ type Template struct {
 	// Interface to use with template.
 	Struct       string   `xml:"struct,attr"`
 	ForcePath    bool
+	Comment     xml.Comment `xml:",comment"`
 }
 
 type Endpoint struct {

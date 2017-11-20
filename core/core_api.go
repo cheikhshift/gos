@@ -1448,7 +1448,18 @@ import (
 				log.Println("🚰 Processing : ", imp)
 
 				meth := template.findMethod(imp)
-				
+				commentslice := strings.Split(string(meth.Comment), "\n")
+				for i,val := range commentslice {
+					commentslice[i] = strings.TrimSpace(val)
+				}
+				if len(commentslice) > 0 {
+					local_string +=  fmt.Sprintf(`
+						// %s`, strings.Join(commentslice, `
+						// `)) 
+
+					splitAtComment := strings.Split(meth.Method, "-->") //at end of comment
+					meth.Method = splitAtComment[len(splitAtComment) - 1]
+				}
 				addedit := false
 				if meth.Returntype == "" {
 					meth.Returntype = "string"
@@ -1507,6 +1518,18 @@ import (
 		for _, imp := range template.Templates.Templates {
 			if imp.Struct == "" {
 				imp.Struct = "NoStruct"
+			}
+
+			commentslice := strings.Split(string(imp.Comment), "\n")
+			var commentstring string
+			for i,val := range commentslice {
+				commentslice[i] = strings.TrimSpace(val)
+			}
+			if len(commentslice) > 0 {
+					commentstring = strings.TrimSpace( fmt.Sprintf(`
+						// %s`, strings.Join(commentslice, `
+						// `)) )
+	
 			}
 
 			local_string += fmt.Sprintf(`
@@ -1610,10 +1633,11 @@ import (
     				return
 				}
 
-				func B%s(intstr interface{}) string {
-					return Net%s(intstr)
+				%s
+				func B%s(intstr %s) string {
+					return Netb%s(intstr)
 				}
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Name)
+				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Struct, commentstring,imp.Name, imp.Struct,imp.Name)
 		}
 
 		//Methods have been added
@@ -1839,6 +1863,10 @@ functions:
 			if strings.Contains(local_string, "ioutil") {
 				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
 			}
+			local_string += fmt.Sprintf(`
+				func FileServer() http.Handler {
+					return http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"})
+				}`, web)
 
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
