@@ -942,21 +942,22 @@ import (
 				    
 				}
 
-				func MakeHandler(fn func (http.ResponseWriter, *http.Request, string,*sessions.Session%s) http.HandlerFunc {
+
+				// Access you .gxml's end tags with
+				// this http.HandlerFunc.
+				// Use MakeHandler(http.HandlerFunc) to serve your web
+				// directory from memory.
+				func MakeHandler(fn func (http.ResponseWriter, *http.Request%s) http.HandlerFunc {
 				  return func(w http.ResponseWriter, r *http.Request) {
 				  
 				  	 %s
 				  	
-					var session *sessions.Session
-				  	var er error
-				  	if 	session, er = store.Get(r, "session-"); er != nil {
-						session,_ = store.New(r, "session-")
-					}
-				  	if attmpt := apiAttempt(w,r,session%s ;!attmpt {
-				       fn(w, r, "",session%s
-				  	} else {
-				  		context.Clear(r)
-				  	}
+
+				  	if attmpt := apiAttempt(w,r%s ;!attmpt {
+				       fn(w, r%s
+				  	} 
+				  	context.Clear(r)
+				  	
 				  	
 				  }
 				} 
@@ -965,16 +966,21 @@ import (
 					data,_ := json.Marshal(&v)
 					return string(data)
 				}
-				func apiAttempt(w http.ResponseWriter, r *http.Request, session *sessions.Session%s (callmet bool) {
+				func apiAttempt(w http.ResponseWriter, r *http.Request%s (callmet bool) {
 					var response string
 					response = ""
-					
+					var session *sessions.Session
+				  	var er error
+				  	if 	session, er = store.Get(r, "session-"); er != nil {
+						session,_ = store.New(r, "session-")
+					}
 					
 
 					%s
 
 					if callmet {
 						session.Save(r,w)
+						session = nil
 						if response != "" {
 							//Unmarshal json
 							//w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -983,6 +989,7 @@ import (
 						}
 						return 
 					}
+					session = nil
 					return
 				}
 				func SetField(obj interface{}, name string, value interface{}) error {
@@ -1238,9 +1245,14 @@ import (
 				    }
 
 				}
-			func Handler(w http.ResponseWriter, r *http.Request, contxt string,session *sessions.Session%s {
+			func Handler(w http.ResponseWriter, r *http.Request%s {
 				  var p *Page
 				  p,err := loadPage(r.URL.Path)
+				  	var session *sessions.Session
+				  	var er error
+				  	if 	session, er = store.Get(r, "session-"); er != nil {
+						session,_ = store.New(r, "session-")
+					}
 				  %s
 				  if err != nil {	
 				  		log.Println(err.Error())
@@ -1262,6 +1274,7 @@ import (
 				  		p.R = nil
 				  		p = nil
 				  		}
+				  		session = nil
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
@@ -1297,8 +1310,9 @@ import (
 				 p.Body = nil
 				 p.R = nil
 				 p = nil
-				  context.Clear(r)
-				  return
+				 session = nil
+				 context.Clear(r)
+				 return
 				}
 
 				func loadPage(title string) (*Page,error) {
