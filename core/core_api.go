@@ -1274,12 +1274,13 @@ import (
 				  		p.R = nil
 				  		p = nil
 				  		}
-				  		session = nil
+				  	
 				        if pag.isResource {
 				        	w.Write(pag.Body)
 				    	} else {
 				    		renderTemplate(w, pag%s //"%s" 
 				    	}
+				    	session = nil
 				    	context.Clear(r)
 				        return
 				  }
