@@ -1891,7 +1891,7 @@ func Build(path string) {
 			}
 			notify.Push("Build Passed!", fmt.Sprintf("Your project %s is running!", pk[len(pk)-1]), strings.Replace(fmt.Sprintf("%s/src/github.com/cheikhshift/gos/icon.png", os.ExpandEnv("$GOPATH")), "//", "/", -1), notificator.UR_NORMAL)
 			log.Println("Ready!")
-			if strings.Contains(Type, "faas") {
+			if strings.Contains(Type, "webapp") {
 				go core.Exe_Stall(fmt.Sprintf("%s", pk[len(pk)-1]), process)
 			}
 			//process <- false
