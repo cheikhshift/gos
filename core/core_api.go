@@ -780,7 +780,7 @@ import (
 
 		netMa += `}`
 
-		ReadyTemplate := "func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
+		ReadyTemplate :=  ""//"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
 		netmafuncs := netMa
 		netMa = `gosweb.TemplateFuncStore`
 		local_string += fmt.Sprintf(`
@@ -825,7 +825,7 @@ import (
 				  	%s
 				  
 				    // %s
-				 	var tmpstr = ReadyTemplate(p.Body)
+				 	var tmpstr = string(p.Body)
 				 	var Gt =  template.New(p.R.URL.Path)
 					Gt.Funcs(gosweb.TemplateFuncStore)
 				    Gt.Parse(tmpstr)
@@ -994,7 +994,7 @@ import (
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(%s)
-					    	t, _ = t.Parse(ReadyTemplate(body))
+					    	t, _ = t.Parse(string(body))
 					    	lastline = i
 					    	linestring =  line
 					    	erro := t.Execute(outp, p)
@@ -1015,7 +1015,7 @@ import (
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(%s)
-					    	t, _ = t.Parse(ReadyTemplate(body) )
+					    	t, _ = t.Parse(string(body) )
 					    	lastline = i
 					    	linestring =  line
 					    	erro := t.Execute(outp, p)
@@ -1031,7 +1031,7 @@ import (
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(%s)
-				    	t, _ = t.Parse(ReadyTemplate(body) )
+				    	t, _ = t.Parse(string(body) )
 				    	lastline = i
 				    	linestring = line
 				    	erro := t.Execute(outp, p)
@@ -1107,7 +1107,7 @@ import (
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(%s)
-					    	t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
+					    	t, _ = t.Parse(string([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
 					    	lastline = i
 					    	linestring =  line	    	
 					    	erro := t.Execute(outp, intrf)
@@ -1129,7 +1129,7 @@ import (
 				    		outp := new(bytes.Buffer)  
 					    	t := template.New("PageWrapper")
 					    	t = t.Funcs(%s)
-					    	t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
+					    	t, _ = t.Parse(string([]byte(fmt.Sprintf("%%s%%s",linebuffer, endstr))) )
 					    	lastline = i
 					    	linestring =  line
 					    	erro := t.Execute(outp, intrf)
@@ -1145,7 +1145,7 @@ import (
 				    	outp := new(bytes.Buffer)  
 				    	t := template.New("PageWrapper")
 				    	t = t.Funcs(%s)
-					    t, _ = t.Parse(ReadyTemplate([]byte(fmt.Sprintf("%%s%%s",linebuffer))) )
+					    t, _ = t.Parse(string([]byte(fmt.Sprintf("%%s%%s",linebuffer))) )
 				    	lastline = i
 				    	linestring = line
 				    	erro := t.Execute(outp, intrf)
@@ -1435,7 +1435,7 @@ import (
     				 output := new(bytes.Buffer) 
 					var Gt = template.New("%s")
     				Gt.Funcs(%s)
-    				var tmpstr = ReadyTemplate(body)
+    				var tmpstr = string(body)
 				  	Gt.Parse(tmpstr)
 					erro := Gt.Execute(output, &d)
 				    if erro != nil {
@@ -1463,7 +1463,7 @@ import (
     				 output := new(bytes.Buffer) 
 					var Gt = template.New("%s")
     				Gt.Funcs(%s)
-    				var tmpstr = ReadyTemplate(body)
+    				var tmpstr = string(body)
 				  	Gt.Parse(tmpstr)
 				 defer func() {
 					        if n := recover(); n != nil {
