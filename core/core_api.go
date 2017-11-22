@@ -434,7 +434,10 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "log", "github.com/elazarl/go-bindata-assetfs"}
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "log", "github.com/elazarl/go-bindata-assetfs"}
+		if strings.Contains( template.Type, "webapp" ) {
+			Netimports = append(Netimports, "os")
+		}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -772,12 +775,14 @@ import (
 		netMa += `}`
 
 		ReadyTemplate := "func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
-
+		netmafuncs := netMa
+		netMa = `gosweb.TemplateFuncStore`
 		local_string += fmt.Sprintf(`
 		)
 				var store = sessions.NewCookieStore([]byte("%s"))
 
 
+				%s
 
 
 				type dbflf db.O
@@ -1274,15 +1279,13 @@ import (
 				 } 
 				
 				   
-				
-				func BytesToString(b []byte) string {
-				    bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-				    sh := reflect.StringHeader{bh.Data, bh.Len}
-				    return *(*string)(unsafe.Pointer(&sh))
-				}
 			
 				 %s
-				 `, template.Key, TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
+				 `, template.Key, fmt.Sprintf(`func StoreNetfn () int {
+				 	gosweb.TemplateFuncStore = %s
+				 	return 0
+				 	}
+				 	var FuncStored = StoreNetfn()`, netmafuncs ),TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)

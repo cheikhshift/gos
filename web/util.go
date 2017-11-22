@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"bufio"
 	"fmt"
+	"html/template"
 	"github.com/fatih/color"
 	"os"
 	"strings"
 )
+
+var TemplateFuncStore template.FuncMap
 
 			 func Netadd(x,v float64) float64 {
 					return v + x				   
