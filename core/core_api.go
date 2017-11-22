@@ -381,25 +381,7 @@ func NewLenChars(length int, chars []byte) string {
 func Process(template *gos, r string, web string, tmpl string) (local_string string) {
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
-	mathFuncs := ` 
 
-			 func Netadd(x,v float64) float64 {
-					return v + x				   
-			 }
-
-			 func Netsubs(x,v float64) float64 {
-				   return v - x
-			 }
-
-			 func Netmultiply(x,v float64) float64 {
-				   return v * x
-			 }
-
-			 func Netdivided(x,v float64) float64 {
-				   return v/x
-			 }
-
-	`
 
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
@@ -420,10 +402,12 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 		if template.Type == "webapp" {
 			local_string = `package main 
 import (
+		gosweb "github.com/cheikhshift/gos/web"
 	 	//iogos-replace`
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
+		gosweb "github.com/cheikhshift/gos/web"
 	 	//iogos-replace`, pk[len(pk)-1])
 		}
 
@@ -450,7 +434,7 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "bufio", "log", "github.com/elazarl/go-bindata-assetfs"}
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "unsafe", "os", "log", "github.com/elazarl/go-bindata-assetfs"}
 		/*
 			Methods before so that we can create to correct delegate method for each object
 		*/
@@ -531,7 +515,7 @@ import (
 					 	defer sp.Finish()
 					defer func() {
 					       if n := recover(); n != nil {
-					          log.Println("Web request (%s) failed at line :",GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
+					          log.Println("Web request (%s) failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
 					          log.Println("Reason : ",n)
 					         %s
 					          span.SetTag("error", true)
@@ -548,7 +532,7 @@ import (
 								 }
 								 	 pag.R = r
 						         pag.Session = session	
-								if pag.isResource {
+								if pag.IsResource {
 				        			w.Write(pag.Body)
 						    	} else {
 						    		// renderTemplate(w, pag%s
@@ -599,7 +583,7 @@ import (
 					  defer sp.Finish()
 					defer func() {
 					       if n := recover(); n != nil {
-					          log.Println("Web request (%s) failed at line :",GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
+					          log.Println("Web request (%s) failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
 					          log.Println("Reason : ",n)
 					          %s
 					       	 span.SetTag("error", true)
@@ -615,7 +599,7 @@ import (
 								 }
 								  pag.R = r
 						         pag.Session = session	
-								   if pag.isResource {
+								   if pag.IsResource {
 							        	w.Write(pag.Body)
 							    	} else {
 							    		renderTemplate(w, pag%s //"s" 
@@ -642,7 +626,7 @@ import (
 			}
 			if imp.Type == "star" {
 				apiraw += fmt.Sprintf(` 
-				if  !callmet &&  UrlAtZ(r.URL.Path, "%s")  { 
+				if  !callmet &&  gosweb.UrlAtZ(r.URL.Path, "%s")  { 
 					%s			
 					callmet = true
 				}
@@ -673,7 +657,7 @@ import (
 		}
 
 		//log.Printf("APi Methods %v\n",api_methods)
-		netMa := `template.FuncMap{"a":Netadd,"s":Netsubs,"m":Netmultiply,"d":Netdivided,"js" : Netimportjs,"css" : Netimportcss,"sd" : NetsessionDelete,"sr" : NetsessionRemove,"sc": NetsessionKey,"ss" : NetsessionSet,"sso": NetsessionSetInt,"sgo" : NetsessionGetInt,"sg" : NetsessionGet,"form" : formval,"eq": equalz, "neq" : nequalz, "lte" : netlt`
+		netMa := `template.FuncMap{"a":gosweb.Netadd,"s":gosweb.Netsubs,"m":gosweb.Netmultiply,"d":gosweb.Netdivided,"js" : gosweb.Netimportjs,"css" : gosweb.Netimportcss,"sd" : gosweb.NetsessionDelete,"sr" : gosweb.NetsessionRemove,"sc": gosweb.NetsessionKey,"ss" : gosweb.NetsessionSet,"sso": gosweb.NetsessionSetInt,"sgo" : gosweb.NetsessionGetInt,"sg" : gosweb.NetsessionGet,"form" : gosweb.Formval,"eq": gosweb.Equalz, "neq" : gosweb.Nequalz, "lte" : gosweb.Netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
 				netMa += fmt.Sprintf(`,"%s" : Net%s`, imp, imp)
@@ -793,85 +777,12 @@ import (
 		)
 				var store = sessions.NewCookieStore([]byte("%s"))
 
-				type NoStruct struct {
-					/* emptystruct */
-				}
-
-				func NetsessionGet(key string,s *sessions.Session) string {
-					return s.Values[key].(string)
-				}
-
-				func UrlAtZ(url,base string) (isURL bool) {
-					isURL = strings.Index(url, base) == 0 
-					return
-				}
-
-
-				func NetsessionDelete(s *sessions.Session) string {
-						//keys := make([]string, len(s.Values))
-
-						//i := 0
-						for k := range s.Values {
-						   // keys[i] = k.(string)
-						    NetsessionRemove(k.(string), s)
-						    //i++
-						}
-
-					return ""
-				}
-
-				func NetsessionRemove(key string,s *sessions.Session) string {
-					delete(s.Values, key)
-					return ""
-				}
-				func NetsessionKey(key string,s *sessions.Session) bool {					
-				 if _, ok := s.Values[key]; ok {
-					    //do something here
-				 		return true
-					}
-
-					return false
-				}
-
-				%s
-
-				func NetsessionGetInt(key string,s *sessions.Session) interface{} {
-					return s.Values[key]
-				}
-
-				func NetsessionSet(key string, value string,s *sessions.Session) string {
-					 s.Values[key] = value
-					 return ""
-				}
-				func NetsessionSetInt(key string, value interface{},s *sessions.Session) string {
-					 s.Values[key] = value
-					 return ""
-				}
-
-				func dbDummy() {
-					smap := db.O{}
-					smap["key"] = "set"
-					log.Println(smap)
-				}
-
-				
-				func Netimportcss(s string) string {
-					return fmt.Sprintf("<link rel=\"stylesheet\" href=\"%%s\" /> ",s)
-				}
-
-				func Netimportjs(s string) string {
-					return fmt.Sprintf("<script type=\"text/javascript\" src=\"%%s\" ></script> ", s)
-				}
 
 
 
-				func formval(s string, r*http.Request) string {
-					return r.FormValue(s)
-				}
-
-
+				type dbflf db.O
 			
-				func renderTemplate(w http.ResponseWriter, p *Page%s  bool {
+				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
 					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
@@ -887,7 +798,7 @@ import (
 						        	return
 						        }
 
-						         if pag.isResource {
+						         if pag.IsResource {
 						        	w.Write(pag.Body)
 						    	} else {
 						    		pag.R = p.R
@@ -920,7 +831,7 @@ import (
 						 pag.R = p.R
 						         pag.Session = p.Session
 						         p = nil
-						  if pag.isResource {
+						  if pag.IsResource {
 				        	w.Write(pag.Body)
 				    	} else {
 				    		renderTemplate(w, pag%s // "%s" 
@@ -1246,7 +1157,7 @@ import (
 
 				}
 			func Handler(w http.ResponseWriter, r *http.Request%s {
-				  var p *Page
+				  var p *gosweb.Page
 				  p,err := loadPage(r.URL.Path)
 				  	var session *sessions.Session
 				  	var er error
@@ -1275,7 +1186,7 @@ import (
 				  		p = nil
 				  		}
 				  	
-				        if pag.isResource {
+				        if pag.IsResource {
 				        	w.Write(pag.Body)
 				    	} else {
 				    		renderTemplate(w, pag%s //"%s" 
@@ -1286,7 +1197,7 @@ import (
 				  }
 
 				   
-				  if !p.isResource {
+				  if !p.IsResource {
 				  		w.Header().Set("Content-Type",  "text/html")
 				  		p.Session = session
 				  		p.R = r
@@ -1316,7 +1227,7 @@ import (
 				 return
 				}
 
-				func loadPage(title string) (*Page,error) {
+				func loadPage(title string) (*gosweb.Page,error) {
 				   
 				    if roottitle := (title == "/"); roottitle  {
 				    	webbase := "%s/"
@@ -1328,10 +1239,10 @@ import (
 					    		if err != nil {
 					    			return nil,err
 					    		}
-					    		return  &Page{ Body: body,isResource: false}, nil
+					    		return  &gosweb.Page{ Body: body,IsResource: false}, nil
 					    	}
 
-					    	return  &Page{ Body: body,isResource: true}, nil
+					    	return  &gosweb.Page{ Body: body,IsResource: true}, nil
 					    		    		
 				     } 
 				     
@@ -1349,13 +1260,13 @@ import (
 				          if strings.Contains(title, ".tmpl")  {
 				              return nil,nil
 				          }
-				          return &Page{ Body: body,isResource: true }, nil
+				          return &gosweb.Page{ Body: body,IsResource: true }, nil
 				         }
 				      } else {
-				         return &Page{ Body: body,isResource: true}, nil
+				         return &gosweb.Page{ Body: body,IsResource: true}, nil
 				      }
 				    } else {
-				    	  return &Page{Body: body,isResource:false}, nil
+				    	  return &gosweb.Page{Body: body,IsResource:false}, nil
 				    }
  
 				       %s
@@ -1369,76 +1280,9 @@ import (
 				    sh := reflect.StringHeader{bh.Data, bh.Len}
 				    return *(*string)(unsafe.Pointer(&sh))
 				}
-				func equalz(args ...interface{}) bool {
-		    	    if args[0] == args[1] {
-		        	return true;
-				    }
-				    return false;
-				 }
-				 func nequalz(args ...interface{}) bool {
-				    if args[0] != args[1] {
-				        return true;
-				    }
-				    return false;
-				 }
-
-				 func netlt(x,v float64) bool {
-				    if x < v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 func netgt(x,v float64) bool {
-				    if x > v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 func netlte(x,v float64) bool {
-				    if x <= v {
-				        return true;
-				    }
-				    return false;
-				 }
-
-				 func GetLine(fname string , match string )  int {
-					intx := 0
-					file, err := os.Open(fname)
-								if err != nil {
-									color.Red("Could not find a source file")
-																		           		return -1
-												    }
-								defer file.Close()
-
-								scanner := bufio.NewScanner(file)
-								for scanner.Scan() {
-									intx = intx + 1
-									if strings.Contains(scanner.Text(), match ) {
-												    		
-												    		return intx
-												    	}
-
-								}
-
-
-					return -1
-				}
-				 func netgte(x,v float64) bool {
-				    if x >= v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 type Page struct {
-					    Title string
-					    Body  []byte
-					    isResource bool
-					    R *http.Request
-					    Session *sessions.Session
-				 }
-
+			
 				 %s
-				 `, template.Key, mathFuncs, TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
+				 `, template.Key, TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)
@@ -1503,7 +1347,7 @@ import (
 
 							defer func() {
 							       if n := recover(); n != nil {
-							          log.Println("Pipeline failed at line :",GetLine("%s", lastLine),"Of file:%s:", strings.TrimSpace(lastLine))
+							          log.Println("Pipeline failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s:", strings.TrimSpace(lastLine))
 							          log.Println("Reason : ",n)
 
 							        }
@@ -1532,7 +1376,7 @@ import (
 
 		for _, imp := range template.Templates.Templates {
 			if imp.Struct == "" {
-				imp.Struct = "NoStruct"
+				imp.Struct = "gosweb.NoStruct"
 			}
 
 			commentslice := strings.Split(string(imp.Comment), "\n")
@@ -2303,7 +2147,7 @@ CMD server
 								        return []byte("Error ")
 								  }
 
-								  if !p.isResource {
+								  if !p.IsResource {
 								      p.Parameters = f.(map[string]interface{}) 
 								      p.Session = openSession()
 								      p.Layer = flow
@@ -2340,7 +2184,7 @@ CMD server
 					return false
 				}
 
-				` + mathFuncs + `
+			
 
 				func NetGetSession(key string) interface{} {
 					s := openSession() 
@@ -2517,7 +2361,7 @@ CMD server
 				    	}
 
 				    	if err == nil {
-				    		return  &page{ Body: body,isResource: !strings.Contains(filename, ".tmpl")}, nil
+				    		return  &page{ Body: body,IsResource: !strings.Contains(filename, ".tmpl")}, nil
 				    	} else return nil,err
 				    }
 				    body, err := Asset(filename)
@@ -2536,14 +2380,14 @@ CMD server
 				          if strings.Contains(title, ".tmpl") || title == "/" {
 				              return nil,nil
 				          }
-				          return &page{ Body: body,isResource: true}, nil
+				          return &page{ Body: body,IsResource: true}, nil
 				         }
 				      } else {
-				         return &page{Body: body,isResource: true}, nil
+				         return &page{Body: body,IsResource: true}, nil
 				      }
 				    } 
 				    //load custom struts
-				    return &page{Title: title, Body: body,isResource:false}, nil
+				    return &page{Title: title, Body: body,IsResource:false}, nil
 				}
 				func apiAttempt(path string, method string,bod []byte,layer Flow) ([]byte,bool) {
 				//	session, er := store.Get(r, "session-")
