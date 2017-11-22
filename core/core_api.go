@@ -400,10 +400,16 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
 		if template.Type == "webapp" {
-			local_string = `package main 
+		var	pprofadd string
+		if !template.Prod {
+			pprofadd = `_ "net/http/pprof"
+			`
+		}
+			local_string = fmt.Sprintf(`package main 
+		
 import (
 		gosweb "github.com/cheikhshift/gos/web"
-	 	//iogos-replace`
+	   %s//iogos-replace`, pprofadd)
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
@@ -786,7 +792,8 @@ import (
 
 
 				type dbflf db.O
-			
+				
+
 				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s  bool {
 				     defer func() {
 					        if n := recover(); n != nil {
@@ -815,13 +822,15 @@ import (
 					    }()
 
 
-				  %s
+				  	%s
 				  
-				    t := template.New("PageWrapper")
-				    t = t.Funcs(%s)
-				    t, _ = t.Parse(ReadyTemplate(p.Body))
+				    // %s
+				 	var tmpstr = ReadyTemplate(p.Body)
+				 	var Gt =  template.New(p.R.URL.Path)
+					Gt.Funcs(gosweb.TemplateFuncStore)
+				    Gt.Parse(tmpstr)
 				    outp := new(bytes.Buffer)
-				    err := t.Execute(outp, p)
+				    err := Gt.Execute(outp, p)
 				    if err != nil {
 				        log.Println(err.Error())
 				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
@@ -834,8 +843,8 @@ import (
 						        	return false
 						 }
 						 pag.R = p.R
-						         pag.Session = p.Session
-						         p = nil
+						 pag.Session = p.Session
+						    
 						  if pag.IsResource {
 				        	w.Write(pag.Body)
 				    	} else {
@@ -848,11 +857,9 @@ import (
 
 				    p.Session.Save(p.R, w)
 
-				    fmt.Fprintf(w, html.UnescapeString(outp.String()) )
-				  	p.Session = nil
-				  	p.Body = nil
-				  	p.R = nil
-				  	p = nil
+				    var outps = outp.String()
+				    var outpescaped = html.UnescapeString(outps)
+				    fmt.Fprintf(w, outpescaped )
 				    return true
 					
 				    
@@ -1426,17 +1433,18 @@ import (
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("%s")
-    				t = t.Funcs(%s)
-				  	t, _ = t.Parse(ReadyTemplate(body) )
-					
-					
-				    erro := t.Execute(output, &d)
+					var Gt = template.New("%s")
+    				Gt.Funcs(%s)
+    				var tmpstr = ReadyTemplate(body)
+				  	Gt.Parse(tmpstr)
+					erro := Gt.Execute(output, &d)
 				    if erro != nil {
-				   color.Red(fmt.Sprintf("Error processing template %%s" , filename) )
-				   DebugTemplatePath(filename, &d)	
+				   	color.Red(fmt.Sprintf("Error processing template %%s" , filename) )
+				  	 DebugTemplatePath(filename, &d)	
 				    } 
-					return html.UnescapeString(output.String())
+				    var outps = output.String()
+				    var outpescaped = html.UnescapeString(outps)
+					return outpescaped
 					
 				}
 				func  b%s(d %s) string {
@@ -1453,20 +1461,23 @@ import (
     					return ""
     				}
     				 output := new(bytes.Buffer) 
-					t := template.New("%s")
-    				t = t.Funcs(%s)
-				  	t, _ = t.Parse(ReadyTemplate(body) )
+					var Gt = template.New("%s")
+    				Gt.Funcs(%s)
+    				var tmpstr = ReadyTemplate(body)
+				  	Gt.Parse(tmpstr)
 				 defer func() {
 					        if n := recover(); n != nil {
 					           	color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , filename ) )
 					           	DebugTemplatePath(filename, &d)	
 					        }
 					    }()
-				    erro := t.Execute(output, &d)
+				    erro := Gt.Execute(output, &d)
 				    if erro != nil {
 				    log.Println(erro)
 				    } 
-					return html.UnescapeString(output.String())
+					var outps = output.String()
+				    var outpescaped = html.UnescapeString(outps)
+					return outpescaped
 				}
 				func  Netc%s(args ...interface{}) (d %s) {
 					if len(args) > 0 {
@@ -1484,7 +1495,7 @@ import (
 
 				func  c%s(args ...interface{}) (d %s) {
 					if len(args) > 0 {
-					d = Netc%s(args[0])
+						d = Netc%s(args[0])
 					} else {
 						d = Netc%s()
 					}
