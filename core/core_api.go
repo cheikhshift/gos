@@ -794,7 +794,7 @@ import (
 				type dbflf db.O
 				
 
-				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s  bool {
+				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s   {
 				     defer func() {
 					        if n := recover(); n != nil {
 					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
@@ -840,7 +840,7 @@ import (
 						 
 						 if err != nil {
 						        	log.Println(err.Error())	        	
-						        	return false
+						        	return
 						 }
 						 pag.R = p.R
 						 pag.Session = p.Session
@@ -851,16 +851,17 @@ import (
 				    		renderTemplate(w, pag%s // "%s" 
 				     
 				    	}
-				    	return false
+				    	return
 				    } 
 
 
 				    p.Session.Save(p.R, w)
 
+				    Gt = nil
 				    var outps = outp.String()
 				    var outpescaped = html.UnescapeString(outps)
+				    outp = nil
 				    fmt.Fprintf(w, outpescaped )
-				    return true
 					
 				    
 				}
@@ -1444,6 +1445,8 @@ import (
 				    } 
 				    var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
+				    Gt = nil
+				    output = nil
 					return outpescaped
 					
 				}
@@ -1477,6 +1480,8 @@ import (
 				    } 
 					var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
+				    				    Gt = nil
+				    output = nil
 					return outpescaped
 				}
 				func  Netc%s(args ...interface{}) (d %s) {
