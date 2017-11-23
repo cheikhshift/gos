@@ -782,12 +782,12 @@ import (
 
 		ReadyTemplate :=  ""//"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
 		netmafuncs := netMa
-		netMa = `gosweb.TemplateFuncStore`
+		netMa = `TemplateFuncStore`
 		local_string += fmt.Sprintf(`
 		)
 				var store = sessions.NewCookieStore([]byte("%s"))
-
-
+				var templateCache = make(map[string]*template.Template)
+				var TemplateFuncStore template.FuncMap
 				%s
 
 
@@ -825,12 +825,16 @@ import (
 				  	%s
 				  
 				    // %s
-				 	var tmpstr = string(p.Body)
-				 	var Gt =  template.New(p.R.URL.Path)
-					Gt.Funcs(gosweb.TemplateFuncStore)
-				    Gt.Parse(tmpstr)
+				 	
+				 	if _,ok := templateCache[p.R.URL.Path]; !ok {
+				 		var tmpstr = string(p.Body)
+				 		templateCache[p.R.URL.Path] =  template.New(p.R.URL.Path)
+				 		templateCache[p.R.URL.Path].Funcs(TemplateFuncStore)
+				 		templateCache[p.R.URL.Path].Parse(tmpstr)
+				 	}
+	
 				    outp := new(bytes.Buffer)
-				    err := Gt.Execute(outp, p)
+				    err := templateCache[p.R.URL.Path].Execute(outp, p)
 				    if err != nil {
 				        log.Println(err.Error())
 				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
@@ -857,7 +861,6 @@ import (
 
 				    p.Session.Save(p.R, w)
 
-				    Gt = nil
 				    var outps = outp.String()
 				    var outpescaped = html.UnescapeString(outps)
 				    outp = nil
@@ -1290,7 +1293,7 @@ import (
 			
 				 %s
 				 `, template.Key, fmt.Sprintf(`func StoreNetfn () int {
-				 	gosweb.TemplateFuncStore = %s
+				 	TemplateFuncStore = %s
 				 	return 0
 				 	}
 				 	var FuncStored = StoreNetfn()`, netmafuncs ),TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
@@ -1404,18 +1407,17 @@ import (
 
 			local_string += fmt.Sprintf(`
 
-
+				var  templateID%s = "%s/%s.tmpl"
 				func  Net%s(args ...interface{}) string {
 					
+					localid := templateID%s
 					var d *%s
-					filename :=  "%s/%s.tmpl"
-						defer func() {
+					defer func() {
 					       if n := recover(); n != nil {
-					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , filename ) )
+					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
 					           	// log.Println(n)
-					           		DebugTemplatePath(filename, d)	
-					           	 //http.Redirect(w,r,"%s",307)
-					        }
+					           		DebugTemplatePath(localid, d)	
+										        }
 					    }()	
 					if len(args) > 0 {
 					jso := args[0].(string)
@@ -1429,25 +1431,33 @@ import (
 					}
 
 					
-    				body, er := Asset(filename)
-    				if er != nil {
-    					return ""
-    				}
+    				
     				 output := new(bytes.Buffer) 
-					var Gt = template.New("%s")
-    				Gt.Funcs(%s)
-    				var tmpstr = string(body)
-				  	Gt.Parse(tmpstr)
-					erro := Gt.Execute(output, d)
+ 	
+    				 if _, ok := templateCache[localid]; !ok {
+
+    				 	body, er := Asset(localid)
+		    				if er != nil {
+		    					return ""
+		    			}
+		    			templateCache[localid] = template.New("%s")
+		    			templateCache[localid].Funcs(%s)
+		    			var tmpstr = string(body)
+				  		templateCache[localid].Parse(tmpstr)
+	    				body = nil
+    				 }
+					
+
+					erro := templateCache[localid].Execute(output, d)
 				    if erro != nil {
-				   	color.Red(fmt.Sprintf("Error processing template %%s" , filename) )
-				  	 DebugTemplatePath(filename, d)	
+				   	color.Red(fmt.Sprintf("Error processing template %%s" , localid) )
+				  	 DebugTemplatePath(localid, d)	
 				    } 
 				    var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
-				    Gt = nil
 				    d = nil
 				    output = nil
+				    args = nil
 					return outpescaped
 					
 				}
@@ -1457,31 +1467,35 @@ import (
 
 				%s
 				func  Netb%s(d %s) string {
-					
-					filename :=  "%s/%s.tmpl"
-					
-    				body, er := Asset(filename)
-    				if er != nil {
-    					return ""
-    				}
-    				 output := new(bytes.Buffer) 
-					var Gt = template.New("%s")
-    				Gt.Funcs(%s)
-    				var tmpstr = string(body)
-				  	Gt.Parse(tmpstr)
-				 	defer func() {
+					localid := templateID%s
+					defer func() {
 					        if n := recover(); n != nil {
-					           	color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , filename ) )
-					           	DebugTemplatePath(filename, &d)	
+					           	color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
+					           	DebugTemplatePath(localid, &d)	
 					        }
-					    }()
-				    erro := Gt.Execute(output, d)
+					 }()
+    				 output := new(bytes.Buffer) 
+				  	
+    				 if _, ok := templateCache[localid]; !ok {
+
+    				 	body, er := Asset(localid)
+		    				if er != nil {
+		    					return ""
+		    			}
+		    			templateCache[localid] = template.New("%s")
+		    			templateCache[localid].Funcs(%s)
+		    			var tmpstr = string(body)
+				  		templateCache[localid].Parse(tmpstr)
+	    				body = nil
+    				 }
+					
+
+					erro := templateCache[localid].Execute(output, d)
 				    if erro != nil {
 				    log.Println(erro)
 				    } 
 					var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
-				    Gt = nil
 				    d = %s{}
 				    output = nil
 					return outpescaped
@@ -1510,7 +1524,7 @@ import (
 				}
 
 			
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Struct , imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct,imp.Name,imp.Name)
+				`, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.TemplateFile, imp.Struct,imp.Name, netMa,imp.Name,imp.Struct,imp.Name, commentstring,imp.Name,imp.Struct,  imp.Name, imp.TemplateFile,imp.Name,netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
 		}
 
 		//Methods have been added
