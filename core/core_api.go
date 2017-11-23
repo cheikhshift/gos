@@ -573,6 +573,10 @@ import (
 				`, imp.Path, est)
 			}
 		}
+
+		apiraw += `if r.Method == "RESET" {
+			return true
+		}`
 		for _, imp := range template.Endpoints.Endpoints {
 			est := ``
 			if !template.Prod && template.Type != "faas" {
@@ -634,20 +638,16 @@ import (
 				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
 			}
 			if imp.Type == "star" {
-				apiraw += fmt.Sprintf(` 
-				if  !callmet &&  gosweb.UrlAtZ(r.URL.Path, "%s")  { 
+				apiraw += fmt.Sprintf(` else if  !callmet &&  gosweb.UrlAtZ(r.URL.Path, "%s")  { 
 					%s			
 					callmet = true
-				}
-				`, imp.Path, est)
+				}`, imp.Path, est)
 			} else if imp.Type != "f" {
 
-				apiraw += fmt.Sprintf(` 
-				if  isURL := (r.URL.Path == "%s" && r.Method == strings.ToUpper("%s") );!callmet && isURL{ 
+				apiraw += fmt.Sprintf(` else if  isURL := (r.URL.Path == "%s" && r.Method == strings.ToUpper("%s") );!callmet && isURL{ 
 					%s
 					callmet = true
-				}
-				`, imp.Path, imp.Type, est)
+				} `, imp.Path, imp.Type, est)
 			}
 
 		}
@@ -1407,25 +1407,25 @@ import (
 
 				func  Net%s(args ...interface{}) string {
 					
-					var d %s
+					var d *%s
 					filename :=  "%s/%s.tmpl"
 						defer func() {
 					       if n := recover(); n != nil {
 					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , filename ) )
 					           	// log.Println(n)
-					           		DebugTemplatePath(filename, &d)	
+					           		DebugTemplatePath(filename, d)	
 					           	 //http.Redirect(w,r,"%s",307)
 					        }
 					    }()	
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
-					err := json.Unmarshal(jsonBlob, &d)
+					err := json.Unmarshal(jsonBlob, d)
 					if err != nil {
 						return err.Error()
 					}
 					} else {
-						d = %s{}
+						d = &%s{}
 					}
 
 					
@@ -1438,10 +1438,10 @@ import (
     				Gt.Funcs(%s)
     				var tmpstr = string(body)
 				  	Gt.Parse(tmpstr)
-					erro := Gt.Execute(output, &d)
+					erro := Gt.Execute(output, d)
 				    if erro != nil {
 				   	color.Red(fmt.Sprintf("Error processing template %%s" , filename) )
-				  	 DebugTemplatePath(filename, &d)	
+				  	 DebugTemplatePath(filename, d)	
 				    } 
 				    var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
@@ -1468,13 +1468,13 @@ import (
     				Gt.Funcs(%s)
     				var tmpstr = string(body)
 				  	Gt.Parse(tmpstr)
-				 defer func() {
+				 	defer func() {
 					        if n := recover(); n != nil {
 					           	color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , filename ) )
 					           	DebugTemplatePath(filename, &d)	
 					        }
 					    }()
-				    erro := Gt.Execute(output, &d)
+				    erro := Gt.Execute(output, d)
 				    if erro != nil {
 				    log.Println(erro)
 				    } 
