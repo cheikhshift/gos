@@ -1761,7 +1761,7 @@ func Build(path string) {
 	}
 
 	if coreTemplate.Type == "webapp" || coreTemplate.Type == "faas" || coreTemplate.Type == "package" {
- 
+
 		if os.Args[1] == "run" || os.Args[1] == "run-sub" || os.Args[1] == "--run" || os.Args[1] == "--serv" {
 			//
 			if !strings.Contains(os.Args[1], "run-") && !strings.Contains(os.Args[1], "--") {
@@ -1832,9 +1832,9 @@ func Build(path string) {
 					fmt.Println(log_build)
 					if len(os.Args) > 2 {
 						if os.Args[2] != "--buildcheck" {
-						WatchForUpdate(path)
-						} 
-					}	else {
+							WatchForUpdate(path)
+						}
+					} else {
 						WatchForUpdate(path)
 					}
 					return
@@ -1981,7 +1981,7 @@ func Build(path string) {
 				os.Chdir(GOHOME)
 			}
 			//create both zips
-			if strings.Contains(coreTemplate.Type,"webapp"){
+			if strings.Contains(coreTemplate.Type, "webapp") {
 				core.RunCmd("go build")
 			}
 		}

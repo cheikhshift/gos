@@ -317,19 +317,18 @@ func TrimSuffix(s, suffix string) string {
 	return s
 }
 
-
 //Get config of current project.
-func Config() (*gos,error) {
+func Config() (*gos, error) {
 	return LoadGos("./gos.gxml")
 }
 
-func (template * gos) AddToMainFunc(str string) error {
+func (template *gos) AddToMainFunc(str string) error {
 	body, err := ioutil.ReadFile(template.Output)
 	if err != nil {
 		return err
 	}
 
-	strnew := strings.Replace(string(body),"//+++extendgxmlmain+++", fmt.Sprintf(`
+	strnew := strings.Replace(string(body), "//+++extendgxmlmain+++", fmt.Sprintf(`
 		%s
 		//+++extendgxmlmain+++`, str), 1)
 	var strbytes = []byte(strnew)
@@ -337,9 +336,6 @@ func (template * gos) AddToMainFunc(str string) error {
 
 	return nil
 }
-
-
-
 
 func NewID(length int) string {
 	return NewLenChars(length, StdNums)
@@ -382,7 +378,6 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
 
-
 	var pk []string
 	if strings.Contains(os.Args[1], "--") {
 		pwd, err := os.Getwd()
@@ -400,29 +395,27 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
 		if template.Type == "webapp" {
-		var	pprofadd string
-		if !template.Prod {
-			pprofadd = `_ "net/http/pprof"
+			var pprofadd string
+			if !template.Prod {
+				pprofadd = `_ "net/http/pprof"
 			`
-		}
+			}
 			local_string = fmt.Sprintf(`package main 
 		
 import (
 		gosweb "github.com/cheikhshift/gos/web"
-		"sync"
 	   %s//iogos-replace`, pprofadd)
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
 		gosweb "github.com/cheikhshift/gos/web"
-		"sync"
 	 	//iogos-replace`, pk[len(pk)-1])
 		}
 
 		// if template.Type == "webapp" {
 		log.Println("Checking templates")
 
-		if _, err := os.Stat(fmt.Sprintf("%s%s", TrimSuffix(os.ExpandEnv("$GOPATH"), "/") , "/src/github.com/gotpl/gtfmt/"  ) ); os.IsNotExist(err)  {
+		if _, err := os.Stat(fmt.Sprintf("%s%s", TrimSuffix(os.ExpandEnv("$GOPATH"), "/"), "/src/github.com/gotpl/gtfmt/")); os.IsNotExist(err) {
 			RunCmd("go get github.com/gotpl/gtfmt")
 		}
 
@@ -430,20 +423,20 @@ import (
 			log.Println("Checking : ", templ.Name)
 			var goatResponse string
 			if !strings.Contains(runtime.GOOS, "indows") {
-				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s/%s.tmpl", tmpl ,templ.TemplateFile))
+				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s/%s.tmpl", tmpl, templ.TemplateFile))
 			} else {
-				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s\\%s.tmpl", tmpl ,strings.Replace(templ.TemplateFile, "/", "\\", -1) ) )
+				goatResponse, _ = RunCmdSmart(fmt.Sprintf("gtfmt %s\\%s.tmpl", tmpl, strings.Replace(templ.TemplateFile, "/", "\\", -1)))
 			}
 			if goatResponse != "" {
 				color.Yellow("Warning!!!!!!")
 				log.Println(goatResponse)
 			}
-		} 
+		}
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context" ,"errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "log", "github.com/elazarl/go-bindata-assetfs"}
-		if strings.Contains( template.Type, "webapp" ) {
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "log", "github.com/elazarl/go-bindata-assetfs"}
+		if strings.Contains(template.Type, "webapp") {
 			Netimports = append(Netimports, "os")
 		}
 		/*
@@ -636,8 +629,8 @@ import (
 			} else {
 				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
 			}
-			if !strings.Contains(est,"w.Write") && !strings.Contains(est,"response") && imp.Type != "f"{
-				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type) )
+			if !strings.Contains(est, "w.Write") && !strings.Contains(est, "response") && imp.Type != "f" {
+				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type))
 			}
 			if imp.Type == "star" {
 				apiraw += fmt.Sprintf(` else if  !callmet &&  gosweb.UrlAtZ(r.URL.Path, "%s")  { 
@@ -782,7 +775,7 @@ import (
 
 		netMa += `}`
 
-		ReadyTemplate :=  ""//"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
+		ReadyTemplate := "" //"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
 		netmafuncs := netMa
 		var CacheParam string
 
@@ -796,8 +789,10 @@ import (
 		local_string += fmt.Sprintf(`
 		)
 				var store = sessions.NewCookieStore([]byte("%s"))
-				var templateCache = make(map[string]*template.Template)
+				
+
 				var TemplateFuncStore template.FuncMap
+				var templateCache = gosweb.NewTemplateCache()
 				%s
 
 
@@ -835,16 +830,17 @@ import (
 				  	%s
 				  
 				    // %s
-				 	
-				 	if _,ok := templateCache[p.R.URL.Path]; !ok {
+		
+				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok {
 				 		var tmpstr = string(p.Body)
-				 		templateCache[p.R.URL.Path] =  template.New(p.R.URL.Path)
-				 		templateCache[p.R.URL.Path].Funcs(TemplateFuncStore)
-				 		templateCache[p.R.URL.Path].Parse(tmpstr)
+
+				 		templateCache.Put(p.R.URL.Path, template.New(p.R.URL.Path) )
+				 		templateCache.JGet(p.R.URL.Path).Funcs(TemplateFuncStore)
+				 		templateCache.JGet(p.R.URL.Path).Parse(tmpstr)
 				 	}
 	
 				    outp := new(bytes.Buffer)
-				    err := templateCache[p.R.URL.Path].Execute(outp, p)
+				    err := templateCache.JGet(p.R.URL.Path).Execute(outp, p)
 				    if err != nil {
 				        log.Println(err.Error())
 				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
@@ -869,7 +865,7 @@ import (
 				    } 
 
 
-				    p.Session.Save(p.R, w)
+				 	// p.Session.Save(p.R, w)
 
 				    var outps = outp.String()
 				    var outpescaped = html.UnescapeString(outps)
@@ -1228,7 +1224,7 @@ import (
 				  		p.Session = session
 				  		p.R = r
 				      	renderTemplate(w, p%s //fmt.Sprintf("%s%%s", r.URL.Path)
-				     
+				     	session.Save(r, w)
 				     // log.Println(w)
 				  } else {
 				  		w.Header().Set("Cache-Control",  "public")
@@ -1253,31 +1249,8 @@ import (
 				 return
 				}
 
-				type CacheStore struct {
-					Lock *sync.RWMutex
-					Cache map[string]gosweb.Page
-				}
-				func NewCache() CacheStore {
-					return CacheStore{Lock: new(sync.RWMutex), Cache: make(map[string]gosweb.Page) }
-				}
 
-				func (m *CacheStore) Put (k string, v gosweb.Page) {
-				        m.Lock.Lock()
-				        defer m.Lock.Unlock()
-				        if _,ok :=  m.Cache[k]; !ok {
-				        	m.Cache[k] = v
-				    	}
-				}
-				func (m *CacheStore) Get (k string) (v gosweb.Page, inCache bool) {
-				        m.Lock.Lock()
-				        defer m.Lock.Unlock()
-				        if _,ok :=  m.Cache[k]; ok {
-				        	v = m.Cache[k]
-				        	inCache = true
-				    	} 
-				    	return
-				}
-				var WebCache = NewCache()
+				var WebCache = gosweb.NewCache()
 			
 
 				func loadPage(title string) (*gosweb.Page,error) {
@@ -1353,7 +1326,7 @@ import (
 				 	TemplateFuncStore = %s
 				 	return 0
 				 	}
-				 	var FuncStored = StoreNetfn()`, netmafuncs ),TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, CacheParam ,web, web, web, web, TraceOpt, ReadyTemplate)
+				 	var FuncStored = StoreNetfn()`, netmafuncs), TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, CacheParam, web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)
@@ -1379,36 +1352,36 @@ import (
 
 				meth := template.findMethod(imp)
 				commentslice := strings.Split(string(meth.Comment), "\n")
-				for i,val := range commentslice {
+				for i, val := range commentslice {
 					commentslice[i] = strings.TrimSpace(val)
 				}
 				if len(commentslice) > 0 {
-					local_string +=  fmt.Sprintf(`
+					local_string += fmt.Sprintf(`
 						// %s`, strings.Join(commentslice, `
-						// `)) 
+						// `))
 
 					splitAtComment := strings.Split(meth.Method, "-->") //at end of comment
-					meth.Method = splitAtComment[len(splitAtComment) - 1]
+					meth.Method = splitAtComment[len(splitAtComment)-1]
 				}
 				addedit := false
 				if meth.Returntype == "" {
 					meth.Returntype = "string"
 					addedit = true
 				}
-				if meth.Man == "exp"  {
+				if meth.Man == "exp" {
 					local_string += fmt.Sprintf(`
 						func Net%s(%s) %s {
-							`, meth.Name,meth.Variables, meth.Returntype)
+							`, meth.Name, meth.Variables, meth.Returntype)
 				} else {
-				local_string += fmt.Sprintf(`
+					local_string += fmt.Sprintf(`
 						func Net%s(args ...interface{}) %s {
 							`, meth.Name, meth.Returntype)
-				for k, nam := range strings.Split(meth.Variables, ",") {
-					if nam != "" {
-						local_string += fmt.Sprintf(`%s := args[%v]
+					for k, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							local_string += fmt.Sprintf(`%s := args[%v]
 								`, nam, k)
+						}
 					}
-				}
 				}
 				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
 				est := ``
@@ -1452,14 +1425,14 @@ import (
 
 			commentslice := strings.Split(string(imp.Comment), "\n")
 			var commentstring string
-			for i,val := range commentslice {
+			for i, val := range commentslice {
 				commentslice[i] = strings.TrimSpace(val)
 			}
 			if len(commentslice) > 0 {
-					commentstring = strings.TrimSpace( fmt.Sprintf(`
+				commentstring = strings.TrimSpace(fmt.Sprintf(`
 						// %s`, strings.Join(commentslice, `
-						// `)) )
-	
+						// `)))
+
 			}
 
 			local_string += fmt.Sprintf(`
@@ -1492,21 +1465,21 @@ import (
     				
     				 output := new(bytes.Buffer) 
  	
-    				 if _, ok := templateCache[localid]; !ok {
+    				 if _, ok := templateCache.Get(localid); !ok {
 
     				 	body, er := Asset(localid)
 		    				if er != nil {
 		    					return ""
 		    			}
-		    			templateCache[localid] = template.New("%s")
-		    			templateCache[localid].Funcs(%s)
+		    			templateCache.Put(localid, template.New("%s") )
+		    			templateCache.JGet(localid).Funcs(%s)
 		    			var tmpstr = string(body)
-				  		templateCache[localid].Parse(tmpstr)
+				  		templateCache.JGet(localid).Parse(tmpstr)
 	    				body = nil
     				 }
 					
 
-					erro := templateCache[localid].Execute(output, d)
+					erro := templateCache.JGet(localid).Execute(output, d)
 				    if erro != nil {
 				   	color.Red(fmt.Sprintf("Error processing template %%s" , localid) )
 				  	 DebugTemplatePath(localid, d)	
@@ -1530,21 +1503,21 @@ import (
 					defer templateFN%s(localid, d)
     				 output := new(bytes.Buffer) 
 				  	
-    				 if _, ok := templateCache[localid]; !ok {
+    				 if _, ok := templateCache.Get(localid); !ok {
 
     				 	body, er := Asset(localid)
 		    				if er != nil {
 		    					return ""
 		    			}
-		    			templateCache[localid] = template.New("%s")
-		    			templateCache[localid].Funcs(%s)
+		    			templateCache.Put(localid , template.New("%s") )
+		    			templateCache.JGet(localid).Funcs(%s)
 		    			var tmpstr = string(body)
-				  		templateCache[localid].Parse(tmpstr)
+				  		templateCache.JGet(localid).Parse(tmpstr)
 	    				body = nil
     				 }
 					
 
-					erro := templateCache[localid].Execute(output, d)
+					erro := templateCache.JGet(localid).Execute(output, d)
 				    if erro != nil {
 				    log.Println(erro)
 				    } 
@@ -1579,7 +1552,7 @@ import (
 				}
 
 			
-				`, imp.Name,imp.TemplateFile,imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct,imp.Name, netMa,imp.Name,imp.Struct,imp.Name, commentstring,imp.Name,imp.Struct,  imp.Name, imp.Name,imp.Name,netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+				`, imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
 		}
 
 		//Methods have been added
@@ -1812,7 +1785,7 @@ functions:
 
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
-			
+
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
 		} else {
@@ -1872,7 +1845,7 @@ functions:
 			}
 
 			defhandler := ""
-			if !strings.Contains(template.Main, "http.ListenAndServeTLS"){
+			if !strings.Contains(template.Main, "http.ListenAndServeTLS") {
 				defhandler = `errgos := http.ListenAndServe(port, nil)
 					if errgos != nil {
 						log.Fatal(errgos)
@@ -1925,13 +1898,13 @@ CMD server
 
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
-			
+
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 		}
 
 		var logfull string
-		for _,sh := range template.PostCommand {
-			logfull,_ = RunCmdSmart(sh)
+		for _, sh := range template.PostCommand {
+			logfull, _ = RunCmdSmart(sh)
 			log.Println(logfull)
 		}
 
@@ -3724,7 +3697,7 @@ func (d *gos) MergeWith(target string) {
 		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
 		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
 		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
-		d.PostCommand = append(imp.PostCommand, d.PostCommand...)		
+		d.PostCommand = append(imp.PostCommand, d.PostCommand...)
 		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
 		//Specialize method for templates
 		d.Variables = append(imp.Variables, d.Variables...)
