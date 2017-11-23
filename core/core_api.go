@@ -1446,6 +1446,7 @@ import (
 				    var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
 				    Gt = nil
+				    d = nil
 				    output = nil
 					return outpescaped
 					
@@ -1480,7 +1481,8 @@ import (
 				    } 
 					var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
-				    				    Gt = nil
+				    Gt = nil
+				    d = %s{}
 				    output = nil
 					return outpescaped
 				}
@@ -1508,7 +1510,7 @@ import (
 				}
 
 			
-				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct,imp.Name,imp.Name)
+				`, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, template.ErrorPage, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, tmpl, imp.TemplateFile, imp.Name, netMa, imp.Name, imp.Struct , imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct,imp.Name,imp.Name)
 		}
 
 		//Methods have been added
