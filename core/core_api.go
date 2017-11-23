@@ -1407,18 +1407,19 @@ import (
 
 			local_string += fmt.Sprintf(`
 
+				func templateFN%s(localid string, d interface{}) {
+					    if n := recover(); n != nil {
+					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
+					           	// log.Println(n)
+					           		DebugTemplatePath(localid, d)	
+						}
+				}
 				var  templateID%s = "%s/%s.tmpl"
 				func  Net%s(args ...interface{}) string {
 					
 					localid := templateID%s
 					var d *%s
-					defer func() {
-					       if n := recover(); n != nil {
-					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
-					           	// log.Println(n)
-					           		DebugTemplatePath(localid, d)	
-										        }
-					    }()	
+					defer templateFN%s(localid, d)	
 					if len(args) > 0 {
 					jso := args[0].(string)
 					var jsonBlob = []byte(jso)
@@ -1456,6 +1457,7 @@ import (
 				    var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
 				    d = nil
+				    output.Reset()
 				    output = nil
 				    args = nil
 					return outpescaped
@@ -1468,12 +1470,7 @@ import (
 				%s
 				func  Netb%s(d %s) string {
 					localid := templateID%s
-					defer func() {
-					        if n := recover(); n != nil {
-					           	color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
-					           	DebugTemplatePath(localid, &d)	
-					        }
-					 }()
+					defer templateFN%s(localid, d)
     				 output := new(bytes.Buffer) 
 				  	
     				 if _, ok := templateCache[localid]; !ok {
@@ -1497,6 +1494,7 @@ import (
 					var outps = output.String()
 				    var outpescaped = html.UnescapeString(outps)
 				    d = %s{}
+				    output.Reset()
 				    output = nil
 					return outpescaped
 				}
@@ -1524,7 +1522,7 @@ import (
 				}
 
 			
-				`, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.TemplateFile, imp.Struct,imp.Name, netMa,imp.Name,imp.Struct,imp.Name, commentstring,imp.Name,imp.Struct,  imp.Name, imp.TemplateFile,imp.Name,netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+				`, imp.Name,imp.TemplateFile,imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct,imp.Name, netMa,imp.Name,imp.Struct,imp.Name, commentstring,imp.Name,imp.Struct,  imp.Name, imp.Name,imp.Name,netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
 		}
 
 		//Methods have been added
