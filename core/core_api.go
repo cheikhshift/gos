@@ -409,11 +409,13 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 		
 import (
 		gosweb "github.com/cheikhshift/gos/web"
+		"sync"
 	   %s//iogos-replace`, pprofadd)
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
 		gosweb "github.com/cheikhshift/gos/web"
+		"sync"
 	 	//iogos-replace`, pk[len(pk)-1])
 		}
 
@@ -782,6 +784,14 @@ import (
 
 		ReadyTemplate :=  ""//"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
 		netmafuncs := netMa
+		var CacheParam string
+
+		if template.Prod {
+			CacheParam = `
+			if lPage, ok := WebCache.Get(title); ok {
+				return &lPage, nil
+			}`
+		}
 		netMa = `TemplateFuncStore`
 		local_string += fmt.Sprintf(`
 		)
@@ -1243,8 +1253,38 @@ import (
 				 return
 				}
 
+				type CacheStore struct {
+					Lock *sync.RWMutex
+					Cache map[string]gosweb.Page
+				}
+				func NewCache() CacheStore {
+					return CacheStore{Lock: new(sync.RWMutex), Cache: make(map[string]gosweb.Page) }
+				}
+
+				func (m *CacheStore) Put (k string, v gosweb.Page) {
+				        m.Lock.Lock()
+				        defer m.Lock.Unlock()
+				        if _,ok :=  m.Cache[k]; !ok {
+				        	m.Cache[k] = v
+				    	}
+				}
+				func (m *CacheStore) Get (k string) (v gosweb.Page, inCache bool) {
+				        m.Lock.Lock()
+				        defer m.Lock.Unlock()
+				        if _,ok :=  m.Cache[k]; ok {
+				        	v = m.Cache[k]
+				        	inCache = true
+				    	} 
+				    	return
+				}
+				var WebCache = NewCache()
+			
+
 				func loadPage(title string) (*gosweb.Page,error) {
-				   
+				   	
+					%s
+
+					var nPage = gosweb.Page{}
 				    if roottitle := (title == "/"); roottitle  {
 				    	webbase := "%s/"
 					    	fname := fmt.Sprintf("%%s%%s", webbase, "index.html")
@@ -1255,14 +1295,20 @@ import (
 					    		if err != nil {
 					    			return nil,err
 					    		}
-					    		return  &gosweb.Page{ Body: body,IsResource: false}, nil
+					    		nPage.Body = body
+					    		WebCache.Put(title, nPage)
+					    		body = nil
+					    		return  &nPage, nil
 					    	}
-
-					    	return  &gosweb.Page{ Body: body,IsResource: true}, nil
+					    	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+					    	return  &nPage, nil
 					    		    		
 				     } 
 				     
-				    filename := fmt.Sprintf("%s%%s.tmpl", title)
+				   filename := fmt.Sprintf("%s%%s.tmpl", title)
 
 				   if body, err := Asset(filename) ;err != nil {
 				    	 filename = fmt.Sprintf("%s%%s.html", title) 
@@ -1276,13 +1322,24 @@ import (
 				          if strings.Contains(title, ".tmpl")  {
 				              return nil,nil
 				          }
-				          return &gosweb.Page{ Body: body,IsResource: true }, nil
+					    	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+				            return &nPage, nil
 				         }
-				      } else {
-				         return &gosweb.Page{ Body: body,IsResource: true}, nil
+				      } else {					    	
+				      	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    body = nil
+				         return &nPage, nil
 				      }
 				    } else {
-				    	  return &gosweb.Page{Body: body,IsResource:false}, nil
+				    						    	nPage.Body = body
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+				    	  return &nPage, nil
 				    }
  
 				       %s
@@ -1296,7 +1353,7 @@ import (
 				 	TemplateFuncStore = %s
 				 	return 0
 				 	}
-				 	var FuncStored = StoreNetfn()`, netmafuncs ),TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, web, web, web, web, TraceOpt, ReadyTemplate)
+				 	var FuncStored = StoreNetfn()`, netmafuncs ),TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, CacheParam ,web, web, web, web, TraceOpt, ReadyTemplate)
 		for _, imp := range template.Variables {
 			local_string += fmt.Sprintf(`
 						var %s %s`, imp.Name, imp.Type)
