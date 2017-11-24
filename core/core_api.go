@@ -1872,7 +1872,7 @@ functions:
 			var port string
 			if !template.Prod || (template.Domain == "") {
 				hostname = fmt.Sprintf("http://localhost:%s", template.Port)
-				port = fmt.Sprintf("%s\nExpose 8700\n", template.Port)
+				port = fmt.Sprintf("%s\nEXPOSE 8700", template.Port)
 			} else {
 				hostname = fmt.Sprintf("https://%s", template.Domain)
 				port = template.Port
@@ -1882,8 +1882,7 @@ RUN mkdir -p /go/src/server
 RUN mkdir -p /var/pool
 COPY . /go/src/server/
 ENV PORT=%s 
-RUN go get github.com/cheikhshift/gos
-RUN cd /go/src/server && gos deps && gos --export && go install
+RUN cd /go/src/server && go install
 EXPOSE %s
 CMD server
 # healthcheck requires docker 1.12 and up.
