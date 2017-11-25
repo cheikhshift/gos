@@ -833,10 +833,11 @@ import (
 		
 				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok {
 				 		var tmpstr = string(p.Body)
-
-				 		templateCache.Put(p.R.URL.Path, template.New(p.R.URL.Path) )
-				 		templateCache.JGet(p.R.URL.Path).Funcs(TemplateFuncStore)
-				 		templateCache.JGet(p.R.URL.Path).Parse(tmpstr)
+				 		var localtemplate =  template.New(p.R.URL.Path)
+				 		
+				 		localtemplate.Funcs(TemplateFuncStore)
+				 		localtemplate.Parse(tmpstr)
+				 		templateCache.Put(p.R.URL.Path, localtemplate )
 				 	}
 	
 				    outp := new(bytes.Buffer)
@@ -1471,11 +1472,12 @@ import (
 		    				if er != nil {
 		    					return ""
 		    			}
-		    			templateCache.Put(localid, template.New("%s") )
-		    			templateCache.JGet(localid).Funcs(%s)
+		    			var localtemplate =  template.New("%s")	  			
+		    			localtemplate.Funcs(%s)
 		    			var tmpstr = string(body)
-				  		templateCache.JGet(localid).Parse(tmpstr)
+				  		localtemplate.Parse(tmpstr)
 	    				body = nil
+	    				templateCache.Put(localid, localtemplate )
     				 }
 					
 
@@ -1509,11 +1511,12 @@ import (
 		    				if er != nil {
 		    					return ""
 		    			}
-		    			templateCache.Put(localid , template.New("%s") )
-		    			templateCache.JGet(localid).Funcs(%s)
+		    			var localtemplate =  template.New("%s")	  			
+		    			localtemplate.Funcs(%s)
 		    			var tmpstr = string(body)
-				  		templateCache.JGet(localid).Parse(tmpstr)
+				  		localtemplate.Parse(tmpstr)
 	    				body = nil
+	    				templateCache.Put(localid, localtemplate )
     				 }
 					
 
