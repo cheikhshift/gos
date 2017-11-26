@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"io/ioutil"
+	"log"
 )
 
 type CacheStore struct {
@@ -17,8 +19,17 @@ type CacheStore struct {
 	Cache map[string]Page
 }
 
+type ByteStore struct {
+	Lock  *sync.RWMutex
+	Cache map[string][]byte
+}
+
 func NewCache() CacheStore {
 	return CacheStore{Lock: new(sync.RWMutex), Cache: make(map[string]Page)}
+}
+
+func NewBS() ByteStore {
+	return ByteStore{Lock: new(sync.RWMutex), Cache: make(map[string][]byte)}
 }
 
 func (m CacheStore) Put(k string, v Page) {
@@ -43,6 +54,16 @@ type TemplateCacheStore struct {
 	Cache map[string]*template.Template
 }
 
+func CacheFile(cacheref string, ImageCache ByteStore){
+	img,err := ioutil.ReadFile(cacheref)
+	if err != nil {
+		log.Println(err)
+		return 
+	}
+	ImageCache.Put(cacheref, img)
+	return
+}
+
 func NewTemplateCache() TemplateCacheStore {
 	return TemplateCacheStore{Lock: new(sync.RWMutex), Cache: make(map[string]*template.Template)}
 }
@@ -55,6 +76,22 @@ func (m TemplateCacheStore) Put(k string, v *template.Template) {
 	}
 }
 func (m TemplateCacheStore) Get(k string) (v *template.Template, inCache bool) {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+	if _, ok := m.Cache[k]; ok {
+		v = m.Cache[k]
+		inCache = true
+	}
+	return
+}
+func (m ByteStore) Put(k string, v []byte) {
+	m.Lock.Lock()
+	defer m.Lock.Unlock()
+	if _, ok := m.Cache[k]; !ok {
+		m.Cache[k] = v
+	}
+}
+func (m ByteStore) Get(k string) (v []byte, inCache bool) {
 	m.Lock.Lock()
 	defer m.Lock.Unlock()
 	if _, ok := m.Cache[k]; ok {
