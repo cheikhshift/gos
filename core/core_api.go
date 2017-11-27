@@ -1894,7 +1894,7 @@ COPY . /go/src/server/
 ENV PORT=%s 
 RUN cd /go/src/server && go install
 EXPOSE %s
-CMD server
+CMD cd /go/src/server && server
 # healthcheck requires docker 1.12 and up.
 # HEALTHCHECK --interval=20m --timeout=3s \
 #  CMD curl -f %s/ || exit 1`, template.Port, port, hostname)
