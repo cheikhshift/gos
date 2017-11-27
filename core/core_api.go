@@ -1848,11 +1848,18 @@ functions:
 			}
 
 			defhandler := ""
-			if !strings.Contains(template.Main, "http.ListenAndServeTLS") {
+			if template.Cert == "" && template.HKey == "" {
+				log.Println("Set gos gxml attributes `https-key` & `https-cert` to enable HTTPS")
 				defhandler = `errgos := http.ListenAndServe(port, nil)
 					if errgos != nil {
 						log.Fatal(errgos)
 					}`
+			} else {
+				defhandler = fmt.Sprintf(`
+	errgos := http.ListenAndServeTLS(":%s", "%s", "%s", nil)
+		if errgos != nil {
+			log.Fatal("ListenAndServe: ", errgos)
+	}`, template.Port,template.Cert, template.HKey)
 			}
 			local_string += fmt.Sprintf(`
 					 %s

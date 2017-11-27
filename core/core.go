@@ -34,7 +34,10 @@ type gos struct {
 	Domain string `xml:"domain"`
 	// OpenFaaS gateway to deploy application to.
 	Gate string `xml:"gateway,attr"`
-	//
+	// path to HTTPS cert file
+	Cert string `xml:"https-cert,attr"`
+	// path to HTTPS key file
+	HKey string `xml:"https-key,attr"`
 	Debug string `xml:"trace"`
 	// name of written Gofile
 	Output string `xml:"output"`
