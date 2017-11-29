@@ -392,6 +392,7 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 		pk = strings.Split(strings.Trim(os.Args[2], "/"), "/")
 	}
 
+
 	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
 		if template.Type == "webapp" {
@@ -3522,22 +3523,8 @@ func VLoadGos(pathraw string) (gos, error) {
 
 func EscpaseGXML(data []byte) []byte {
 	lines := strings.Split(string(data), "\n")
-	infunc := false
 
-	for i, line := range lines {
-		if !infunc && (strings.Contains(line, "<method ") || strings.Contains(line, "<end ")) && !strings.Contains(line, "<!--") {
-			infunc = true
-
-		}
-		if infunc && (strings.Contains(line, "</method>") || strings.Contains(line, "</end>")) {
-			infunc = false
-
-		}
-		if strings.Contains(line, "<") && strings.Contains(line, "{") && infunc {
-			lines[i] = strings.Replace(line, "<", "&lt;", -1)
-		}
-
-	}
+	
 	str := strings.Join(lines, "\n")
 	str = strings.Replace(str, "<func ", "<method m=\"exp\"", -1)
 	str = strings.Replace(str, "</func", "</method", -1)
@@ -3706,6 +3693,7 @@ func (d *gos) MergeWith(target string) {
 		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
 		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
 		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+
 		d.PostCommand = append(imp.PostCommand, d.PostCommand...)
 		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
 		//Specialize method for templates
