@@ -791,6 +791,7 @@ import (
 		)
 				var store = sessions.NewCookieStore([]byte("%s"))
 				
+				var Prod = %v
 
 				var TemplateFuncStore template.FuncMap
 				var templateCache = gosweb.NewTemplateCache()
@@ -832,7 +833,7 @@ import (
 				  
 				    // %s
 		
-				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok {
+				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok && Prod {
 				 		var tmpstr = string(p.Body)
 				 		var localtemplate =  template.New(p.R.URL.Path)
 				 		
@@ -1324,7 +1325,7 @@ import (
 				   
 			
 				 %s
-				 `, template.Key, fmt.Sprintf(`func StoreNetfn () int {
+				 `, template.Key,template.Prod, fmt.Sprintf(`func StoreNetfn () int {
 				 	TemplateFuncStore = %s
 				 	return 0
 				 	}
