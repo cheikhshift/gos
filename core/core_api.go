@@ -1426,6 +1426,8 @@ import (
 				imp.Struct = "gosweb.NoStruct"
 			}
 
+			imp.Struct = strings.Replace(imp.Struct,"*","", -1)
+
 			commentslice := strings.Split(string(imp.Comment), "\n")
 			var commentstring string
 			for i, val := range commentslice {
@@ -1468,7 +1470,7 @@ import (
     				
     				 output := new(bytes.Buffer) 
  	
-    				 if _, ok := templateCache.Get(localid); !ok {
+    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
 
     				 	body, er := Asset(localid)
 		    				if er != nil {
@@ -1507,7 +1509,7 @@ import (
 					defer templateFN%s(localid, d)
     				 output := new(bytes.Buffer) 
 				  	
-    				 if _, ok := templateCache.Get(localid); !ok {
+    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
 
     				 	body, er := Asset(localid)
 		    				if er != nil {
