@@ -833,7 +833,7 @@ import (
 				  
 				    // %s
 		
-				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok && Prod {
+				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok || !Prod {
 				 		var tmpstr = string(p.Body)
 				 		var localtemplate =  template.New(p.R.URL.Path)
 				 		
