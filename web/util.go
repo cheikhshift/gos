@@ -71,9 +71,8 @@ func NewTemplateCache() TemplateCacheStore {
 func (m TemplateCacheStore) Put(k string, v *template.Template) {
 	m.Lock.Lock()
 	defer m.Lock.Unlock()
-	if _, ok := m.Cache[k]; !ok {
-		m.Cache[k] = v
-	}
+	m.Cache[k] = v
+	
 }
 func (m TemplateCacheStore) Get(k string) (v *template.Template, inCache bool) {
 	m.Lock.Lock()
