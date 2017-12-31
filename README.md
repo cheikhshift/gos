@@ -12,10 +12,6 @@
 - [x] Live reload on project source file updates.
 - [x] Open tracing on local port `8700`.
 
-## Motivation of project :
-
-I spent the last three years breaking the boundary between writing markup and programming machine code. During my attempts at teaching people to write code that can be read by a computer, I noticed beginners grasped the mild vibe of HTML alot easier than any procedural language. I saw that as an opportunity to make anyone's entrance into programming easy, and thought of GopherSauce. GopherSauce mixes XML's markup with Golang's javascript similarities, thus creating an experience any newcomer can grasp and use.
-
 ## Documentation here :
 [Docs](http://gophersauce.com)
 
