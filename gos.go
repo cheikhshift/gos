@@ -1669,10 +1669,10 @@ func JBuild(path string, out string) {
 
 	if !strings.Contains(Type, "webapp") {
 
-		core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+		core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 	} else {
-		core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+		core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
 	}
 
 	chn := make(chan int)
@@ -1713,19 +1713,19 @@ func Build(path string) {
 		log.Println("📦 Invoking go-bindata ")
 
 		if !strings.Contains(Type, "webapp") {
-			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 		} else {
-			core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
 		}
 	} else {
 
 		if !strings.Contains(Type, "webapp") {
 
-			core.RunCmd(fmt.Sprintf("go-bindata -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 		} else {
-			core.RunCmd(fmt.Sprintf("go-bindata %s/... %s/...", webroot, templateroot))
+			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy %s/... %s/...", webroot, templateroot))
 		}
 	}
 	appout = coreTemplate.Output
@@ -1906,10 +1906,10 @@ func Build(path string) {
 
 			if !strings.Contains(Type, "webapp") {
 
-				core.RunCmd(fmt.Sprintf("go-bindata  -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
+				core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy  -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
 			} else {
-				core.RunCmd(fmt.Sprintf("go-bindata -debug %s/... %s/...", webroot, templateroot))
+				core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
 			}
 			chn := make(chan int)
 			go core.DoSpin(chn)
