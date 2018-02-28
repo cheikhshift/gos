@@ -1592,10 +1592,6 @@ import (
 				os.MkdirAll(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")), 0700)
 			}
 
-			RunCmd("git add .")
-			RunCmdSmart("git commit --allow-empty-message -m ''")
-			RunCmd("git push .")
-
 			os.Chdir(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")))
 			if template.Gate == "" {
 				template.Gate = "http://localhost:8080"
@@ -1638,7 +1634,7 @@ functions:
 
 				go DoSpin(chn)
 				if sourcedep == "" {
-					RunCmd("dep init -gopath")
+					RunCmd("dep init")
 
 					appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//", "/", -1)
 					vendpath := fmt.Sprintf("vendor/%s/", appname)
@@ -1714,7 +1710,7 @@ functions:
 					go DoSpin(chn)
 
 					if sourcedep == "" {
-						RunCmd("dep init -gopath")
+						RunCmd("dep init")
 						//cleanup bugs found with fmt
 						appath := strings.Replace(fmt.Sprintf("%s/src/%s/", os.ExpandEnv("$GOPATH"), appname), "//", "/", -1)
 						vendpath := fmt.Sprintf("vendor/%s/", appname)
