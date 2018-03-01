@@ -196,24 +196,6 @@ func CheckFile(source string) (file, line, reason string) {
 
 		reason = strings.Join(nset, ",")
 
-		/* if len(nset) == 0 {
-
-			file = "COMP"
-			line = "COMP"
-
-			log,_ := RunCmdSmart("sh gobuild.sh error.go")
-
-			probs := strings.Split(log,"\n")
-
-			for k,m := range probs {
-				if k > 0 {
-					errors = append(errors, m)
-				}
-			}
-
-
-		} */
-
 	}
 
 	return
@@ -1737,15 +1719,7 @@ functions:
 				}
 			}
 
-			/*if ff {
-				RunCmd("dep init -gopath")
-			}	else {
-			 	RunCmd("dep ensure")
-			} */
 
-			//RunCmd( fmt.Sprintf("dep ensure -add lib/goserver/%s", pk[len(pk) - 1] ) )
-
-			//fix - current pkg generates errors on faas
 
 			for _, v := range template.Templates.Templates {
 				tlc := fmt.Sprintf("%s", strings.ToLower(v.Name))
@@ -1878,26 +1852,25 @@ functions:
 					}
 
 					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler)
-			var hostname string
+
 			var port string
-			if !template.Prod || (template.Domain == "") {
-				hostname = fmt.Sprintf("http://localhost:%s", template.Port)
+			if !template.Prod  {			
 				port = fmt.Sprintf("%s\nEXPOSE 8700", template.Port)
 			} else {
-				hostname = fmt.Sprintf("https://%s", template.Domain)
+				
 				port = template.Port
 			}
 			dockerfile := fmt.Sprintf(`FROM golang:1.8
-RUN mkdir -p /go/src/server
-RUN mkdir -p /var/pool
-COPY . /go/src/server/
+ENV WEBAPP /go/src/server
+RUN mkdir -p ${WEBAPP}
+COPY . ${WEBAPP}
 ENV PORT=%s 
-RUN cd /go/src/server && go install
+WORKDIR ${WEBAPP}
+RUN go install
+RUN rm -rf ${WEBAPP} 
 EXPOSE %s
-CMD cd /go/src/server && server
-# healthcheck requires docker 1.12 and up.
-# HEALTHCHECK --interval=20m --timeout=3s \
-#  CMD curl -f %s/ || exit 1`, template.Port, port, hostname)
+CMD server
+`, template.Port, port)
 
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
