@@ -418,7 +418,7 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "errors", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "reflect", "log", "github.com/elazarl/go-bindata-assetfs"}
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "log", "github.com/elazarl/go-bindata-assetfs"}
 		if strings.Contains(template.Type, "webapp") {
 			Netimports = append(Netimports, "os")
 		}
@@ -910,28 +910,7 @@ import (
 					session = nil
 					return
 				}
-				func SetField(obj interface{}, name string, value interface{}) error {
-					structValue := reflect.ValueOf(obj).Elem()
-					structFieldValue := structValue.FieldByName(name)
 
-					if !structFieldValue.IsValid() {
-						return fmt.Errorf("No such field: %%s in obj", name)
-					}
-
-					if !structFieldValue.CanSet() {
-						return fmt.Errorf("Cannot set %%s field value", name)
-					}
-
-					structFieldType := structFieldValue.Type()
-					val := reflect.ValueOf(value)
-					if structFieldType != val.Type() {
-						invalidTypeError := errors.New("Provided value type didn't match obj field type")
-						return invalidTypeError
-					}
-
-					structFieldValue.Set(val)
-					return nil
-				}
 				func DebugTemplate(w http.ResponseWriter,r *http.Request,tmpl string){
 					lastline := 0
 					linestring := ""
