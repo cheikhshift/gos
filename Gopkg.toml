@@ -1,7 +1,6 @@
-
 # Gopkg.toml example
 #
-# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -17,24 +16,30 @@
 #   source = "github.com/myfork/project2"
 #
 # [[override]]
-#  name = "github.com/x/y"
-#  version = "2.4.0"
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
 
-
-[[constraint]]
-  name = "github.com/0xAX/notificator"
 
 [[constraint]]
   name = "github.com/Sirupsen/logrus"
-  version = "1.0.3"
+  version = "1.0.5"
 
 [[constraint]]
   name = "github.com/alexellis/faas"
-  version = "0.6.6"
+  version = "0.7.7"
 
 [[constraint]]
   name = "github.com/alexellis/faas-nats"
-  version = "0.1.0"
+  version = "0.4.2"
+
+[[constraint]]
+  name = "github.com/cheikhshift/db"
+  version = "0.5.0"
 
 [[constraint]]
   name = "github.com/docker/distribution"
@@ -45,13 +50,23 @@
   version = "1.13.1"
 
 [[constraint]]
-  name = "github.com/fatih/color"
+  name = "github.com/elazarl/go-bindata-assetfs"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/gorilla/context"
+  version = "1.1.0"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
-  version = "1.5.0"
+  version = "1.6.1"
 
 [[constraint]]
+  name = "github.com/gorilla/sessions"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
   name = "github.com/howeyc/fsnotify"
 
 [[constraint]]
@@ -69,3 +84,7 @@
 [[constraint]]
   name = "github.com/tj/go-spin"
   version = "1.1.0"
+
+[prune]
+  go-tests = true
+  unused-packages = true
