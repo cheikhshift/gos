@@ -50,6 +50,9 @@ type gos struct {
 	// Block of code to be ran on application start.
 	// Only applies to files with deploy type : webapp
 	Main          string            `xml:"main"`
+	// Block of code to be ran on application termination.
+	// Only applies to files with deploy type : webapp
+	Shutdown          string            `xml:"shutdown"`
 	Variables     []GlobalVariables `xml:"var"`
 	WriteOut      bool
 	Export        string   `xml:"export"`

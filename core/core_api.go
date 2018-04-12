@@ -418,9 +418,11 @@ import (
 
 		var TraceOpt, TraceOpen, TraceParam, TraceinFunc, TraCFt, TraceGet, TraceTemplate, TraceError string
 
-		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/gorilla/context", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "log", "github.com/elazarl/go-bindata-assetfs"}
+		Netimports := []string{"net/http", "time", "github.com/gorilla/sessions", "github.com/cheikhshift/db", "bytes", "encoding/json", "fmt", "html", "html/template", "github.com/fatih/color", "strings", "log", "github.com/elazarl/go-bindata-assetfs"}
 		if strings.Contains(template.Type, "webapp") {
 			Netimports = append(Netimports, "os")
+			Netimports = append(Netimports, "os/signal")
+			Netimports = append(Netimports, "context")
 		}
 		/*
 			Methods before so that we can create to correct delegate method for each object
@@ -874,7 +876,7 @@ import (
 				  	if attmpt := apiAttempt(w,r%s ;!attmpt {
 				       fn(w, r%s
 				  	} 
-				  	context.Clear(r)
+				  	
 				  	
 				  	
 				  }
@@ -1160,7 +1162,7 @@ import (
 				        
 				        if err != nil {
 				        	log.Println(err.Error())
-				        	//context.Clear(r)
+				        	//
 				        	return
 				        }
 				         pag.R = r
@@ -1178,7 +1180,7 @@ import (
 				    		renderTemplate(w, pag%s //"%s" 
 				    	}
 				    	session = nil
-				    	context.Clear(r)
+				    	
 				        return
 				  }
 
@@ -1209,7 +1211,7 @@ import (
 				 p.R = nil
 				 p = nil
 				 session = nil
-				 context.Clear(r)
+				 
 				 return
 				}
 
@@ -1803,16 +1805,16 @@ functions:
 			defhandler := ""
 			if template.Cert == "" && template.HKey == "" {
 				log.Println("Set gos gxml attributes `https-key` & `https-cert` to enable HTTPS")
-				defhandler = `errgos := http.ListenAndServe(port, nil)
+				defhandler = `errgos := h.ListenAndServe()
 					if errgos != nil {
 						log.Fatal(errgos)
 					}`
 			} else {
 				defhandler = fmt.Sprintf(`
-	errgos := http.ListenAndServeTLS(":%s", "%s", "%s", nil)
+	errgos := h.ListenAndServeTLS("%s", "%s")
 		if errgos != nil {
 			log.Fatal("ListenAndServe: ", errgos)
-	}`, template.Port,template.Cert, template.HKey)
+	}`,template.Cert, template.HKey)
 			}
 			local_string += fmt.Sprintf(`
 					 %s
@@ -1821,16 +1823,37 @@ functions:
 							port = fmt.Sprintf(":%%s", envport)
 						}
 					 log.Printf("Listenning on Port %%v\n", port)
-					 http.HandleFunc( "/",  MakeHandler(Handler))
+					
 
 					//+++extendgxmlmain+++
-					http.Handle("/dist/",  http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
 					
+					stop := make(chan os.Signal, 1)
+
+					signal.Notify(stop, os.Interrupt)
+					http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
+					http.HandleFunc("/", MakeHandler(Handler))
+
+					h := &http.Server{Addr: port}
+
+					go func(){
+						%s
+					}()
+
+					<-stop
+
+					log.Println("\nShutting down the server...")
+
+					ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+					h.Shutdown(ctx)
+
 					%s
+
+					log.Println("Server gracefully stopped")
 
 					}
 
-					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler)
+					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler, template.Shutdown)
 
 			var port string
 			if !template.Prod  {			
