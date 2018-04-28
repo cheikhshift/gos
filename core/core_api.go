@@ -1837,6 +1837,7 @@ functions:
 
 					go func(){
 						%s
+						os.Exit(0)
 					}()
 
 					<-stop
