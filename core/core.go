@@ -77,6 +77,7 @@ type gos struct {
 	FolderRoot, Name string
 	// Set Prod to true to build your application in production mode.
 	Prod bool
+	Packages []Package
 }
 
 type Pgos struct {
@@ -198,4 +199,9 @@ type Endpoint struct {
 	Testi string `xml:"testi,attr"`
 	Testo string `xml:"testo,attr"`
 	Id    string `xml:"id,attr"`
+}
+
+type Package struct {
+	Path string
+	Name string
 }

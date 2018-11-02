@@ -377,8 +377,14 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 
 	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
+		packageLibrary := ""
+		var packageImports = `package main
+				`
+
 		if template.Type == "webapp" {
 			var pprofadd string
+			
+
 			if !template.Prod {
 				pprofadd = `_ "net/http/pprof"
 			`
@@ -388,12 +394,42 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 import (
 		gosweb "github.com/cheikhshift/gos/web"
 	   %s//iogos-replace`, pprofadd)
+
+
+
 		} else {
 			local_string = fmt.Sprintf(`package %s 
 import (
 		gosweb "github.com/cheikhshift/gos/web"
 	 	//iogos-replace`, pk[len(pk)-1])
+
+	 		packageImports = fmt.Sprintf(`package %s
+	 		`,pk[len(pk)-1])
 		}
+
+
+
+
+
+		for _, pkg := range template.Packages {
+			packageImports += fmt.Sprintf(`import "%s"
+			`, pkg.Path)
+
+			pathComp := strings.Split(pkg.Path, "/")
+			pkgNm := pathComp[len(pathComp) - 1]
+
+			packageLibrary += fmt.Sprintf(`
+			func Load%s() %s.PKG { 
+				return %s.PKG{}
+			}`, pkg.Name, pkgNm, pkgNm)
+		}
+		// process packages
+		packageFinal := fmt.Sprintf(`%s
+
+			%s`, packageImports, packageLibrary)
+
+		ioutil.WriteFile("libr.go", []byte(packageFinal), 0700)
+
 
 		// if template.Type == "webapp" {
 		log.Println("Checking templates")
@@ -423,6 +459,7 @@ import (
 			Netimports = append(Netimports, "os")
 			Netimports = append(Netimports, "os/signal")
 			Netimports = append(Netimports, "context")
+			
 		}
 		/*
 			Methods before so that we can create to correct delegate method for each object
@@ -431,7 +468,7 @@ import (
 		TraceinFunc = `)`
 		TraCFt = `)`
 
-		if !template.Prod && template.Type != "faas" {
+		if !template.Prod && template.Type != "faas" && template.Type != "package" {
 			TraCFt = `, opentracing.Span)`
 			TraceParam = `, span)`
 			TraceinFunc = `, span opentracing.Span)`
@@ -475,6 +512,7 @@ import (
 			TraceError = ` span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%s request at %s, reason : %s ", r.Method, r.URL.Path, err) )`
 			Netimports = append(Netimports, "github.com/opentracing/opentracing-go")
+
 			Netimports = append(Netimports, `net`, `net/url`, `sourcegraph.com/sourcegraph/appdash`, `appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"`, `sourcegraph.com/sourcegraph/appdash/traceapp`)
 		}
 
@@ -652,6 +690,12 @@ import (
 				netMa += fmt.Sprintf(`,"%s" : Net%s`, imp, imp)
 			}
 		}
+
+		for _, pkg := range template.Packages {
+			netMa += fmt.Sprintf(`,"%s" : Load%s`, pkg.Name, pkg.Name)
+		}
+
+
 		//int_lok := []string{}
 
 		/*	for _,imp := range template.RootImports {
@@ -752,6 +796,8 @@ import (
 			}
 			func Netstruct%s() *%s{ return &%s{} }`, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
 
+
+
 				netMa += fmt.Sprintf(`,"%s" : Netstruct%s`, imp.Name, imp.Name)
 				netMa += fmt.Sprintf(`,"is%s" : Netcast%s`, imp.Name, imp.Name)
 
@@ -763,6 +809,14 @@ import (
 		ReadyTemplate := "" //"func ReadyTemplate(body []byte) string { return strings.Replace(strings.Replace(strings.Replace(string(body), \"/{\", \"\\\"{\",-1),\"}/\", \"}\\\"\",-1 ) ,\"`\", \"\\\"\" ,-1) }"
 		netmafuncs := netMa
 		var CacheParam string
+		var pkgStruct string
+
+		if template.Type == "package" {
+			pkgStruct = fmt.Sprintf(`package %s
+			type PKG struct {}`, pk[len(pk) - 1] )
+
+			ioutil.WriteFile("./entry.go", []byte(pkgStruct), 0700)
+		}
 
 		if template.Prod {
 			CacheParam = `
@@ -783,6 +837,8 @@ import (
 
 
 				type dbflf db.O
+
+			
 				
 
 				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s   {
@@ -1381,6 +1437,35 @@ import (
 				}
 				local_string += `
 						}`
+
+				if template.Type == "package" {
+					
+					varChain := []string{}
+
+					for _, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							declName := strings.Split(nam, " ")
+							varChain = append(varChain,declName[0])
+						}
+					}
+
+					if meth.Man == "exp" {
+
+					local_string += fmt.Sprintf(`
+							func (pkg PKG) %s(%s) %s {
+								return Net%s(%s) 
+							}
+							`, meth.Name, meth.Variables, meth.Returntype, meth.Name, strings.Join(varChain, ","))
+					} else {
+						local_string += fmt.Sprintf(`
+							func (pkg PKG) %s(args ...interface{}) %s {
+								return Net%s(args...)
+							}`, meth.Name, meth.Returntype, meth.Name)
+							
+					}
+
+
+				}
 			}
 		}
 
@@ -1403,7 +1488,9 @@ import (
 
 			}
 
-			local_string += fmt.Sprintf(`
+			templateString := fmt.Sprintf(`
+
+				
 
 				func templateFN%s(localid string, d interface{}) {
 					    if n := recover(); n != nil {
@@ -1462,7 +1549,7 @@ import (
 					return outpescaped
 					
 				}
-				func  b%s(d %s) string {
+				func b%s(d %s) string {
 						return Netb%s(d)
 				}
 
@@ -1521,8 +1608,28 @@ import (
     				return
 				}
 
+				/*S*/
 			
 				`, imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+				
+				replacer := ""
+
+				if  template.Type == "package" {
+					replacer =  fmt.Sprintf(`func (pkg PKG) %s(args ...interface{}) string {
+					var result string
+
+					if len(args) > 0 {
+						result = Netb%s(args[0].(%s))
+					} else {
+						result = Net%s()
+					}
+    				return result
+				}`, imp.Name, imp.Name, imp.Struct, imp.Name)
+
+				}
+
+
+				local_string += strings.Replace(templateString, "/*S*/", replacer, -1)
 		}
 
 		//Methods have been added
@@ -1837,7 +1944,6 @@ functions:
 
 					go func(){
 						%s
-						os.Exit(0)
 					}()
 
 					<-stop
@@ -3664,49 +3770,69 @@ func (d *gos) MergeWith(target string) {
 			}
 		}
 
-		//d.RootImports = append(imp.RootImports,d.RootImports...)
-		d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
-		d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
-		d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+
+		
+
+		srcP := strings.Split(target, "/")
+		dir := strings.Join(srcP[:len(srcP)-1], "/")
+
+		if _, err := os.Stat(filepath.Join( dir , "entry.go" ) ); os.IsNotExist(err) && strings.Contains(target, ".gxml") {
+
+			d.Methods.Methods = append(imp.Methods.Methods, d.Methods.Methods...)
+			d.Header.Structs = append(imp.Header.Structs, d.Header.Structs...)
+			d.Header.Objects = append(imp.Header.Objects, d.Header.Objects...)
+
+			if imp.Package != "" && imp.Type == "package" {
+				log.Println("Parsing Prefixes for " + imp.Package)
+				for _, im := range imp.Templates.Templates {
+					im.TemplateFile = imp.Package + "/" + im.TemplateFile
+					d.Templates.Templates = append(d.Templates.Templates, im)
+				}
+			} else {
+				d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
+			}
+
+			if imp.Tmpl == "" {
+				imp.Tmpl = "tmpl"
+			}
+
+			if imp.Web == "" {
+				imp.Web = "web"
+			}
+
+			if d.Tmpl == "" {
+				d.Tmpl = "tmpl"
+			}
+
+			if d.Web == "" {
+				d.Web = "web"
+			}
+
+			os.MkdirAll(d.Tmpl+"/"+imp.Package, 0777)
+			os.MkdirAll(d.Web+"/"+imp.Package, 0777)
+			CopyDir(imp.FolderRoot+imp.Tmpl, d.Tmpl+"/"+imp.Package)
+			CopyDir(imp.FolderRoot+imp.Web, d.Web+"/"+imp.Package)
+
+		} else {
+			targ := strings.Replace(target,"\\","/", -1)
+
+			path := strings.Replace(targ, filepath.Join(os.ExpandEnv("$GOPATH"), "src") + "/", "" ,-1)
+			path = strings.Replace(path, "/gos.gxml", "", -1)
+	
+			d.Packages = append(d.Packages , Package{ Name : imp.Package , Path : path} )
+		}
 
 		d.PostCommand = append(imp.PostCommand, d.PostCommand...)
 		d.Timers.Timers = append(imp.Timers.Timers, d.Timers.Timers...)
 		//Specialize method for templates
 		d.Variables = append(imp.Variables, d.Variables...)
 
-		if imp.Package != "" && imp.Type == "package" {
-			log.Println("Parsing Prefixes for " + imp.Package)
-			for _, im := range imp.Templates.Templates {
-				im.TemplateFile = imp.Package + "/" + im.TemplateFile
-				d.Templates.Templates = append(d.Templates.Templates, im)
-			}
-		} else {
-			d.Templates.Templates = append(imp.Templates.Templates, d.Templates.Templates...)
-		}
-
-		if imp.Tmpl == "" {
-			imp.Tmpl = "tmpl"
-		}
-
-		if imp.Web == "" {
-			imp.Web = "web"
-		}
-
-		if d.Tmpl == "" {
-			d.Tmpl = "tmpl"
-		}
-
-		if d.Web == "" {
-			d.Web = "web"
-		}
+		
 		d.Init_Func = d.Init_Func + ` 
 	` + imp.Init_Func
 		d.Main = d.Main + ` 
 	` + imp.Main
-		os.MkdirAll(d.Tmpl+"/"+imp.Package, 0777)
-		os.MkdirAll(d.Web+"/"+imp.Package, 0777)
-		CopyDir(imp.FolderRoot+imp.Tmpl, d.Tmpl+"/"+imp.Package)
-		CopyDir(imp.FolderRoot+imp.Web, d.Web+"/"+imp.Package)
+		
 
 		//copy files
 		d.Endpoints.Endpoints = append(imp.Endpoints.Endpoints, d.Endpoints.Endpoints...)
