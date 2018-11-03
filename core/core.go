@@ -78,6 +78,7 @@ type gos struct {
 	// Set Prod to true to build your application in production mode.
 	Prod bool
 	Packages []Package
+	PackagePath string
 }
 
 type Pgos struct {
@@ -88,6 +89,7 @@ type GlobalVariables struct {
 	XMLName xml.Name `xml:"var"`
 	Name    string   `xml:",innerxml"`
 	Type    string   `xml:"type,attr"`
+	ExplicitName string
 }
 
 type Import struct {

@@ -19,7 +19,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -378,7 +377,7 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 	if template.Type == "webapp" || template.Type == "faas" || template.Type == "package" {
 
 		packageLibrary := ""
-		var packageImports = `package main
+		var packageImports = `package exported
 				`
 
 		if template.Type == "webapp" {
@@ -393,7 +392,7 @@ func Process(template *gos, r string, web string, tmpl string) (local_string str
 		
 import (
 		gosweb "github.com/cheikhshift/gos/web"
-	   %s//iogos-replace`, pprofadd)
+	   %s`, pprofadd)
 
 
 
@@ -401,10 +400,9 @@ import (
 			local_string = fmt.Sprintf(`package %s 
 import (
 		gosweb "github.com/cheikhshift/gos/web"
-	 	//iogos-replace`, pk[len(pk)-1])
+	 	`, pk[len(pk)-1])
 
-	 		packageImports = fmt.Sprintf(`package %s
-	 		`,pk[len(pk)-1])
+	 		
 		}
 
 
@@ -428,7 +426,26 @@ import (
 
 			%s`, packageImports, packageLibrary)
 
-		ioutil.WriteFile("libr.go", []byte(packageFinal), 0700)
+		os.MkdirAll("./api/exported", 0700)
+		ioutil.WriteFile("./api/exported/packages.go", []byte(packageFinal), 0700)
+
+		wd, _ := os.Getwd()
+		if !strings.Contains(runtime.GOOS, "indows") {
+			wd = strings.Replace(wd, filepath.Join( os.ExpandEnv("$GOPATH"), "src" ) + "/","", 1)
+		} else {
+			wd = strings.Replace(wd, filepath.Join( os.ExpandEnv("$GOPATH"), "src" ) + "\\","", 1)
+		}
+
+		os.MkdirAll("./api/templates", 0700)
+		os.MkdirAll("./api/handlers", 0700)
+		os.MkdirAll("./api/globals", 0700)
+
+		os.MkdirAll("./api/methods", 0700)
+		os.MkdirAll("./api/sessions", 0700)
+		os.MkdirAll("./types", 0700)
+
+
+		var appname = strings.TrimSuffix(strings.Split(strings.Join(pk, "/"), "/src/")[1], "/")
 
 
 		// if template.Type == "webapp" {
@@ -436,6 +453,10 @@ import (
 
 		if _, err := os.Stat(fmt.Sprintf("%s%s", TrimSuffix(os.ExpandEnv("$GOPATH"), "/"), "/src/github.com/gotpl/gtfmt/")); os.IsNotExist(err) {
 			RunCmd("go get github.com/gotpl/gtfmt")
+		}
+
+		if _, err := os.Stat(fmt.Sprintf("%s%s", TrimSuffix(os.ExpandEnv("$GOPATH"), "/"), "/src/golang.org/x/tools/cmd/goimports/")); os.IsNotExist(err) {
+			RunCmd("go get golang.org/x/tools/cmd/goimports")
 		}
 
 		for _, templ := range template.Templates.Templates {
@@ -459,7 +480,14 @@ import (
 			Netimports = append(Netimports, "os")
 			Netimports = append(Netimports, "os/signal")
 			Netimports = append(Netimports, "context")
-			
+
+			Netimports = append(Netimports, fmt.Sprintf(`sessionStore "%s/api/sessions"`, appname))
+			Netimports = append(Netimports, fmt.Sprintf(`%s/api/handlers`, appname))
+			Netimports = append(Netimports, fmt.Sprintf(`%s/types`, appname))
+			Netimports = append(Netimports, fmt.Sprintf(`%s/api/assets`, appname))
+
+
+
 		}
 		/*
 			Methods before so that we can create to correct delegate method for each object
@@ -550,7 +578,7 @@ import (
 					         	 
 					         	w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
-								pag,err := loadPage("%s")
+								pag,err := templates.LoadPage("%s")
 											
 								 if err != nil {
 								        	log.Println(err.Error())
@@ -561,14 +589,11 @@ import (
 						         pag.Session = session	
 								if pag.IsResource {
 				        			w.Write(pag.Body)
-						    	} else {
-						    		// renderTemplate(w, pag%s
-						     
-						    	}
+						    	} 
 
 								 callmet = true
 					        }
-						}()`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, TraceParam)
+						}()`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage)
 				setv := strings.Split(imp.Method, "\n")
 				for _, line := range setv {
 					line = strings.TrimSpace(line)
@@ -582,13 +607,37 @@ import (
 			}
 
 			if imp.Type == "f" {
+				var tlc = strings.Replace(fmt.Sprintf("%s%s", imp.Type, strings.Replace(strings.Title(strings.Replace(imp.Path, "/", " ", -1)), " ", "", -1)), "star", "", -1)
+
+				est = fmt.Sprintf(`package handlers
+
+				import gosweb "github.com/cheikhshift/gos/web"
+
+				import sessionStore "%s/api/sessions"
+
+				import templates "%s/api/templates"
+
+				import methods "%s/api/methods"
+
+				import types "%s/types"
+				import "%s/api/globals"
+
+
+
+				func %s(w http.ResponseWriter, r *http.Request ,session *sessions.Session%s (response string, callmet bool){
+					%s
+					return
+				}`, appname,appname,appname,appname, appname, tlc,  TraceinFunc, est)
+
+				ioutil.WriteFile(fmt.Sprintf("./api/handlers/middleware_%s.go", tlc), []byte(est), 0700 )
+
+				
 
 				apiraw += fmt.Sprintf(` 
-				if   strings.Contains(r.URL.Path, "%s")  { 
-					%s
-
-				}
-				`, imp.Path, est)
+					if   strings.Contains(r.URL.Path, "%s")  { 
+						response,callmet = %s(w,r,session%s				
+					}
+					`, imp.Path, tlc, strings.Replace(TraceinFunc, "opentracing.Span", "", -1) ) 
 			}
 		}
 
@@ -621,7 +670,7 @@ import (
             span.LogEvent(fmt.Sprintf("%%s request at %%s, reason : %%s ", r.Method, r.URL.Path, n) )
 					        	 w.WriteHeader(http.StatusInternalServerError)
 							    w.Header().Set("Content-Type",  "text/html")
-								pag,err := loadPage("%s")
+								pag,err := templates.LoadPage("%s")
 				   
 								 if err != nil {
 								        	log.Println(err.Error())
@@ -633,7 +682,7 @@ import (
 								   if pag.IsResource {
 							        	w.Write(pag.Body)
 							    	} else {
-							    		renderTemplate(w, pag%s //"s" 
+							    		templates.RenderTemplate(w, pag%s //"s" 
 							     
 							    	}
 					           callmet = true
@@ -655,17 +704,51 @@ import (
 			if !strings.Contains(est, "w.Write") && !strings.Contains(est, "response") && imp.Type != "f" {
 				color.Yellow(fmt.Sprintf("Warning : No response writing detected with endpoint : %s type : %s", imp.Path, imp.Type))
 			}
+
+			
+			var tlc = strings.Replace( strings.Replace(fmt.Sprintf("%s%s", imp.Type, strings.Replace(strings.Title(strings.Replace(imp.Path, "/", " ", -1)), " ", "", -1)), "star", "", -1), "-", "", -1)
+
+
+			if imp.Type == "star" || imp.Type != "f" {
+				est = fmt.Sprintf(`package handlers
+
+				import gosweb "github.com/cheikhshift/gos/web"
+
+				import sessionStore "%s/api/sessions"
+
+				import templates "%s/api/templates"
+
+				import methods "%s/api/methods"
+
+				import types "%s/types"
+				import "%s/api/globals"
+
+				func %s(w http.ResponseWriter, r *http.Request, session *sessions.Session%s (response string,callmet bool){
+
+					%s
+
+					callmet = true
+					return
+				}`, appname,appname,appname,appname, appname, tlc, TraceinFunc,est)
+
+				ioutil.WriteFile(fmt.Sprintf("./api/handlers/rest_%s.go", tlc), []byte(est), 0700 )
+			}
+
+
 			if imp.Type == "star" {
 				apiraw += fmt.Sprintf(` else if  !callmet &&  gosweb.UrlAtZ(r.URL.Path, "%s")  { 
-					%s			
-					callmet = true
-				}`, imp.Path, est)
+					
+
+					response, callmet = %s(w, r, session%s			
+					
+				}`, imp.Path, tlc, strings.Replace(TraceinFunc, "opentracing.Span", "", -1) )
 			} else if imp.Type != "f" {
 
 				apiraw += fmt.Sprintf(` else if  isURL := (r.URL.Path == "%s" && r.Method == strings.ToUpper("%s") );!callmet && isURL{ 
-					%s
-					callmet = true
-				} `, imp.Path, imp.Type, est)
+				
+					response, callmet = %s(w, r, session%s
+					
+				} `, imp.Path, imp.Type, tlc, strings.Replace(TraceinFunc, "opentracing.Span", "", -1) )
 			}
 
 		}
@@ -687,12 +770,13 @@ import (
 		netMa := `template.FuncMap{"a":gosweb.Netadd,"s":gosweb.Netsubs,"m":gosweb.Netmultiply,"d":gosweb.Netdivided,"js" : gosweb.Netimportjs,"css" : gosweb.Netimportcss,"sd" : gosweb.NetsessionDelete,"sr" : gosweb.NetsessionRemove,"sc": gosweb.NetsessionKey,"ss" : gosweb.NetsessionSet,"sso": gosweb.NetsessionSetInt,"sgo" : gosweb.NetsessionGetInt,"sg" : gosweb.NetsessionGet,"form" : gosweb.Formval,"eq": gosweb.Equalz, "neq" : gosweb.Nequalz, "lte" : gosweb.Netlt`
 		for _, imp := range available_methods {
 			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-				netMa += fmt.Sprintf(`,"%s" : Net%s`, imp, imp)
+				netMa += fmt.Sprintf(`,"%s" : methods.%s`, imp, imp)
 			}
 		}
 
+
 		for _, pkg := range template.Packages {
-			netMa += fmt.Sprintf(`,"%s" : Load%s`, pkg.Name, pkg.Name)
+			netMa += fmt.Sprintf(`,"%s" : exported.Load%s`, pkg.Name, pkg.Name)
 		}
 
 
@@ -765,19 +849,23 @@ import (
 			"%s"`, imp)
 			}
 		}
-		var structs_string string
+		var structs_string, struct_funcs string
 		//Lets Do structs
 		structs_string = ``
 		for _, imp := range template.Header.Structs {
 			if !contains(arch.objects, imp.Name) {
 				log.Println("🔧 Processing Struct : ", imp.Name)
 				arch.objects = append(arch.objects, imp.Name)
+
 				structs_string += fmt.Sprintf(`
 			type %s struct {`, imp.Name)
 				structs_string += imp.Attributes
-				structs_string += fmt.Sprintf(`
-			}
+				structs_string += "}"
 
+			struct_funcs += fmt.Sprintf(`
+
+			// Assert first argument as struct
+			// %s
 			func  Netcast%s(args ...interface{}) *%s  {
 				
 				s := %s{}
@@ -794,12 +882,12 @@ import (
 				
 				return &s
 			}
-			func Netstruct%s() *%s{ return &%s{} }`, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
+			func Netstruct%s() *%s{ return &%s{} }`, imp.Name,imp.Name,imp.Name, imp.Name, imp.Name, imp.Name, imp.Name)
 
 
 
-				netMa += fmt.Sprintf(`,"%s" : Netstruct%s`, imp.Name, imp.Name)
-				netMa += fmt.Sprintf(`,"is%s" : Netcast%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"%s" : types.Netstruct%s`, imp.Name, imp.Name)
+			netMa += fmt.Sprintf(`,"is%s" : types.Netcast%s`, imp.Name, imp.Name)
 
 			}
 		}
@@ -810,6 +898,7 @@ import (
 		netmafuncs := netMa
 		var CacheParam string
 		var pkgStruct string
+
 
 		if template.Type == "package" {
 			pkgStruct = fmt.Sprintf(`package %s
@@ -826,100 +915,37 @@ import (
 		}
 		netMa = `TemplateFuncStore`
 		local_string += fmt.Sprintf(`
-		)
-				var store = sessions.NewCookieStore([]byte("%s"))
-				
-				var Prod = %v
+		)`)
 
-				var TemplateFuncStore template.FuncMap
-				var templateCache = gosweb.NewTemplateCache()
+		globals := ""
+		for _, imp := range template.Variables {
+			globals += fmt.Sprintf(`
+						var %s %s`, imp.Name, imp.Type)
+		}
+
+		globals = fmt.Sprintf(`package globals
+
+			%s`, globals)
+
+		ioutil.WriteFile("./api/globals/variables.go", []byte(globals), 0700)
+
+
+		if template.Init_Func != "" {
+			local_string += fmt.Sprintf(`
+			func init(){
 				%s
+			}`, template.Init_Func)
 
+		}
 
-				type dbflf db.O
+		handlersHtml := fmt.Sprintf(`package handlers
 
-			
-				
+			import gosweb "github.com/cheikhshift/gos/web"
+			import templates "%s/api/templates"
+			import sessionStore "%s/api/sessions"
+			import "%s/api/globals"
 
-				func renderTemplate(w http.ResponseWriter, p *gosweb.Page%s   {
-				     defer func() {
-					        if n := recover(); n != nil {
-					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
-					           	 
-					           	 DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path) )
-					           	 w.WriteHeader(http.StatusInternalServerError)
-					           	 
-						         pag,err := loadPage("%s" )
-						       
-						    
-						        if err != nil {
-						        	log.Println(err.Error())	        	
-						        	return
-						        }
-
-						         if pag.IsResource {
-						        	w.Write(pag.Body)
-						    	} else {
-						    		pag.R = p.R
-						         	pag.Session = p.Session
-						    		renderTemplate(w, pag%s //%s"
-						     
-						    	}
-					        }
-					    }()
-
-
-				  	%s
-				  
-				    // %s
-		
-				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok || !Prod {
-				 		var tmpstr = string(p.Body)
-				 		var localtemplate =  template.New(p.R.URL.Path)
-				 		
-				 		localtemplate.Funcs(TemplateFuncStore)
-				 		localtemplate.Parse(tmpstr)
-				 		templateCache.Put(p.R.URL.Path, localtemplate )
-				 	}
-	
-				    outp := new(bytes.Buffer)
-				    err := templateCache.JGet(p.R.URL.Path).Execute(outp, p)
-				    if err != nil {
-				        log.Println(err.Error())
-				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
-				    	w.WriteHeader(http.StatusInternalServerError)
-					    w.Header().Set("Content-Type",  "text/html")
-						pag,err := loadPage("%s" )
-						 
-						 if err != nil {
-						        	log.Println(err.Error())	        	
-						        	return
-						 }
-						 pag.R = p.R
-						 pag.Session = p.Session
-						    
-						  if pag.IsResource {
-				        	w.Write(pag.Body)
-				    	} else {
-				    		renderTemplate(w, pag%s // "%s" 
-				     
-				    	}
-				    	return
-				    } 
-
-
-				 	// p.Session.Save(p.R, w)
-
-				    var outps = outp.String()
-				    var outpescaped = html.UnescapeString(outps)
-				    outp = nil
-				    fmt.Fprintf(w, outpescaped )
-					
-				    
-				}
-
-
-				// Access you .gxml's end tags with
+			// Access you .gxml's end tags with
 				// this http.HandlerFunc.
 				// Use MakeHandler(http.HandlerFunc) to serve your web
 				// directory from memory.
@@ -928,32 +954,122 @@ import (
 				  
 				  	 %s
 				  	
-
-				  	if attmpt := apiAttempt(w,r%s ;!attmpt {
+				  	if attmpt := ApiAttempt(w,r%s ;!attmpt {
 				       fn(w, r%s
 				  	} 
-				  	
-				  	
+				  			  	
 				  	
 				  }
 				} 
 
-				func mResponse(v interface{}) string {
+				
+
+				
+			func Handler(w http.ResponseWriter, r *http.Request%s {
+				  var p *gosweb.Page
+				  p,err := templates.LoadPage(r.URL.Path)
+				  	var session *sessions.Session
+				  	var er error
+				  	if 	session, er = sessionStore.Store.Get(r, "session-"); er != nil {
+						session,_ = sessionStore.Store.New(r, "session-")
+					}
+				  %s
+				  if err != nil {	
+				  		log.Println(err.Error())
+				  		
+				        w.WriteHeader(http.StatusNotFound)				  	
+				       	%s
+				        pag,err := templates.LoadPage("%s")
+				        
+				        if err != nil {
+				        	log.Println(err.Error())
+				        	//
+				        	return
+				        }
+				         pag.R = r
+						 pag.Session = session
+						if p != nil {
+						p.Session = nil
+				  		p.Body = nil
+				  		p.R = nil
+				  		p = nil
+				  		}
+				  	
+				        if pag.IsResource {
+				        	w.Write(pag.Body)
+				    	} else {
+				    		templates.RenderTemplate(w, pag%s //"%s" 
+				    	}
+				    	session = nil
+				    	
+				        return
+				  }
+
+				   
+				  if !p.IsResource {
+				  		w.Header().Set("Content-Type",  "text/html")
+				  		p.Session = session
+				  		p.R = r
+				      	templates.RenderTemplate(w, p%s //fmt.Sprintf("%s%%s", r.URL.Path)
+				     	session.Save(r, w)
+				     // log.Println(w)
+				  } else {
+				  		w.Header().Set("Cache-Control",  "public")
+				  		if strings.Contains(r.URL.Path, ".css") {
+				  	  		w.Header().Add("Content-Type",  "text/css")
+				  	  	} else if strings.Contains(r.URL.Path, ".js") {
+				  	  		w.Header().Add("Content-Type",  "application/javascript")
+				  	  	} else {
+				  	  	w.Header().Add("Content-Type",  http.DetectContentType(p.Body))
+				  	  	}
+				  	 
+				  	 
+				      w.Write(p.Body)
+				  }
+
+			  	 p.Session = nil
+				 p.Body = nil
+				 p.R = nil
+				 p = nil
+				 session = nil
+				 
+				 return
+				}
+				`, appname , appname, appname,TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web)
+
+		ioutil.WriteFile("./api/handlers/html.go", []byte(handlersHtml), 0700)
+
+		apifinal := fmt.Sprintf(`package handlers
+
+			import gosweb "github.com/cheikhshift/gos/web"
+
+			import sessionStore "%s/api/sessions"
+
+			import templates "%s/api/templates"
+
+			import methods "%s/api/methods"
+
+			import types "%s/types"
+			import "%s/api/globals"
+
+			var WebCache = gosweb.NewCache()
+
+			func mResponse(v interface{}) string {
 					data,_ := json.Marshal(&v)
 					return string(data)
-				}
-				func apiAttempt(w http.ResponseWriter, r *http.Request%s (callmet bool) {
+			}
+
+			func ApiAttempt(w http.ResponseWriter, r *http.Request%s (callmet bool) {
 					var response string
-					response = ""
 					var session *sessions.Session
+					
 				  	var er error
-				  	if 	session, er = store.Get(r, "session-"); er != nil {
-						session,_ = store.New(r, "session-")
+
+				  	if 	session, er = sessionStore.Store.Get(r, "session-"); er != nil {
+						session,_ = sessionStore.Store.New(r, "session-")
 					}
 					
-
 					%s
-
 					if callmet {
 						session.Save(r,w)
 						session = nil
@@ -969,7 +1085,460 @@ import (
 					return
 				}
 
-				func DebugTemplate(w http.ResponseWriter,r *http.Request,tmpl string){
+
+
+			`, appname, appname, appname, appname, appname,TraceinFunc, apiraw)
+
+		ioutil.WriteFile("./api/handlers/endpoints.go", []byte(apifinal), 0700)
+
+		sessionStore := fmt.Sprintf(`package sessions 
+
+			var Store = sessions.NewCookieStore([]byte("%s"))`, template.Key)
+
+		ioutil.WriteFile("./api/sessions/store.go", []byte(sessionStore), 0700)
+
+	
+
+		for _, imp := range template.Header.Objects {
+			structs_string = fmt.Sprintf(`type %s %s
+				`, imp.Name, imp.Templ) + structs_string
+		}
+
+		structs_string = fmt.Sprintf(`package types
+
+			%s`, structs_string)
+
+		struct_funcs = fmt.Sprintf(`package types
+
+			%s`, struct_funcs)
+
+		ioutil.WriteFile("./types/struct_funcs.go", []byte(struct_funcs), 0700)
+		ioutil.WriteFile("./types/structs.go", []byte(structs_string), 0700)
+
+		var  methodsExported string 
+
+		for _, imp := range available_methods {
+			if !contains(int_methods, imp) && !contains(api_methods, imp) {
+				log.Println("🚰 Processing : ", imp)
+				var methodsString string
+
+				meth := template.findMethod(imp)
+				commentslice := strings.Split(string(meth.Comment), "\n")
+				for i, val := range commentslice {
+					commentslice[i] = strings.TrimSpace(val)
+				}
+				if len(commentslice) > 0 {
+					methodsString += fmt.Sprintf(`
+						// %s`, strings.Join(commentslice, `
+						// `))
+
+					splitAtComment := strings.Split(meth.Method, "-->") //at end of comment
+					meth.Method = splitAtComment[len(splitAtComment)-1]
+				}
+				addedit := false
+				if meth.Returntype == "" {
+					meth.Returntype = "string"
+					addedit = true
+				}
+				if meth.Man == "exp" {
+					methodsString += fmt.Sprintf(`
+						func %s(%s) %s {
+							`, meth.Name, meth.Variables, meth.Returntype)
+				} else {
+					methodsString += fmt.Sprintf(`
+						func %s(args ...interface{}) %s {
+							`, meth.Name, meth.Returntype)
+					for k, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							methodsString += fmt.Sprintf(`%s := args[%v]
+								`, nam, k)
+						}
+					}
+				}
+				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
+				est := ``
+				if !template.Prod {
+					est = fmt.Sprintf(`	
+							lastLine := ""
+
+							defer func() {
+							       if n := recover(); n != nil {
+							          log.Println("Pipeline failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s:", strings.TrimSpace(lastLine))
+							          log.Println("Reason : ",n)
+
+							        }
+								}()`, template.Name, template.Name)
+					setv := strings.Split(meth.Method, "\n")
+					for _, line := range setv {
+						line = strings.TrimSpace(line)
+						if len(line) > 0 {
+							est += fmt.Sprintf("\nlastLine = `%s`\n%s", line, line)
+						}
+					}
+
+				} else {
+					est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
+				}
+				methodsString += est
+				if addedit {
+					methodsString += `
+						 return ""
+						 `
+				}
+				methodsString += `
+						}`
+
+				if template.Type == "package" {
+					
+					varChain := []string{}
+
+					for _, nam := range strings.Split(meth.Variables, ",") {
+						if nam != "" {
+							declName := strings.Split(nam, " ")
+							varChain = append(varChain,declName[0])
+						}
+					}
+
+					if meth.Man == "exp" {
+
+						methodsExported += fmt.Sprintf(`
+							func (pkg PKG) %s(%s) %s {
+								return methods.%s(%s) 
+							}
+							`, meth.Name, meth.Variables, meth.Returntype, meth.Name, strings.Join(varChain, ","))
+					} else {
+						methodsExported += fmt.Sprintf(`
+							func (pkg PKG) %s(args ...interface{}) %s {
+								return methods.%s(args...)
+							}`, meth.Name, meth.Returntype, meth.Name)
+							
+					}
+
+
+				}
+
+					methodsString = fmt.Sprintf(`package methods
+
+					import gosweb "github.com/cheikhshift/gos/web"
+					import "%s/types"
+					import "%s/api/globals"
+
+					%s`, appname,appname,methodsString)
+
+					ioutil.WriteFile(fmt.Sprintf("./api/methods/method_%s.go", meth.Name ), []byte(methodsString), 0700)
+			}
+
+		
+
+		}
+
+		
+
+		if template.Type == "package" {
+
+			methodsExported = fmt.Sprintf(`package %s
+
+				import "%s/api/methods"
+
+				%s`, pk[len(pk) - 1], appname, methodsExported)
+
+			ioutil.WriteFile("./exported_methods.go", []byte(methodsExported), 0700)
+		}
+
+		var templatesFile,templateImport string
+
+		for _, imp := range template.Templates.Templates {
+			if imp.Struct == "" {
+				imp.Struct = "gosweb.NoStruct"
+			}
+
+			imp.Struct = strings.Replace(imp.Struct,"*","", -1)
+
+			commentslice := strings.Split(string(imp.Comment), "\n")
+			var commentstring string
+			for i, val := range commentslice {
+				commentslice[i] = strings.TrimSpace(val)
+			}
+			if len(commentslice) > 0 {
+				commentstring = strings.TrimSpace(fmt.Sprintf(`
+						// %s`, strings.Join(commentslice, `
+						// `)))
+
+			}
+
+			if !strings.Contains(imp.Struct, ".") {
+				imp.Struct = fmt.Sprintf("types.%s", strings.Title(imp.Struct ) )
+			}
+
+			templateString := fmt.Sprintf(`
+				package templates
+				
+				import "%s/types"
+				import "%s/api/assets"
+				import gosweb "github.com/cheikhshift/gos/web"
+
+				// Render HTML of template 
+				// %s with struct %s
+				func %s(d %s) string {
+					return  Netb%s(d)
+				}
+
+				// recovery function used to log a 
+				// panic.
+				func templateFN%s(localid string, d interface{}) {
+					    if n := recover(); n != nil {
+					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
+					           	// log.Println(n)
+					           		DebugTemplatePath(localid, d)	
+						}
+				}
+
+				var  templateID%s = "%s/%s.tmpl"
+
+
+				func  Net%s(args ...interface{}) string {
+					
+					localid := templateID%s
+					var d *%s
+					defer templateFN%s(localid, d)	
+					if len(args) > 0 {
+					jso := args[0].(string)
+					var jsonBlob = []byte(jso)
+					err := json.Unmarshal(jsonBlob, d)
+					if err != nil {
+						return err.Error()
+					}
+					} else {
+						d = &%s{}
+					}
+
+					
+    				
+    				 output := new(bytes.Buffer) 
+ 	
+    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+    				 	body, er := assets.Asset(localid)
+		    				if er != nil {
+		    					return ""
+		    			}
+		    			var localtemplate =  template.New("%s")	  			
+		    			localtemplate.Funcs(%s)
+		    			var tmpstr = string(body)
+				  		localtemplate.Parse(tmpstr)
+	    				body = nil
+	    				templateCache.Put(localid, localtemplate )
+    				 }
+					
+
+					erro := templateCache.JGet(localid).Execute(output, d)
+				    if erro != nil {
+				   	color.Red(fmt.Sprintf("Error processing template %%s" , localid) )
+				  	 DebugTemplatePath(localid, d)	
+				    } 
+				    var outps = output.String()
+				    var outpescaped = html.UnescapeString(outps)
+				    d = nil
+				    output.Reset()
+				    output = nil
+				    args = nil
+					return outpescaped
+					
+				}
+				func b%s(d %s) string {
+						return Netb%s(d)
+				}
+
+				%s
+
+				func  Netb%s(d %s) string {
+					localid := templateID%s
+					defer templateFN%s(localid, d)
+    				 output := new(bytes.Buffer) 
+				  	
+    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+    				 	body, er := assets.Asset(localid)
+		    				if er != nil {
+		    					return ""
+		    			}
+		    			var localtemplate =  template.New("%s")	  			
+		    			localtemplate.Funcs(%s)
+		    			var tmpstr = string(body)
+				  		localtemplate.Parse(tmpstr)
+	    				body = nil
+	    				templateCache.Put(localid, localtemplate )
+    				 }
+					
+
+					erro := templateCache.JGet(localid).Execute(output, d)
+				    if erro != nil {
+				    log.Println(erro)
+				    } 
+					var outps = output.String()
+				    var outpescaped = html.UnescapeString(outps)
+				    d = %s{}
+				    output.Reset()
+				    output = nil
+					return outpescaped
+				}
+				func  Netc%s(args ...interface{}) (d %s) {
+					if len(args) > 0 {
+					var jsonBlob = []byte(args[0].(string))
+					err := json.Unmarshal(jsonBlob, &d)
+					if err != nil {
+						log.Println("error:", err)
+						return 
+					}
+					} else {
+						d = %s{}
+					}
+    				return
+				}
+
+				func  c%s(args ...interface{}) (d %s) {
+					if len(args) > 0 {
+						d = Netc%s(args[0])
+					} else {
+						d = Netc%s()
+					}
+    				return
+				}
+
+				
+
+			
+				`,  appname, appname , imp.Name, imp.Struct,strings.Title(imp.Name), imp.Struct, imp.Name ,imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+				
+				
+
+				if  template.Type == "package" {
+					templateImport +=  fmt.Sprintf(`func (pkg PKG) %s(args ...interface{}) string {
+					var result string
+
+					if len(args) > 0 {
+						result = templates.Netb%s(args[0].(%s))
+					} else {
+						result = templates.Net%s()
+					}
+    				return result
+				}`, imp.Name, imp.Name, imp.Struct, imp.Name)
+
+				}
+
+
+				ioutil.WriteFile( fmt.Sprintf("./api/templates/template_%s.go", imp.Name), []byte(templateString), 0700 )
+		}
+
+		templatesFile = fmt.Sprintf(`package templates
+
+			import gosweb "github.com/cheikhshift/gos/web"
+			
+			import methods "%s/api/methods"
+			import exported "%s/api/exported"
+			import "%s/api/assets"
+
+			import "%s/types"
+			import "%s/api/globals"
+
+			var TemplateFuncStore template.FuncMap
+			
+			var templateCache = gosweb.NewTemplateCache()
+			var WebCache = gosweb.NewCache()
+
+			%s 
+
+			%s
+
+			func LoadPage(title string) (*gosweb.Page,error) {
+				   	
+					%s
+
+					var nPage = gosweb.Page{}
+				    if roottitle := (title == "/"); roottitle  {
+				    	webbase := "%s/"
+					    	fname := fmt.Sprintf("%%s%%s", webbase, "index.html")
+					    	body, err := assets.Asset(fname)
+					    	if err != nil {
+					    		fname = fmt.Sprintf("%%s%%s", webbase, "index.tmpl")
+					    		body , err = assets.Asset(fname)
+					    		if err != nil {
+					    			return nil,err
+					    		}
+					    		nPage.Body = body
+					    		WebCache.Put(title, nPage)
+					    		body = nil
+					    		return  &nPage, nil
+					    	}
+					    	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+					    	return  &nPage, nil
+					    		    		
+				     } 
+				     
+				   filename := fmt.Sprintf("%s%%s.tmpl", title)
+
+				   if body, err := assets.Asset(filename) ;err != nil {
+				    	 filename = fmt.Sprintf("%s%%s.html", title) 
+				    	
+				    	if  body, err = assets.Asset(filename); err != nil {
+				         filename = fmt.Sprintf("%s%%s", title) 
+				         
+				         if  body, err = assets.Asset(filename); err != nil {
+				            return nil, err
+				         } else {
+				          if strings.Contains(title, ".tmpl")  {
+				              return nil,nil
+				          }
+					    	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+				            return &nPage, nil
+				         }
+				      } else {					    	
+				      	nPage.Body = body
+					    	nPage.IsResource = true
+					    	WebCache.Put(title, nPage)
+					    body = nil
+				         return &nPage, nil
+				      }
+				    } else {
+				    						    	nPage.Body = body
+					    	WebCache.Put(title, nPage)
+					    	body = nil
+				    	  return &nPage, nil
+				    }
+ 
+				       %s
+				  
+				 } 
+				
+				   
+			
+				 %s`, appname, appname, appname, appname, appname,fmt.Sprintf(`func StoreNetfn () int {
+				 	// List of pipelines linked to each template.
+				 	TemplateFuncStore = %s
+				 	return 0
+				 	}
+				 	var FuncStored = StoreNetfn()`, netmafuncs),templatesFile, CacheParam, web, web, web, web, TraceOpt, ReadyTemplate)
+
+
+
+		ioutil.WriteFile("./api/templates/templates.go", []byte(templatesFile), 0700)
+
+		loggerFile := fmt.Sprintf(`package templates
+
+			import gosweb "github.com/cheikhshift/gos/web"
+
+			import sessionStore "%s/api/sessions"
+			import "%s/api/assets"
+
+			var Prod = %v
+
+			func DebugTemplate(w http.ResponseWriter,r *http.Request,tmpl string){
 					lastline := 0
 					linestring := ""
 					defer func() {
@@ -981,13 +1550,13 @@ import (
 					        }
 					    }()	
 
-					p,err := loadPage(r.URL.Path)
+					p,err := LoadPage(r.URL.Path)
 					filename :=  tmpl  + ".tmpl"
-				    body, err := Asset(filename)
-				    session, er := store.Get(r, "session-")
+				    body, err := assets.Asset(filename)
+				    session, er := sessionStore.Store.Get(r, "session-")
 
 				 	if er != nil {
-				           session,er = store.New(r,"session-")
+				           session,er = sessionStore.Store.New(r,"session-")
 				    }
 				    p.Session = session
 				    p.R = r
@@ -1101,7 +1670,7 @@ import (
 
 				
 					filename :=  tmpl  
-				    body, err := Asset(filename)
+				    body, err := assets.Asset(filename)
 				   
 				    if err != nil {
 				       	log.Print(err)
@@ -1199,454 +1768,110 @@ import (
 					
 				    }
 
-				}
-			func Handler(w http.ResponseWriter, r *http.Request%s {
-				  var p *gosweb.Page
-				  p,err := loadPage(r.URL.Path)
-				  	var session *sessions.Session
-				  	var er error
-				  	if 	session, er = store.Get(r, "session-"); er != nil {
-						session,_ = store.New(r, "session-")
-					}
-				  %s
-				  if err != nil {	
-				  		log.Println(err.Error())
-				  		
-				        w.WriteHeader(http.StatusNotFound)				  	
-				       	%s
-				        pag,err := loadPage("%s")
-				        
-				        if err != nil {
-				        	log.Println(err.Error())
-				        	//
-				        	return
-				        }
-				         pag.R = r
-						 pag.Session = session
-						if p != nil {
-						p.Session = nil
-				  		p.Body = nil
-				  		p.R = nil
-				  		p = nil
-				  		}
-				  	
-				        if pag.IsResource {
+				}` , appname, appname, template.Prod,template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa)
+
+		ioutil.WriteFile("./api/templates/logger.go", []byte(loggerFile), 0700 )
+
+		renderFile := fmt.Sprintf(`package templates
+
+			import gosweb "github.com/cheikhshift/gos/web"
+
+			func RenderTemplate(w http.ResponseWriter, p *gosweb.Page%s   {
+				     defer func() {
+					        if n := recover(); n != nil {
+					           	 color.Red(fmt.Sprintf("Error loading template in path : %s%%s.tmpl reason : %%s", p.R.URL.Path,n)  )
+					           	 
+					           	 DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path) )
+					           	 w.WriteHeader(http.StatusInternalServerError)
+					           	 
+						         pag,err := LoadPage("%s" )
+						       
+						    
+						        if err != nil {
+						        	log.Println(err.Error())	        	
+						        	return
+						        }
+
+						         if pag.IsResource {
+						        	w.Write(pag.Body)
+						    	} else {
+						    		pag.R = p.R
+						         	pag.Session = p.Session
+						    		RenderTemplate(w, pag%s //%s"
+						     
+						    	}
+					        }
+					    }()
+
+
+				  	%s
+				  
+				    // %s
+		
+				 	if _,ok := templateCache.Get(p.R.URL.Path); !ok || !Prod {
+				 		var tmpstr = string(p.Body)
+				 		var localtemplate =  template.New(p.R.URL.Path)
+				 		
+				 		localtemplate.Funcs(TemplateFuncStore)
+				 		localtemplate.Parse(tmpstr)
+				 		templateCache.Put(p.R.URL.Path, localtemplate )
+				 	}
+	
+				    outp := new(bytes.Buffer)
+				    err := templateCache.JGet(p.R.URL.Path).Execute(outp, p)
+				    if err != nil {
+				        log.Println(err.Error())
+				    	DebugTemplate( w,p.R , fmt.Sprintf("%s%%s", p.R.URL.Path))
+				    	w.WriteHeader(http.StatusInternalServerError)
+					    w.Header().Set("Content-Type",  "text/html")
+						pag,err := LoadPage("%s" )
+						 
+						 if err != nil {
+						        	log.Println(err.Error())	        	
+						        	return
+						 }
+						 pag.R = p.R
+						 pag.Session = p.Session
+						    
+						  if pag.IsResource {
 				        	w.Write(pag.Body)
 				    	} else {
-				    		renderTemplate(w, pag%s //"%s" 
-				    	}
-				    	session = nil
-				    	
-				        return
-				  }
-
-				   
-				  if !p.IsResource {
-				  		w.Header().Set("Content-Type",  "text/html")
-				  		p.Session = session
-				  		p.R = r
-				      	renderTemplate(w, p%s //fmt.Sprintf("%s%%s", r.URL.Path)
-				     	session.Save(r, w)
-				     // log.Println(w)
-				  } else {
-				  		w.Header().Set("Cache-Control",  "public")
-				  		if strings.Contains(r.URL.Path, ".css") {
-				  	  		w.Header().Add("Content-Type",  "text/css")
-				  	  	} else if strings.Contains(r.URL.Path, ".js") {
-				  	  		w.Header().Add("Content-Type",  "application/javascript")
-				  	  	} else {
-				  	  	w.Header().Add("Content-Type",  http.DetectContentType(p.Body))
-				  	  	}
-				  	 
-				  	 
-				      w.Write(p.Body)
-				  }
-
-			  	 p.Session = nil
-				 p.Body = nil
-				 p.R = nil
-				 p = nil
-				 session = nil
-				 
-				 return
-				}
-
-
-				var WebCache = gosweb.NewCache()
-			
-
-				func loadPage(title string) (*gosweb.Page,error) {
-				   	
-					%s
-
-					var nPage = gosweb.Page{}
-				    if roottitle := (title == "/"); roottitle  {
-				    	webbase := "%s/"
-					    	fname := fmt.Sprintf("%%s%%s", webbase, "index.html")
-					    	body, err := Asset(fname)
-					    	if err != nil {
-					    		fname = fmt.Sprintf("%%s%%s", webbase, "index.tmpl")
-					    		body , err = Asset(fname)
-					    		if err != nil {
-					    			return nil,err
-					    		}
-					    		nPage.Body = body
-					    		WebCache.Put(title, nPage)
-					    		body = nil
-					    		return  &nPage, nil
-					    	}
-					    	nPage.Body = body
-					    	nPage.IsResource = true
-					    	WebCache.Put(title, nPage)
-					    	body = nil
-					    	return  &nPage, nil
-					    		    		
-				     } 
+				    		RenderTemplate(w, pag%s // "%s" 
 				     
-				   filename := fmt.Sprintf("%s%%s.tmpl", title)
-
-				   if body, err := Asset(filename) ;err != nil {
-				    	 filename = fmt.Sprintf("%s%%s.html", title) 
-				    	
-				    	if  body, err = Asset(filename); err != nil {
-				         filename = fmt.Sprintf("%s%%s", title) 
-				         
-				         if  body, err = Asset(filename); err != nil {
-				            return nil, err
-				         } else {
-				          if strings.Contains(title, ".tmpl")  {
-				              return nil,nil
-				          }
-					    	nPage.Body = body
-					    	nPage.IsResource = true
-					    	WebCache.Put(title, nPage)
-					    	body = nil
-				            return &nPage, nil
-				         }
-				      } else {					    	
-				      	nPage.Body = body
-					    	nPage.IsResource = true
-					    	WebCache.Put(title, nPage)
-					    body = nil
-				         return &nPage, nil
-				      }
-				    } else {
-				    						    	nPage.Body = body
-					    	WebCache.Put(title, nPage)
-					    	body = nil
-				    	  return &nPage, nil
-				    }
- 
-				       %s
-				  
-				 } 
-				
-				   
-			
-				 %s
-				 `, template.Key,template.Prod, fmt.Sprintf(`func StoreNetfn () int {
-				 	TemplateFuncStore = %s
-				 	return 0
-				 	}
-				 	var FuncStored = StoreNetfn()`, netmafuncs), TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage, TraCFt, TraceOpen, TraceParam, TraceParam, TraceinFunc, apiraw, template.ErrorPage, netMa, netMa, netMa, template.ErrorPage, netMa, netMa, netMa, TraceinFunc, TraceGet, TraceError, template.NPage, TraceParam, template.ErrorPage, TraceParam, web, CacheParam, web, web, web, web, TraceOpt, ReadyTemplate)
-		for _, imp := range template.Variables {
-			local_string += fmt.Sprintf(`
-						var %s %s`, imp.Name, imp.Type)
-		}
-		if template.Init_Func != "" {
-			local_string += fmt.Sprintf(`
-			func init(){
-				%s
-			}`, template.Init_Func)
-
-		}
-
-		local_string += structs_string
-
-		for _, imp := range template.Header.Objects {
-			local_string += fmt.Sprintf(`
-			type %s %s`, imp.Name, imp.Templ)
-		}
-
-		for _, imp := range available_methods {
-			if !contains(int_methods, imp) && !contains(api_methods, imp) {
-				log.Println("🚰 Processing : ", imp)
-
-				meth := template.findMethod(imp)
-				commentslice := strings.Split(string(meth.Comment), "\n")
-				for i, val := range commentslice {
-					commentslice[i] = strings.TrimSpace(val)
-				}
-				if len(commentslice) > 0 {
-					local_string += fmt.Sprintf(`
-						// %s`, strings.Join(commentslice, `
-						// `))
-
-					splitAtComment := strings.Split(meth.Method, "-->") //at end of comment
-					meth.Method = splitAtComment[len(splitAtComment)-1]
-				}
-				addedit := false
-				if meth.Returntype == "" {
-					meth.Returntype = "string"
-					addedit = true
-				}
-				if meth.Man == "exp" {
-					local_string += fmt.Sprintf(`
-						func Net%s(%s) %s {
-							`, meth.Name, meth.Variables, meth.Returntype)
-				} else {
-					local_string += fmt.Sprintf(`
-						func Net%s(args ...interface{}) %s {
-							`, meth.Name, meth.Returntype)
-					for k, nam := range strings.Split(meth.Variables, ",") {
-						if nam != "" {
-							local_string += fmt.Sprintf(`%s := args[%v]
-								`, nam, k)
-						}
-					}
-				}
-				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
-				est := ``
-				if !template.Prod {
-					est = fmt.Sprintf(`	
-							lastLine := ""
-
-							defer func() {
-							       if n := recover(); n != nil {
-							          log.Println("Pipeline failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s:", strings.TrimSpace(lastLine))
-							          log.Println("Reason : ",n)
-
-							        }
-								}()`, template.Name, template.Name)
-					setv := strings.Split(meth.Method, "\n")
-					for _, line := range setv {
-						line = strings.TrimSpace(line)
-						if len(line) > 0 {
-							est += fmt.Sprintf("\nlastLine = `%s`\n%s", line, line)
-						}
-					}
-
-				} else {
-					est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
-				}
-				local_string += est
-				if addedit {
-					local_string += `
-						 return ""
-						 `
-				}
-				local_string += `
-						}`
-
-				if template.Type == "package" {
-					
-					varChain := []string{}
-
-					for _, nam := range strings.Split(meth.Variables, ",") {
-						if nam != "" {
-							declName := strings.Split(nam, " ")
-							varChain = append(varChain,declName[0])
-						}
-					}
-
-					if meth.Man == "exp" {
-
-					local_string += fmt.Sprintf(`
-							func (pkg PKG) %s(%s) %s {
-								return Net%s(%s) 
-							}
-							`, meth.Name, meth.Variables, meth.Returntype, meth.Name, strings.Join(varChain, ","))
-					} else {
-						local_string += fmt.Sprintf(`
-							func (pkg PKG) %s(args ...interface{}) %s {
-								return Net%s(args...)
-							}`, meth.Name, meth.Returntype, meth.Name)
-							
-					}
-
-
-				}
-			}
-		}
-
-		for _, imp := range template.Templates.Templates {
-			if imp.Struct == "" {
-				imp.Struct = "gosweb.NoStruct"
-			}
-
-			imp.Struct = strings.Replace(imp.Struct,"*","", -1)
-
-			commentslice := strings.Split(string(imp.Comment), "\n")
-			var commentstring string
-			for i, val := range commentslice {
-				commentslice[i] = strings.TrimSpace(val)
-			}
-			if len(commentslice) > 0 {
-				commentstring = strings.TrimSpace(fmt.Sprintf(`
-						// %s`, strings.Join(commentslice, `
-						// `)))
-
-			}
-
-			templateString := fmt.Sprintf(`
-
-				
-
-				func templateFN%s(localid string, d interface{}) {
-					    if n := recover(); n != nil {
-					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
-					           	// log.Println(n)
-					           		DebugTemplatePath(localid, d)	
-						}
-				}
-				var  templateID%s = "%s/%s.tmpl"
-				func  Net%s(args ...interface{}) string {
-					
-					localid := templateID%s
-					var d *%s
-					defer templateFN%s(localid, d)	
-					if len(args) > 0 {
-					jso := args[0].(string)
-					var jsonBlob = []byte(jso)
-					err := json.Unmarshal(jsonBlob, d)
-					if err != nil {
-						return err.Error()
-					}
-					} else {
-						d = &%s{}
-					}
-
-					
-    				
-    				 output := new(bytes.Buffer) 
- 	
-    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
-
-    				 	body, er := Asset(localid)
-		    				if er != nil {
-		    					return ""
-		    			}
-		    			var localtemplate =  template.New("%s")	  			
-		    			localtemplate.Funcs(%s)
-		    			var tmpstr = string(body)
-				  		localtemplate.Parse(tmpstr)
-	    				body = nil
-	    				templateCache.Put(localid, localtemplate )
-    				 }
-					
-
-					erro := templateCache.JGet(localid).Execute(output, d)
-				    if erro != nil {
-				   	color.Red(fmt.Sprintf("Error processing template %%s" , localid) )
-				  	 DebugTemplatePath(localid, d)	
+				    	}
+				    	return
 				    } 
-				    var outps = output.String()
+
+
+				 	// p.Session.Save(p.R, w)
+
+				    var outps = outp.String()
 				    var outpescaped = html.UnescapeString(outps)
-				    d = nil
-				    output.Reset()
-				    output = nil
-				    args = nil
-					return outpescaped
+				    outp = nil
+				    fmt.Fprintf(w, outpescaped )
 					
-				}
-				func b%s(d %s) string {
-						return Netb%s(d)
-				}
+				    
+				}`, TraceinFunc, web, web, template.ErrorPage, TraceParam, template.ErrorPage, TraceTemplate, netMa, web, template.ErrorPage, TraceParam, template.ErrorPage )
 
-				%s
-				func  Netb%s(d %s) string {
-					localid := templateID%s
-					defer templateFN%s(localid, d)
-    				 output := new(bytes.Buffer) 
-				  	
-    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
+				ioutil.WriteFile("./api/templates/render.go", []byte(renderFile), 0700 )
 
-    				 	body, er := Asset(localid)
-		    				if er != nil {
-		    					return ""
-		    			}
-		    			var localtemplate =  template.New("%s")	  			
-		    			localtemplate.Funcs(%s)
-		    			var tmpstr = string(body)
-				  		localtemplate.Parse(tmpstr)
-	    				body = nil
-	    				templateCache.Put(localid, localtemplate )
-    				 }
-					
+		if  template.Type == "package" {
 
-					erro := templateCache.JGet(localid).Execute(output, d)
-				    if erro != nil {
-				    log.Println(erro)
-				    } 
-					var outps = output.String()
-				    var outpescaped = html.UnescapeString(outps)
-				    d = %s{}
-				    output.Reset()
-				    output = nil
-					return outpescaped
-				}
-				func  Netc%s(args ...interface{}) (d %s) {
-					if len(args) > 0 {
-					var jsonBlob = []byte(args[0].(string))
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return 
-					}
-					} else {
-						d = %s{}
-					}
-    				return
-				}
+			templateImport = fmt.Sprintf(`package %s
 
-				func  c%s(args ...interface{}) (d %s) {
-					if len(args) > 0 {
-						d = Netc%s(args[0])
-					} else {
-						d = Netc%s()
-					}
-    				return
-				}
+				%s`, pk[len(pk) - 1], templateImport)
 
-				/*S*/
-			
-				`, imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
-				
-				replacer := ""
-
-				if  template.Type == "package" {
-					replacer =  fmt.Sprintf(`func (pkg PKG) %s(args ...interface{}) string {
-					var result string
-
-					if len(args) > 0 {
-						result = Netb%s(args[0].(%s))
-					} else {
-						result = Net%s()
-					}
-    				return result
-				}`, imp.Name, imp.Name, imp.Struct, imp.Name)
-
-				}
-
-
-				local_string += strings.Replace(templateString, "/*S*/", replacer, -1)
+			ioutil.WriteFile("./exported_templates.go", []byte(templateImport), 0700)
 		}
+
 
 		//Methods have been added
 
-		local_string += `
-			func dummy_timer(){
-				dg := time.Second *5
-				log.Println(dg)
-			}`
 
 		if template.Type == "faas" {
 
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
-			if strings.Contains(local_string, "ioutil") {
-				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
-			}
-
+			
 			local_string += `
 		
 		func MakeFSHandle(root string){
@@ -1654,10 +1879,13 @@ import (
 		}
 		`
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
+
+
+
 			d1 := []byte(local_string)
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
 
-			var appname = strings.TrimSuffix(strings.Split(strings.Join(pk, "/"), "/src/")[1], "/")
+			
 			if _, err := os.Stat(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH"))); os.IsNotExist(err) {
 				os.MkdirAll(fmt.Sprintf("%s/src/func", os.ExpandEnv("$GOPATH")), 0700)
 			}
@@ -1676,7 +1904,7 @@ import (
 				handlerTemp := fmt.Sprintf(`package function
 // Handle a serverless request
 import (
-	app "%s"
+	app "%s/api/templates"
 )
 
 func Handle(req []byte) string {
@@ -1738,7 +1966,7 @@ functions:
 					handlerTemp := fmt.Sprintf(`package function
 // Handle a serverless request
 import (
-	app "%s"
+	app "%s/api/handlers"
 	"bytes"
 	"net/http"
 	"net/http/httptest"
@@ -1840,12 +2068,10 @@ functions:
 		} else if template.Type == "package" {
 
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
-			if strings.Contains(local_string, "ioutil") {
-				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
-			}
+			
 			local_string += fmt.Sprintf(`
 				func FileServer() http.Handler {
-					return http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"})
+					return http.FileServer(&assetfs.AssetFS{Asset: assets.Asset, AssetDir: assets.AssetDir, Prefix: "%s"})
 				}`, web)
 
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
@@ -1855,12 +2081,28 @@ functions:
 
 		} else {
 
-			local_string += fmt.Sprintf(`
+			local_string += `
 			func main() {
-				fmt.Fprintf(os.Stdout, "%%v\n", os.Getpid())
-				%s`, template.Main)
+				fmt.Fprintf(os.Stdout, "%v\n", os.Getpid())
+
+				LaunchServer()
+				`
+
+			launcher := fmt.Sprintf(`package main
+
+			import "%s/api/globals"
+			import "%s/api/methods"
+			import "%s/api/templates"
+
+			func LaunchServer(){
+				%s
+			}`, appname, appname, appname, template.Main)
+
+
+			ioutil.WriteFile("launcher.go", []byte(launcher), 0700)
+
 			if template.Prod {
-				local_string += fmt.Sprintf(` store.Options = &sessions.Options{
+				local_string += fmt.Sprintf(` sessionStore.Store.Options = &sessions.Options{
 						    Path:     "/",
 						    MaxAge:   86400 * 7,
 						    HttpOnly: true,
@@ -1870,43 +2112,57 @@ functions:
 
 				//todo timeouts
 			} else {
-				local_string += `store := appdash.NewMemoryStore()
+				os.Mkdir("api/tracer", 0700)
 
-				// Listen on any available TCP port locally.
-				l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 0})
-				if err != nil {
-					log.Fatal(err)
-				}
-				collectorPort := l.Addr().(*net.TCPAddr).Port
+				appDashInit := `
+				package tracer
 
-				// Start an Appdash collection server that will listen for spans and
-				// annotations and add them to the local collector (stored in-memory).
-				cs := appdash.NewServer(l, appdash.NewLocalCollector(store))
-				go cs.Start()
+				import appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"
 
-				// Print the URL at which the web UI will be running.
-				appdashPort := 8700
-				appdashURLStr := fmt.Sprintf("http://localhost:%d", appdashPort)
-				appdashURL, err := url.Parse(appdashURLStr)
-				if err != nil {
-					log.Fatalf("Error parsing %s: %s", appdashURLStr, err)
-				}
-				color.Red("✅ Important!")
-				log.Println("To see your traces, go to ",  appdashURL )
+				func LoadTraceServer(){
+					store := appdash.NewMemoryStore()
 
-				// Start the web UI in a separate goroutine.
-				tapp, err := traceapp.New(nil, appdashURL)
-				if err != nil {
-					log.Fatal(err)
-				}
-				tapp.Store = store
-				tapp.Queryer = store
-				go func() {
-					log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", appdashPort), tapp))
-				}()
+					// Listen on any available TCP port locally.
+					l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 0})
+					if err != nil {
+						log.Fatal(err)
+					}
+					collectorPort := l.Addr().(*net.TCPAddr).Port
 
-				tracer := appdashot.NewTracer(appdash.NewRemoteCollector(fmt.Sprintf(":%d", collectorPort) ) )
-				opentracing.InitGlobalTracer(tracer)`
+					// Start an Appdash collection server that will listen for spans and
+					// annotations and add them to the local collector (stored in-memory).
+					cs := appdash.NewServer(l, appdash.NewLocalCollector(store))
+					go cs.Start()
+
+					// Print the URL at which the web UI will be running.
+					appdashPort := 8700
+					appdashURLStr := fmt.Sprintf("http://localhost:%d", appdashPort)
+					appdashURL, err := url.Parse(appdashURLStr)
+					if err != nil {
+						log.Fatalf("Error parsing %s: %s", appdashURLStr, err)
+					}
+					color.Red("✅ Important!")
+					log.Println("To see your traces, go to ",  appdashURL )
+
+					// Start the web UI in a separate goroutine.
+					tapp, err := traceapp.New(nil, appdashURL)
+					if err != nil {
+						log.Fatal(err)
+					}
+					tapp.Store = store
+					tapp.Queryer = store
+					go func() {
+						log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", appdashPort), tapp))
+					}()
+
+					tracer := appdashot.NewTracer(appdash.NewRemoteCollector(fmt.Sprintf(":%d", collectorPort) ) )
+					opentracing.InitGlobalTracer(tracer)
+				}`
+
+				local_string += "tracer.LoadTraceServer()"
+				ioutil.WriteFile("api/tracer/appdash.go", []byte(appDashInit), 0700)
+
+
 			}
 
 			defhandler := ""
@@ -1937,8 +2193,8 @@ functions:
 					stop := make(chan os.Signal, 1)
 
 					signal.Notify(stop, os.Interrupt)
-					http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "%s"}))
-					http.HandleFunc("/", MakeHandler(Handler))
+					http.Handle("/dist/", http.FileServer(&assetfs.AssetFS{Asset: assets.Asset, AssetDir: assets.AssetDir, Prefix: "%s"}))
+					http.HandleFunc("/", handlers.MakeHandler(handlers.Handler))
 
 					h := &http.Server{Addr: port}
 
@@ -1954,13 +2210,22 @@ functions:
 
 					h.Shutdown(ctx)
 
-					%s
+					Shutdown()
 
 					log.Println("Server gracefully stopped")
 
 					}
 
-					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler, template.Shutdown)
+					//+++extendgxmlroot+++`, timeline, template.Port, web, defhandler)
+
+
+					templateShutdown := fmt.Sprintf(`package main
+
+					func Shutdown(){
+						%s
+					}`, template.Shutdown)
+
+					ioutil.WriteFile("shutdown.go", []byte(templateShutdown), 0700)
 
 			var port string
 			if !template.Prod  {			
@@ -1983,15 +2248,20 @@ CMD server
 
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
-			if strings.Contains(local_string, "ioutil") {
-				local_string = strings.Replace(local_string, "//iogos-replace", "\"io/ioutil\"", 1)
-			}
+		
 
 			local_string = strings.Replace(local_string, "net_", "Net", -1)
 			d1 := []byte(local_string)
 
-			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, template.Output), d1, 0700)
+			outputPath := fmt.Sprintf("%s%s", r, template.Output)
+
+			_ = ioutil.WriteFile(outputPath, d1, 0700)
+
+			
 		}
+
+
+		RunCmd(fmt.Sprintf("goimports -w %s",r ) )
 
 		var logfull string
 		for _, sh := range template.PostCommand {
@@ -1999,889 +2269,189 @@ CMD server
 			log.Println(logfull)
 		}
 
-	} else if template.Type == "bind" {
-		local_string = `package ` + template.Package + ` 
-				
-	import (`
+	} 
 
-		Netimports := []string{"time", "os", "bytes", "encoding/json", "fmt", "html", "html/template", "io/ioutil", "strings", "reflect", "unsafe", "crypto/aes", "crypto/cipher", "crypto/rand", "io", "encoding/base64", "errors"}
+	return
+}
 
-		/*
-			Methods before so that we can create to correct delegate method for each object
-		*/
+func (d *gos) ensureBackwardsCompatible(){
 
-		for _, imp := range template.Methods.Methods {
-			if !contains(available_methods, imp.Name) {
-				available_methods = append(available_methods, imp.Name)
-			}
-		}
-		apiraw := ``
-		for _, imp := range template.Endpoints.Endpoints {
-			if !contains(api_methods, imp.Method) {
-				api_methods = append(api_methods, imp.Method)
-			}
-			meth := template.findMethod(imp.Method)
-			apiraw += ` 
-				if  path == "` + imp.Path + `" && method == strings.ToUpper("` + imp.Type + `") { 
-					` + strings.Replace(meth.Method, `&#38;`, `&`, -1) + `
-					callmet = true
-				}
-				`
+
+	for _, m := range d.Methods.Methods {
+
+	
+		newName := fmt.Sprintf("methods.%s(", strings.Title(m.Name) )
+		newNameInternal := fmt.Sprintf("%s(", strings.Title(m.Name) )
+		currentName := fmt.Sprintf("Net%s(", m.Name)
+
+		
+
+		for mE, e := range d.Endpoints.Endpoints {
+
+			e.Method = ReplaceLegacy(e.Method, "net_", "Net")
+			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
+
+
+			d.Endpoints.Endpoints[mE] = e
 
 		}
 
-		log.Printf("APi Methods %v\n", api_methods)
-		netMa := `template.FuncMap{"GetLocation": NetsupportGetLocation,"Run": NetsupportRunjs,"PlaySound" : NetsupportSoundPlay,"StopSound" : NetsupportSoundStop,"SetVolume" : NetsupportSoundSetVolume,"GetVolume" : NetsupportSoundGetVolume, "isPlaying" : NetsupportSoundisPlaying,"trackMotion": NetsupportMotionStart,"stopMotion" : NetsupportMotionStop,"ShowLoad" : NetsupportShowload, "HideLoad" : NetsupportHideLoad, "Device": NetsupportDevice,"TakePicture" : NetsupportTakePicture, "Notify" : NetsupportNotify,"AbsolutePath" : NetsupportFileAbsPath,"Download" : NetsupportFileDownload,"Download_lg" : NetsupportFileDownloadLarge,"Base64" : NetsupportBase64,"DeleteRes" : NetsupportDeleteFile , "Height":NetlayerHeight,"Width": NetlayerWidth,"push":NetpushView,"dismiss":NetdismissView,"dismissAt": NetdismissViewatInt,"a":Netadd,"s":Netsubs,"m":Netmultiply,"d":Netdivided,"js" : Netimportjs,"css" : Netimportcss,"sDelete" : deleteSession,"sRemove" : NetRemoveSessionKey,"sExist": NetSessionKeyExists,"sSet" : NetSetSessionKey,"sSetField": NetSetSessionField,"sGet" : NetGetSession,"sGetString" : NetGetSessionString, "sGetN" : NetGetSessionFloat,"Get" : paramGet,"eq": equalz, "neq" : nequalz, "lte" : netlt`
-		for _, imp := range available_methods {
-			if !contains(api_methods, imp) && template.findMethod(imp).Keeplocal != "true" {
-				netMa += `,"` + imp + `" : Net` + imp
-			}
-		}
-		int_lok := []string{}
-
-		for _, imp := range template.Header.Objects {
-			//struct return and function
-
-			if !contains(int_lok, imp.Name) {
-				int_lok = append(int_lok, imp.Name)
-				netMa += `,"` + imp.Name + `" : Net` + imp.Name
-			}
-		}
-
-		for _, imp := range template.Header.Structs {
-			netMa += `,"is` + imp.Name + `":Netis` + imp.Name
-		}
-
-		for _, imp := range template.Templates.Templates {
-
-			netMa += `,"` + imp.Name + `" : Net` + imp.Name
-			netMa += `,"b` + imp.Name + `" : b` + imp.Name
-			netMa += `,"c` + imp.Name + `" : c` + imp.Name
-		}
-		netMa += `}`
-
-		//log.Println(template.Methods.Methods[0].Name)
-
-		for _, imp := range Netimports {
-			local_string += `
-			"` + imp + `"`
-		}
-		local_string += `
-		)
-
-                type Flow interface {
-         			PushView(url string)
-         			DismissView()
-         			DismissViewatInt(index int)
-         			Width() float64
-         			Height() float64
-         			Device() int
-         			ShowLoad()
-         			HideLoad()
-         			RunJS(line string)
-
-         			Play(path string)
-        			Stop()
-        			SetVolume(power int)
-        			GetVolume() int
-        			IsPlaying() bool
-        			PlayFromWebRoot(path string)
-
-        			RequestLocation()
-        			TrackMotion()
-        			StopMotion()
-
-        			CreatePictureNamed(name string)
-        			OpenAppLink(url string)
-
-    
-         			Notify(title string,message string)
-
-         			AbsolutePath(file string) string
-         			Download(url string, target string) bool
-         			DownloadLarge(url string, target string)
-         			Base64String(target string) string
-         			GetBytes(target string) []byte
-         			GetBytesFromUrl(target string) []byte
-         			DeleteDirectory(path string) bool
-         			DeleteFile(path string) bool
-         			
-         		}
-
-         		
-
-
-         		func NetsupportGetLocation(flow Flow) string {
-         			flow.RequestLocation()
-         			return ""
-         		}
-
-         		func NetsupportRunjs(jss string,flow Flow) string {
-         			flow.RunJS(jss)
-         			return ""
-         		}
-
-         		// sound funcs 
-
-         		func NetsupportSoundPlay(file string,flow Flow) string {
-         			flow.PlayFromWebRoot(file)
-         			return ""
-         		}
-
-         		func NetsupportSoundStop(flow Flow) string {
-         			flow.Stop()
-         			return ""
-         		}
-
-         		func NetsupportSoundSetVolume(level int, flow Flow) string {
-         			flow.SetVolume(level)
-         			return ""
-         		}
-
-         		func NetsupportSoundGetVolume(flow Flow) int {
-         			return flow.GetVolume()
-         		}
-
-         		func NetsupportSoundisPlaying(flow Flow) bool {
-         			return flow.IsPlaying()
-         		}
-
-         		// end sound funcs 
-
-         		func NetsupportMotionStart(flow Flow) string {
-         			flow.TrackMotion()
-         			return ""
-         		}
-
-         		func NetsupportMotionStop(flow Flow) string {
-         			flow.StopMotion()
-         			return ""
-         		}
-
-         		func NetsupportDevice(flow Flow) int {
-         			return flow.Device()
-         		}
-
-         		func NetsupportShowload(flow Flow) string {
-         			flow.ShowLoad()
-         			return ""
-         		}
-
-         		func NetsupportHideLoad(flow Flow) string {
-         			flow.HideLoad()
-         			return ""
-         		}
-
-         		func NetsupportTakePicture(pic string,flow Flow) string {
-         			flow.CreatePictureNamed(pic)
-         			return ""
-         		}
-
-         		func NetsupportNotify(title string,message string,flow Flow) string {
-         			flow.Notify(title,message)
-         			return ""
-         		}
-
-         		// start file manager 
-     
-
-         		func NetsupportFileAbsPath(path string, file Flow) string {
-         			return file.AbsolutePath(path)
-         		}
-
-         		func NetsupportFileDownload(url string,target string, file Flow) bool {
-         			return file.Download(url,target);
-         		}
-
-         		func NetsupportFileDownloadLarge(url string, target string, file Flow) string {
-         			file.DownloadLarge(url, target)
-         			return ""
-         		}
-
-         		func NetsupportBase64(path string,file Flow) string {
-         			return file.Base64String(path)
-         		}
-
-         		func NetsupportGetBytes(target string, file Flow) []byte {
-         			return file.GetBytes(target)
-         		}
-
-         		func NetsupportGetBytesFromUrl(target string, file Flow) []byte {
-         			return file.GetBytesFromUrl(target)
-         		}
-
-         		func NetsupportDeleteFolder(path string,file Flow) bool {
-         			return file.DeleteDirectory(path)
-         		}
-
-         		func NetsupportDeleteFile(path string,file Flow) bool {
-         			return file.DeleteFile(path)
-         		}
-
-
-         		// End file manager 
-         		func NetpushView(url string,flow Flow) string {
-         			flow.PushView(url)
-         			return ""
-         		}
-
-         		func NetdismissView(flow Flow) string {
-         			flow.DismissView()
-         			return ""
-         		}
-
-         		func NetlayerWidth(flow Flow) float64 {
-         			return flow.Width()
-         		}
-         		func NetlayerHeight(flow Flow) float64 {
-         			return flow.Height()
-         		}
-
-         		func NetdismissViewatInt(ind int,flow Flow) string {
-         			flow.DismissViewatInt(ind)
-         			return ""
-         		}
-				
-				var key = []byte("` + template.Key + `")
-
-				func Netimportcss(s string) string {
-					return "<link rel=\"stylesheet\" href=\"" + s + "\" /> "
-				}
-
-				func Netimportjs(s string) string {
-					return "<script type=\"text/javascript\" src=\"" + s + "\" ></script> "
-				}
-
-			
-					 type page struct {
-					    Title string
-					    Body  []byte
-					 	Parameters map[string]interface{}
-					 	Session session
-					 	Layer Flow
-					    isResource bool
-					}
-
-				type session struct {
-					Values map[string]interface{}
-					//custom props
-					` + template.Session + `
-				
-				}
-
-				func paramGet(ke string,f map[string]interface{}) string {
-					if _, ok := f[ke]; ok {
-					return f[ke].(string)
-					} else {
-						return ""
-					}
-				}
-			
-				func dummy_timer(){
-					dg := time.Second *5
-					log.Println(dg)
-				}
-
-				func LoadUrl(path string,bod []byte,method string,flow Flow)[]byte { 
-								
-				body := new(bytes.Buffer)
-				body.Write(bod)
-				var f interface{}
-				if bod != nil {
-				_ = json.Unmarshal(bod, &f)
-				}
-				data,proceed := apiAttempt(path,method,bod,flow)				
-				if proceed {
-					return data
-				} else {
-
-								 p,err := loadPage(path)
-								  if err != nil {
-								  	log.Println(err)
-								        return []byte("Error ")
-								  }
-
-								  if !p.IsResource {
-								      p.Parameters = f.(map[string]interface{}) 
-								      p.Session = openSession()
-								      p.Layer = flow
-								      return   []byte(html.UnescapeString(string(renderTemplate("web" + path, p))))
-								  } else {
-								       return p.Body
-								  }
-
-					return bod
-				}
-								 
-				}
-
-				func NetSetSessionField(key string, arg interface{}) string {
-					s := openSessionMap()
-					s[key] = arg
-					keepSessionMap(s)
-					return ""
-				}
-				func NetSetSessionKey(key string, arg interface{}) string {
-					s := openSession()
-					s.Values[key] = arg
-					keepSession(s)
-					return ""
-				}
-
-				func NetSessionKeyExists(key string) bool {
-					s := openSession()
-					 if _, ok := s.Values[key]; ok {
-					    //do something here
-				 		return true
-					}
-
-					return false
-				}
-
-			
-
-				func NetGetSession(key string) interface{} {
-					s := openSession() 
-					return s.Values[key]
-				}
-				func NetGetSessionString(key string) string {
-					s := openSession() 
-					if _, ok := s.Values[key]; ok {
-					return s.Values[key].(string)
-					} else {
-						return ""
-					}
-				}
-				func NetGetSessionFloat(key string) float64 {
-					s := openSession() 
-					if _, ok := s.Values[key]; ok {
-					return s.Values[key].(float64)
-					} else {
-						return 0
-					}
-				}
-
-				func NetRemoveSessionField(key string) string {
-					s := openSessionMap()
-					delete(s,key)
-					//save here
-					keepSessionMap(s)
-					return ""
-				}
-
-				func NetRemoveSessionKey(key string) string {
-					s := openSession()
-					delete(s.Values,key)
-					//save here
-					keepSession(s)
-					return ""
-				}
-
-				func deleteSession() string {
-					os.Remove(os.TempDir() + "/session")
-					return ""
-				}
-
-				func encrypt(text []byte) ([]byte, error) {
-				    block, err := aes.NewCipher(key)
-				    if err != nil {
-				        return nil, err
-				    }
-				    b := base64.StdEncoding.EncodeToString(text)
-				    ciphertext := make([]byte, aes.BlockSize+len(b))
-				    iv := ciphertext[:aes.BlockSize]
-				    if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-				        return nil, err
-				    }
-				    cfb := cipher.NewCFBEncrypter(block, iv)
-				    cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
-				    return ciphertext, nil
-				}
-
-				func decrypt(text []byte) ([]byte, error) {
-				    block, err := aes.NewCipher(key)
-				    if err != nil {
-				        return nil, err
-				    }
-				    if len(text) < aes.BlockSize {
-				        return nil, errors.New("ciphertext too short")
-				    }
-				    iv := text[:aes.BlockSize]
-				    text = text[aes.BlockSize:]
-				    cfb := cipher.NewCFBDecrypter(block, iv)
-				    cfb.XORKeyStream(text, text)
-				    data, err := base64.StdEncoding.DecodeString(string(text))
-				    if err != nil {
-				        return nil, err
-				    }
-				    return data, nil
-				}
-
-
-				func openSession() session {
-				  body, err := ioutil.ReadFile(os.TempDir() + "/session")
-    				if err != nil {
-    						s := session{Values:make(map[string]interface{})}
-    						return s
-    				}
-    				var d session
-    				data,_ := decrypt(body)
-    				err = json.Unmarshal(data, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return session{}
-					}
-					return d
-				}
-
-				func openSessionMap() map[string]interface{} {
-				  body, err := ioutil.ReadFile(os.TempDir() + "/session")
-    				if err != nil {
-    						s := make(map[string]interface{})
-    						return s
-    				}
-    				var d interface{}
-    				data,_ := decrypt(body)
-    				err = json.Unmarshal(data, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return make(map[string]interface{})
-					}
-					return d.(map[string]interface{})
-				}
-
-			
-
-				
-				func keepSession(s session){
-				
-					data,er := encrypt([]byte(mResponse(s)))
-					if er != nil {
-						log.Println(er)
-						return
-					}
-					err := ioutil.WriteFile(os.TempDir() + "/session", data,0644)
-					if err != nil {
-						log.Println(err)
-					}
-				}
-
-					func keepSessionMap(s interface{}){
-					log.Println(mResponse(s))
-					data,er := encrypt([]byte(mResponse(s)))
-					if er != nil {
-						log.Println(er)
-						return
-					}
-					err := ioutil.WriteFile(os.TempDir() + "/session", data,0644)
-					if err != nil {
-						log.Println(err)
-					}
-				}
-
-
-				func renderTemplate(tmpl string, f*page) []byte {
-				   filename :=  tmpl  + ".tmpl"
-				   body, err := Asset(filename)
-				   outp := new(bytes.Buffer)
-				    if err != nil {
-				       log.Print(err)
-				    } else {
-				    t := template.New("PageWrapper")
-				    t = t.Funcs(` + netMa + `)
-				      t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
-				   
-				    erro := t.Execute(outp, f)
-				    if erro != nil {
-				    log.Print(erro)
-				    return nil
-				    } 
-
-				   return outp.Bytes()
-
-				    
-				    }
-				    return outp.Bytes()
-				}
-
-				func loadPage(title string) (*page,error) {
-				    filename :=  "web" + title + ".tmpl"
-				    if title == "/" {
-				    	filename = "web/index.tmpl"
-				    	body, err := Asset(filename)
-				    	if err != nil {
-				    		filename = "web/index.html"
-				    		body , err = Asset(filename)
-				    	}
-
-				    	if err == nil {
-				    		return  &page{ Body: body,IsResource: !strings.Contains(filename, ".tmpl")}, nil
-				    	} else return nil,err
-				    }
-				    body, err := Asset(filename)
-				    if err != nil {
-				      filename = "web" + title + ".html"
-				      if title == "/" {
-				    	filename = "web/index.html"
-				    	}
-				      body, err = Asset(filename)
-				      if err != nil {
-				         filename = "web" + title
-				         body, err = Asset(filename)
-				         if err != nil {
-				            return nil, err
-				         } else {
-				          if strings.Contains(title, ".tmpl") || title == "/" {
-				              return nil,nil
-				          }
-				          return &page{ Body: body,IsResource: true}, nil
-				         }
-				      } else {
-				         return &page{Body: body,IsResource: true}, nil
-				      }
-				    } 
-				    //load custom struts
-				    return &page{Title: title, Body: body,IsResource:false}, nil
-				}
-				func apiAttempt(path string, method string,bod []byte,layer Flow) ([]byte,bool) {
-				//	session, er := store.Get(r, "session-")
-					response := ""
-					session := openSession()
-					callmet := false
-					var f interface{}
-					if bod != nil {
-					_ = json.Unmarshal(bod, &f)
-					}
-
-					` + apiraw + `
-				
-
-					//++api-space
-
-					if callmet {
-						keepSession(session)
-						
-						if response != "" {
-							
-							return []byte(response),true
-						}
-					
-					}
-					return []byte(""),false
-				} 
-
-
-			
-				func mResponse(v interface{}) string {
-					data,_ := json.Marshal(&v)
-					return string(data)
-				}
-				
-			
-
-			
-				func BytesToString(b []byte) string {
-				    bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-				    sh := reflect.StringHeader{bh.Data, bh.Len}
-				    return *(*string)(unsafe.Pointer(&sh))
-				}
-				func equalz(args ...interface{}) bool {
-		    	    if args[0] == args[1] {
-		        	return true;
-				    }
-				    return false;
-				 }
-				 func nequalz(args ...interface{}) bool {
-				    if args[0] != args[1] {
-				        return true;
-				    }
-				    return false;
-				 }
-
-				 func netlt(x,v float64) bool {
-				    if x < v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 func netgt(x,v float64) bool {
-				    if x > v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 func netlte(x,v float64) bool {
-				    if x <= v {
-				        return true;
-				    }
-				    return false;
-				 }
-				 func netgte(x,v float64) bool {
-				    if x >= v {
-				        return true;
-				    }
-				    return false;
-				 }
-				`
-		for _, imp := range template.Variables {
-			local_string += `
-						var ` + imp.Name + ` ` + imp.Type
-		}
-		if template.Init_Func != "" {
-			local_string += `
-			func init(){
-				` + template.Init_Func + `
-			}`
+		for mI, mM := range d.Methods.Methods {
+
+			mM.Method = ReplaceLegacy(mM.Method, "net_", "Net")
+			mM.Method = ReplaceLegacy(mM.Method,  currentName, newNameInternal)
+			d.Methods.Methods[mI] = mM
 
 		}
 
-		//Lets Do structs
-		for _, imp := range template.Header.Structs {
-			if !contains(arch.objects, imp.Name) {
-				log.Println("Processing Struct : " + imp.Name)
-				arch.objects = append(arch.objects, imp.Name)
-				local_string += `
-			type ` + imp.Name + ` struct {`
-				local_string += imp.Attributes
-				local_string += `
-			}`
+		
 
-				local_string += `
-			func Netis` + imp.Name + ` (arg interface{}) ` + imp.Name + ` {`
-				local_string += `
-				return arg.(` + imp.Name + `)
-			}`
-			}
+		d.Main = ReplaceLegacy(d.Main, "net_", "Net")
+		d.Main = ReplaceLegacy(d.Main, currentName, newName)
+
+		d.Shutdown = ReplaceLegacy(d.Shutdown, "net_", "Net")
+		d.Shutdown = ReplaceLegacy(d.Shutdown, currentName, newName)
+
+
+
+	}
+
+	for i, m := range d.Methods.Methods {
+		d.Methods.Methods[i].Name = strings.Title(m.Name) 
+	}
+
+
+	for i,g := range d.Variables {
+
+		g.ExplicitName = strings.TrimSpace(strings.Split(g.Name,"=")[0])
+
+
+
+		newName := fmt.Sprintf("globals.%s", strings.Title(g.ExplicitName) )
+		currentName := fmt.Sprintf("%s", g.ExplicitName)
+
+
+		for mE, e := range d.Endpoints.Endpoints {
+
+			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
+			d.Endpoints.Endpoints[mE] = e
+
 		}
 
-		for _, imp := range template.Header.Objects {
-			local_string += `
-			type ` + imp.Name + ` ` + imp.Templ
+		for mI, mM := range d.Methods.Methods {
+
+			mM.Method = ReplaceLegacy(mM.Method,  currentName, newName)
+			d.Methods.Methods[mI] = mM
+
 		}
 
-		//Create an object map
-		for _, imp := range template.Header.Objects {
-			//struct return and function
-			log.Println("∑ Processing object :" + imp.Name)
-			if !contains(available_methods, imp.Name) {
-				//addcontructor
-				available_methods = append(available_methods, imp.Name)
-				int_methods = append(int_methods, imp.Name)
-				local_string += `
-				func  Net` + imp.Name + `(args ...interface{}) (d ` + imp.Templ + `){
-					if len(args) > 0 {
-					jso := args[0].(string)
-					var jsonBlob = []byte(jso)
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return
-					}
-					return
-					} else {
-						d = ` + imp.Templ + `{} 
-						return
-					}
-				}`
+		
 
-			}
+		d.Main = ReplaceLegacy(d.Main, currentName, newName)
+		d.Shutdown = ReplaceLegacy(d.Shutdown, currentName, newName)
+		d.Variables[i].Name = strings.Title(g.Name)
 
-			delegateMethods := strings.Split(imp.Methods, "\n")
-
-			for _, im := range delegateMethods {
-
-				if stripSpaces(im) != "" {
-					log.Println(imp.Name + "->" + im)
-					function_map := strings.Split(im, ")")
-
-					if !contains(int_mappings, function_map[0]+imp.Templ) {
-						int_mappings = append(int_mappings, function_map[0]+imp.Templ)
-						funcsp := strings.Split(function_map[0], "(")
-						meth := template.findMethod(stripSpaces(funcsp[0]))
-
-						//process limits and keep local deritives
-						if meth.Autoface == "" || meth.Autoface == "true" {
-
-							/*
-
-							 */
-							procc_funcs := true
-							log.Println()
-
-							if meth.Limit != "" {
-								if !contains(strings.Split(meth.Limit, ","), imp.Name) {
-									procc_funcs = false
-								}
-							}
-
-							if contains(api_methods, meth.Name) {
-								procc_funcs = false
-							}
-
-							objectName := meth.Object
-							if objectName == "" {
-								objectName = "object"
-							}
-							if procc_funcs {
-								if !contains(int_methods, stripSpaces(funcsp[0])) && meth.Name != "000" {
-									int_methods = append(int_methods, stripSpaces(funcsp[0]))
-								}
-								local_string += `
-					  	func  Net` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1]+`, `+objectName+` `+imp.Templ, ",") + `) ` + stripSpaces(function_map[1])
-								if stripSpaces(function_map[1]) == "" {
-									local_string += ` string`
-								}
-
-								local_string += ` {
-									` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
-
-								if stripSpaces(function_map[1]) == "" {
-									local_string += ` 
-								return ""
-							`
-								}
-								local_string += ` 
-						}`
-
-								if meth.Keeplocal == "false" || meth.Keeplocal == "" {
-									local_string += `
-						func (` + objectName + ` ` + imp.Templ + `) ` + stripSpaces(funcsp[0]) + `(` + strings.Trim(funcsp[1], ",") + `) ` + stripSpaces(function_map[1])
-
-									local_string += ` {
-							` + strings.Replace(meth.Method, `&#38;`, `&`, -1)
-
-									local_string += `
-						}`
-								}
-							}
-						}
-
-					}
-				}
-			}
-
-			//create Unused methods methods
-			log.Println(int_methods)
-			for _, imp := range available_methods {
-				if !contains(int_methods, imp) && !contains(api_methods, imp) {
-					log.Println("Processing : " + imp)
-					meth := template.findMethod(imp)
-					addedit := false
-					if meth.Returntype == "" {
-						meth.Returntype = "string"
-						addedit = true
-					}
-					local_string += `
-						func Net` + meth.Name + `(args ...interface{}) ` + meth.Returntype + ` {
-							`
-					for k, nam := range strings.Split(meth.Variables, ",") {
-						if nam != "" {
-							local_string += nam + ` := ` + `args[` + strconv.Itoa(k) + `]
-								`
-						}
-					}
-					local_string += strings.Replace(meth.Method, `&#38;`, `&`, -1)
-					if addedit {
-						local_string += `
-						 return ""
-						 `
-					}
-					local_string += `
-						}`
-				}
-			}
-			for _, imp := range template.Templates.Templates {
-				local_string += `
-				func  Net` + imp.Name + `(args ...interface{}) string {
-					var d ` + imp.Struct + `
-					if len(args) > 0 {
-					jso := args[0].(string)
-					var jsonBlob = []byte(jso)
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return ""
-					}
-					} else {
-						d = ` + imp.Struct + `{}
-					}
-
-					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
-    				body, er := Asset(filename)
-    				if er != nil {
-    					return ""
-    				}
-    				 output := new(bytes.Buffer) 
-					t := template.New("` + imp.Name + `")
-    				t = t.Funcs(` + netMa + `)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
-			
-				    erro := t.Execute(output, &d)
-				    if erro != nil {
-				    log.Println(erro)
-				    } 
-					return html.UnescapeString(output.String())
-				}`
-				local_string += `
-				func Netb` + imp.Name + `(d ` + imp.Struct + `) string {
-					return  b` + imp.Name + `(d)
-				}
-				func  b` + imp.Name + `(d ` + imp.Struct + `) string {
-					filename :=  "` + tmpl + `/` + imp.TemplateFile + `.tmpl"
-    				body, er := Asset(filename)
-    				if er != nil {
-    					return ""
-    				}
-    				 output := new(bytes.Buffer) 
-					t := template.New("` + imp.Name + `")
-    				t = t.Funcs(` + netMa + `)
-				  	t, _ = t.Parse(strings.Replace(strings.Replace(strings.Replace(BytesToString(body), "/{", "\"{",-1),"}/", "}\"",-1 ) ,"` + "`" + `", ` + "`" + `\"` + "`" + ` ,-1) )
-			
-				    erro := t.Execute(output, &d)
-				    if erro != nil {
-				    log.Println(erro)
-				    } 
-					return html.UnescapeString(output.String())
-				}`
-				local_string += `
-				func  c` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
-					if len(args) > 0 {
-					var jsonBlob = []byte(args[0].(string))
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return 
-					}
-					} else {
-						d = ` + imp.Struct + `{}
-					}
-    				return
-				}
-				func  Netc` + imp.Name + `(args ...interface{}) (d ` + imp.Struct + `) {
-					if len(args) > 0 {
-					var jsonBlob = []byte(args[0].(string))
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return 
-					}
-					} else {
-						d = ` + imp.Struct + `{}
-					}
-    				return
-				}`
-			}
-
-			//Methods have been added
-
-			log.Println("Saving file to " + r + "/" + template.Output)
-			d1 := []byte(local_string)
-			_ = ioutil.WriteFile(r+"/"+template.Output, d1, 0644)
-
+		if strings.Contains(g.Name,"=") {
+			varComponents := strings.Split(g.Name,"=")
+			d.Variables[i].Name = fmt.Sprintf("%s = %s", strings.Title(varComponents[0]), varComponents[1])
 		}
 	}
 
-	return
+
+	// handle templates
+	for _, t := range d.Templates.Templates {
+
+
+		newName := fmt.Sprintf("templates.%s(", strings.Title(t.Name) )
+		currentName := fmt.Sprintf("Netb%s(", t.Name)
+		currentName2 := fmt.Sprintf("b%s(", t.Name)
+
+		for mE, e := range d.Endpoints.Endpoints {
+
+			e.Method = ReplaceLegacy(e.Method, "net_", "Net")
+			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
+			e.Method = ReplaceLegacy(e.Method,  currentName2, newName)
+			d.Endpoints.Endpoints[mE] = e
+
+		}
+
+		for mI, mM := range d.Methods.Methods {
+
+			mM.Method = ReplaceLegacy(mM.Method, "net_", "Net")
+			mM.Method = ReplaceLegacy(mM.Method,  currentName, newName)
+			mM.Method = ReplaceLegacy(mM.Method,  currentName2, newName)
+			d.Methods.Methods[mI] = mM
+
+		}
+
+		d.Main = ReplaceLegacy(d.Main, currentName, newName)
+		d.Shutdown = ReplaceLegacy(d.Shutdown, currentName, newName)
+
+
+
+	}
+
+	// handle structs
+	for i, s := range d.Header.Structs {
+
+		original := s.Name
+		s.Name = strings.Title(s.Name)
+
+		newName := fmt.Sprintf("types.%s{", s.Name )
+		newNameArr := fmt.Sprintf(" []types.%s", s.Name )
+
+		returnName := fmt.Sprintf("types.%s", s.Name )
+
+		assertType := fmt.Sprintf("(%s", s.Name )
+
+		newAssertType := fmt.Sprintf("(types.%s", s.Name)
+
+		currentName := fmt.Sprintf("%s{", original)
+		currentNameArr := fmt.Sprintf("[]%s", original)
+
+		d.Header.Structs[i] = s
+
+		for mE, e := range d.Endpoints.Endpoints {
+
+			e.Method = ReplaceLegacy(e.Method, "net_", "Net")
+			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
+			e.Method = ReplaceLegacy(e.Method,  currentNameArr, newNameArr)
+
+			e.Method = ReplaceLegacy(e.Method,  assertType, newAssertType)
+
+			d.Endpoints.Endpoints[mE] = e
+
+		}
+
+		for mI, mM := range d.Methods.Methods {
+
+			mM.Method = ReplaceLegacy(mM.Method, "net_", "Net")
+			mM.Method = ReplaceLegacy(mM.Method,  assertType, newAssertType)
+			mM.Method = ReplaceLegacy(mM.Method,  currentName, newName)
+			mM.Method = ReplaceLegacy(mM.Method,  currentNameArr, newNameArr)
+		
+			mM.Returntype = ReplaceLegacy(mM.Returntype, s.Name, returnName)
+
+			d.Methods.Methods[mI] = mM
+
+		}
+
+
+
+		d.Main = ReplaceLegacy(d.Main, assertType, newAssertType)
+
+		d.Main = ReplaceLegacy(d.Main, currentName, newName)
+
+		d.Shutdown = ReplaceLegacy(d.Shutdown, assertType, newAssertType)
+		d.Shutdown = ReplaceLegacy(d.Shutdown, currentName, newName)
+
+	}
+
+
+}
+
+func ReplaceLegacy(source, target, newExpr string) string {
+	return strings.Replace(source, target, newExpr, -1)
 }
 
 func RunFile(root string, file string) {
@@ -3614,6 +3184,7 @@ func EscpaseGXML(data []byte) []byte {
 
 func LoadGos(pathraw string) (*gos, error) {
 	path := strings.Replace(pathraw, "\\", "/", -1)
+
 	log.Println("🎁 loading " + path)
 	v := gos{}
 	body, err := ioutil.ReadFile(path)
@@ -3634,7 +3205,8 @@ func LoadGos(pathraw string) (*gos, error) {
 
 	if v.FolderRoot == "" {
 		ab := strings.Split(path, "/")
-		v.FolderRoot = strings.Join(ab[:len(ab)-1], "/") + "/"
+		pkgPath := strings.Join(ab[:len(ab)-1], "/")
+		v.FolderRoot = pkgPath + "/"
 	}
 	//process mergs
 	for _, imp := range v.RootImports {
@@ -3686,6 +3258,8 @@ func LoadGos(pathraw string) (*gos, error) {
 		}
 		//
 	}
+
+	v.ensureBackwardsCompatible()
 
 	return &v, nil
 }

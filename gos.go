@@ -1667,13 +1667,11 @@ func JBuild(path string, out string) {
 	log.Println("🤔 Refreshing")
 	log.Println("📦 Invoking go-bindata")
 
-	if !strings.Contains(Type, "webapp") {
 
-		core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
 
-	} else {
-		core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
-	}
+	generateAssetsProd(webroot, templateroot)
+
+
 
 	chn := make(chan int)
 	go core.DoSpin(chn)
@@ -1681,6 +1679,18 @@ func JBuild(path string, out string) {
 	chn <- 1
 	close(chn)
 	JBuild(path, out)
+}
+
+func generateAssetsProd(webroot, templateroot string) {
+	os.MkdirAll("./api/assets" , 0700)
+	core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=assets %s/... %s/...", webroot, templateroot))
+	os.Rename("bindata.go", "./api/assets/bindata.go")
+}
+
+func generateAssetsDebug(webroot, templateroot string) {
+	os.MkdirAll("./api/assets" , 0700)
+	core.RunCmd(fmt.Sprintf("go-bindata -debug -pkg=assets %s/... %s/...", webroot, templateroot))
+	os.Rename("bindata.go", "./api/assets/bindata.go")
 }
 
 func Build(path string) {
@@ -1712,21 +1722,10 @@ func Build(path string) {
 	if !strings.Contains(os.Args[1], "export") {
 		log.Println("📦 Invoking go-bindata ")
 
-		if !strings.Contains(Type, "webapp") {
-			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
-
-		} else {
-			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
-		}
+		generateAssetsDebug(webroot, templateroot)
 	} else {
 
-		if !strings.Contains(Type, "webapp") {
-
-			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
-
-		} else {
-			core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy %s/... %s/...", webroot, templateroot))
-		}
+		generateAssetsProd(webroot, templateroot)
 	}
 	appout = coreTemplate.Output
 	//log.Println(coreTemplate.Methods.Methods)
@@ -1904,13 +1903,7 @@ func Build(path string) {
 			log.Println("🤔 Refreshing")
 			log.Println("📦 Invoking go-bindata")
 
-			if !strings.Contains(Type, "webapp") {
-
-				core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy  -pkg=%s %s/... %s/...", pk[len(pk)-1], webroot, templateroot))
-
-			} else {
-				core.RunCmd(fmt.Sprintf("go-bindata -nomemcopy -debug %s/... %s/...", webroot, templateroot))
-			}
+			generateAssetsDebug(webroot, templateroot)
 			chn := make(chan int)
 			go core.DoSpin(chn)
 			core.RunCmd("gos --t")
@@ -2073,6 +2066,7 @@ func main() {
 			core.RunCmd("go get github.com/opentracing/basictracer-go")
 			core.RunCmd("go get github.com/cheikhshift/db")
 			core.RunCmd("go get gopkg.in/ldap.v2")
+			core.RunCmd("go get golang.org/x/tools/cmd/goimports")
 
 			//core.RunCmd("")
 			//log.Println("ChDir " + os.ExpandEnv("$GOPATH") + "/src/github.com/kronenthaler/mod-pbxproj")
