@@ -2342,6 +2342,8 @@ functions:
 				
 				port = template.Port
 			}
+
+			if _, err := os.Stat("Dockerfile"); os.IsNotExist(err) {
 			dockerfile := fmt.Sprintf(`FROM golang:1.8
 ENV WEBAPP /go/src/server
 RUN mkdir -p ${WEBAPP}
@@ -2355,6 +2357,7 @@ CMD server
 `, template.Port, port)
 
 			_ = ioutil.WriteFile(fmt.Sprintf("%s%s", r, "Dockerfile"), []byte(dockerfile), 0700)
+			}
 			log.Println("🔗 Saving file to ", fmt.Sprintf("%s%s%s", r, "/", template.Output))
 		
 
