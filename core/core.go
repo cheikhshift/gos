@@ -201,6 +201,7 @@ type Endpoint struct {
 	Testi string `xml:"testi,attr"`
 	Testo string `xml:"testo,attr"`
 	Id    string `xml:"id,attr"`
+	Comment    xml.Comment `xml:",comment"`
 }
 
 type Package struct {

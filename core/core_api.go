@@ -355,6 +355,36 @@ func NewLenChars(length int, chars []byte) string {
 	}
 }
 
+func GetEndpointComment(e Endpoint) Endpoint {
+	commentslice := strings.Split(string(e.Comment), "\n")
+	for i, val := range commentslice {
+			commentslice[i] = strings.TrimSpace(val)
+	}
+	if len(commentslice) > 0 {
+		e.Comment = xml.Comment([]byte(fmt.Sprintf(`
+		// %s`, strings.Join(commentslice, `
+		// `))))
+
+		splitAtComment := strings.Split(e.Method, "-->") //at end of comment
+		e.Method = splitAtComment[len(splitAtComment)-1]
+	}
+	return e
+}
+
+func GetTemplateComment(e Template) Template {
+	commentslice := strings.Split(string(e.Comment), "\n")
+	for i, val := range commentslice {
+			commentslice[i] = strings.TrimSpace(val)
+	}
+	if len(commentslice) > 0 {
+		e.Comment = xml.Comment([]byte(fmt.Sprintf(`
+		// %s`, strings.Join(commentslice, `
+		// `))))
+	}
+
+	return e
+}
+
 func Process(template *gos, r string, web string, tmpl string) (local_string string) {
 	// r = GOHOME + GoS Project
 	arch := gosArch{}
@@ -561,6 +591,8 @@ import (
 		apiraw := ``
 		for _, imp := range template.Endpoints.Endpoints {
 			imp.Method = strings.Replace(imp.Method, `&lt;`, `<`, -1)
+			imp = GetEndpointComment(imp)
+
 			est := ``
 			if !template.Prod && template.Type != "faas" {
 				est = fmt.Sprintf(`	
@@ -635,11 +667,11 @@ import (
 				import "%s/api/globals"
 
 
-
+				%s
 				func %s(w http.ResponseWriter, r *http.Request ,session *sessions.Session%s (response string, callmet bool){
 					%s
 					return
-				}`, appname,appname,appname,appname, appname, tlc,  TraceinFunc, est)
+				}`, appname,appname,appname,appname, appname, imp.Comment,tlc,  TraceinFunc, est)
 
 				ioutil.WriteFile(fmt.Sprintf("./api/handlers/middleware_%s.go", tlc), []byte(est), 0700 )
 
@@ -658,6 +690,8 @@ import (
 		}`
 		for _, imp := range template.Endpoints.Endpoints {
 			est := ``
+			imp = GetEndpointComment(imp)
+
 			if !template.Prod && template.Type != "faas" {
 				est = fmt.Sprintf(`	
 					lastLine := ""
@@ -738,13 +772,14 @@ import (
 				import types "%s/types"
 				import "%s/api/globals"
 
+				%s
 				func %s(w http.ResponseWriter, r *http.Request, session *sessions.Session%s (response string,callmet bool){
 
 					%s
 
 					callmet = true
 					return
-				}`, appname,appname,appname,appname, appname, tlc, TraceinFunc,est)
+				}`, appname,appname,appname,appname, appname, imp.Comment,tlc, TraceinFunc,est)
 
 				ioutil.WriteFile(fmt.Sprintf("./api/handlers/rest_%s.go", tlc), []byte(est), 0700 )
 			}
@@ -1321,7 +1356,8 @@ import (
 				import "%s/api/assets"
 				import gosweb "github.com/cheikhshift/gos/web"
 
-				// Render HTML of template 
+				%s
+				// Renders HTML of template 
 				// %s with struct %s
 				func %s(d %s) string {
 					return  Netb%s(d)
@@ -1452,12 +1488,14 @@ import (
 				
 
 			
-				`,  appname, appname , imp.Name, imp.Struct,strings.Title(imp.Name), imp.Struct, imp.Name ,imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+				`,  appname, appname, commentstring , imp.Name, imp.Struct,strings.Title(imp.Name), imp.Struct, imp.Name ,imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
 				
 				
 
 				if  template.Type == "package" {
-					templateImport +=  fmt.Sprintf(`func (pkg PKG) %s(args ...interface{}) string {
+					templateImport +=  fmt.Sprintf(`
+				%s
+				func (pkg PKG) %s(args ...interface{}) string {
 					var result string
 
 					if len(args) > 0 {
@@ -1466,7 +1504,7 @@ import (
 						result = templates.Net%s()
 					}
     				return result
-				}`, imp.Name, imp.Name, imp.Struct, imp.Name)
+				}`, commentstring, imp.Name, imp.Name, imp.Struct, imp.Name)
 
 				}
 
