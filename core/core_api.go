@@ -596,7 +596,7 @@ import (
 			est := ``
 			if !template.Prod && template.Type != "faas" {
 				est = fmt.Sprintf(`	
-					lastLine := ""
+			
 						var sp opentracing.Span
 					    opName := fmt.Sprintf(" [%s]%%s %%s", r.Method,r.URL.Path)
 					  
@@ -611,9 +611,9 @@ import (
 					 	defer sp.Finish()
 					defer func() {
 					       if n := recover(); n != nil {
-					          log.Println("Web request (%s) failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
+					          log.Println("Web request (%s) failed")
 					          log.Println("Reason : ",n)
-					         %s
+					          %s
 					          span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%%s request at %%s, reason : %%s ", r.Method, r.URL.Path, n) )
 					         	 
@@ -634,14 +634,9 @@ import (
 
 								 callmet = true
 					        }
-						}()`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage)
-				setv := strings.Split(imp.Method, "\n")
-				for _, line := range setv {
-					line = strings.TrimSpace(line)
-					if len(line) > 0 {
-						est += fmt.Sprintf("\nlastLine =  `%s`\n%s", line, line)
-					}
-				}
+						}()`, imp.Id, imp.Path, TraceOpt, template.ErrorPage)
+				
+			
 
 			} else {
 				est = imp.Method
@@ -694,7 +689,7 @@ import (
 
 			if !template.Prod && template.Type != "faas" {
 				est = fmt.Sprintf(`	
-					lastLine := ""
+	
 					var sp opentracing.Span
 					    opName := fmt.Sprintf(" [%s]%%s %%s", r.Method,r.URL.Path)
 					  
@@ -709,8 +704,8 @@ import (
 					  defer sp.Finish()
 					defer func() {
 					       if n := recover(); n != nil {
-					          log.Println("Web request (%s) failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s :", strings.TrimSpace(lastLine))
-					          log.Println("Reason : ",n)
+					          log.Println("Web request (%s) failed ")
+					          log.Println("Reason : ", n)
 					          %s
 					       	 span.SetTag("error", true)
             span.LogEvent(fmt.Sprintf("%%s request at %%s, reason : %%s ", r.Method, r.URL.Path, n) )
@@ -735,14 +730,8 @@ import (
 					        
 					        }
 						}()
-						`, imp.Id, imp.Path, template.Name, template.Name, TraceOpt, template.ErrorPage, TraceParam)
-				setv := strings.Split(imp.Method, "\n")
-				for _, line := range setv {
-					line = strings.TrimSpace(line)
-					if len(line) > 0 {
-						est += fmt.Sprintf("\nlastLine =  `%s`\n%s", line, line)
-					}
-				}
+						`, imp.Id, imp.Path, TraceOpt, template.ErrorPage, TraceParam)
+			
 
 			} else {
 				est = strings.Replace(imp.Method, `&#38;`, `&`, -1)
@@ -1207,6 +1196,7 @@ import (
 					meth.Method = splitAtComment[len(splitAtComment)-1]
 				}
 				addedit := false
+
 				if meth.Returntype == "" {
 					meth.Returntype = "string"
 					addedit = true
@@ -1227,31 +1217,29 @@ import (
 					}
 				}
 				meth.Method = strings.Replace(meth.Method, "&lt;", "<", -1)
+				meth.Method = strings.Replace(meth.Method, `&#38;`, `&`, -1)
 				est := ``
 				if !template.Prod {
 					est = fmt.Sprintf(`	
-							lastLine := ""
+	
 
 							defer func() {
 							       if n := recover(); n != nil {
-							          log.Println("Pipeline failed at line :",gosweb.GetLine("%s", lastLine),"Of file:%s:", strings.TrimSpace(lastLine))
+							          log.Println("Method %s failed")
 							          log.Println("Reason : ",n)
 
 							        }
-								}()`, template.Name, template.Name)
-					setv := strings.Split(meth.Method, "\n")
-					for _, line := range setv {
-						line = strings.TrimSpace(line)
-						if len(line) > 0 {
-							est += fmt.Sprintf("\nlastLine = `%s`\n%s", line, line)
-						}
-					}
+								}()
 
-				} else {
-					est = strings.Replace(meth.Method, `&#38;`, `&`, -1)
+							`, meth.Name)
+				
 				}
+
+				est += meth.Method
+				
+				
 				methodsString += est
-				if addedit {
+				if addedit  {
 					methodsString += `
 						 return ""
 						 `
