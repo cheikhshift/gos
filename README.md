@@ -11,6 +11,7 @@
 - [x] Build and use ready-for-use GXML extensions.
 - [x] Live reload on project source file updates.
 - [x] Open tracing on local port `8700`.
+- [x] Generate tests of web server abstractions.
 
 ## Documentation here :
 [Docs](http://gophersauce.com)
