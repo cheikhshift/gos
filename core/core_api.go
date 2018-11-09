@@ -707,7 +707,10 @@ import (
 					func Test%s(t *testing.T){
 
 						t.Error("Test for middleware handler %s not implemented!!")
-					}`, tlc, tlc)
+					}
+
+					
+					`, tlc, tlc)
 				}
 
 				ioutil.WriteFile(fmt.Sprintf("./api/handlers/middleware_%s.go", tlc), []byte(est), 0700 )
@@ -840,7 +843,10 @@ import (
 					func Test%s(t *testing.T){
 
 						t.Error("Test for handler %s not implemented!!")
-					}`, tlc, tlc)
+					}
+
+					
+					`, tlc, tlc)
 				}
 			}
 
@@ -1009,7 +1015,10 @@ import (
 					func Test%s(t *testing.T){
 
 						t.Error("Test for data type %s not implemented!!")
-					}`, imp.Name, imp.Name)
+					}
+
+					
+					`, imp.Name, imp.Name)
 				}
 
 			}
@@ -1395,7 +1404,10 @@ import (
 						func Test%s(t *testing.T){
 
 							t.Error("Test for method %s not implemented!!")
-						}`, meth.Name, meth.Name)
+						}
+
+						
+						`, meth.Name, meth.Name)
 					}
 
 					ioutil.WriteFile(fmt.Sprintf("./api/methods/method_%s.go", meth.Name ), []byte(methodsString), 0700)
@@ -1621,7 +1633,10 @@ import (
 					func Test%s(t *testing.T){
 
 							t.Error("Test for template %s not implemented!!")
-					}`, imp.Name, imp.Name)
+					}
+
+					
+					`, imp.Name, imp.Name)
 				}
 
 				if  template.Type == "package" {
