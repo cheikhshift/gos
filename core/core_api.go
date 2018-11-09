@@ -704,7 +704,7 @@ import (
 
 				if !strings.Contains(handlerInternalTests, tlc) {
 					handlerInternalTests += fmt.Sprintf(`
-					func Test%s(t *testing.T){
+					func test%s(t *testing.T){
 
 						t.Error("Test for middleware handler %s not implemented!!")
 					}
@@ -1078,7 +1078,7 @@ import (
 						var %s %s`, imp.Name, imp.Type)
 
 			globalName := strings.TrimSpace( strings.Split(imp.Name, "=")[0] )
-			
+
 			if !strings.Contains(globalTests,globalName) {
 
 
