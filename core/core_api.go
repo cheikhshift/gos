@@ -2435,20 +2435,23 @@ functions:
 					h := &http.Server{Addr: port}
 
 					go func(){
-						%s
+						<-stop
+						log.Println("\nShutting down the server...")
+						err := h.Close()
+
+						if err != nil {
+							panic(err)
+						}
+						
+						Shutdown()
+						log.Println("Server gracefully stopped")
 					}()
 
-					<-stop
+					%s
 
-					log.Println("\nShutting down the server...")
+					
 
-					ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-
-					h.Shutdown(ctx)
-
-					Shutdown()
-
-					log.Println("Server gracefully stopped")
+					
 
 					}
 
