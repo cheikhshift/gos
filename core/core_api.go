@@ -1521,147 +1521,55 @@ import (
 				import "%s/api/assets"
 				import gosweb "github.com/cheikhshift/gos/web"
 
+				// Template path
+				var  templateID%s = "%s/%s.tmpl"
+
 				%s
 				// Renders HTML of template 
 				// %s with struct %s
 				func %s(d %s) string {
 					return  netb%s(d)
 				}
-
-				// recovery function used to log a 
-				// panic.
-				func templateFN%s(localid string, d interface{}) {
-					    if n := recover(); n != nil {
-					           	   color.Red(fmt.Sprintf("Error loading template in path (%s) : %%s" , localid ) )
-					           	// log.Println(n)
-					           		DebugTemplatePath(localid, d)	
-						}
-				}
-
-				var  templateID%s = "%s/%s.tmpl"
+				
 
 				// Render template with JSON string as
 				// data.
 				func  net%s(args ...interface{}) string {
 					
-					localid := templateID%s
-					var d *%s
-					defer templateFN%s(localid, d)	
-					if len(args) > 0 {
-					jso := args[0].(string)
-					var jsonBlob = []byte(jso)
-					err := json.Unmarshal(jsonBlob, d)
-					if err != nil {
-						return err.Error()
-					}
-					} else {
-						d = &%s{}
-					}
-
-					
-    				
-    				 output := new(bytes.Buffer) 
- 	
-    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
-
-    				 	body, er := assets.Asset(localid)
-		    				if er != nil {
-		    					return ""
-		    			}
-		    			var localtemplate =  template.New("%s")	  			
-		    			localtemplate.Funcs(%s)
-		    			var tmpstr = string(body)
-				  		localtemplate.Parse(tmpstr)
-	    				body = nil
-	    				templateCache.Put(localid, localtemplate )
-    				 }
-					
-
-					erro := templateCache.JGet(localid).Execute(output, d)
-				    if erro != nil {
-				   	color.Red(fmt.Sprintf("Error processing template %%s" , localid) )
-				  	 DebugTemplatePath(localid, d)	
-				    } 
-				    var outps = output.String()
-				    var outpescaped = html.UnescapeString(outps)
-				    d = nil
-				    output.Reset()
-				    output = nil
-				    args = nil
-					return outpescaped
+					// Get data from JSON		
+					var d = netc%s(args...)
+					return netb%s(d)
 					
 				}
 
-				// alias of template render function.
-				func b%s(d %s) string {
-						return netb%s(d)
-				}
-
-				%s
 
 				// template render function
 				func  netb%s(d %s) string {
-					localid := templateID%s
-					defer templateFN%s(localid, d)
-    				 output := new(bytes.Buffer) 
-				  	
-    				 if _, ok := templateCache.Get(localid); !ok || !Prod {
-
-    				 	body, er := assets.Asset(localid)
-		    				if er != nil {
-		    					return ""
-		    			}
-		    			var localtemplate =  template.New("%s")	  			
-		    			localtemplate.Funcs(%s)
-		    			var tmpstr = string(body)
-				  		localtemplate.Parse(tmpstr)
-	    				body = nil
-	    				templateCache.Put(localid, localtemplate )
-    				 }
-					
-
-					erro := templateCache.JGet(localid).Execute(output, d)
-				    if erro != nil {
-				    log.Println(erro)
-				    } 
-					var outps = output.String()
-				    var outpescaped = html.UnescapeString(outps)
-				    d = %s{}
-				    output.Reset()
-				    output = nil
-					return outpescaped
+				    localid := templateID%s
+				    name := "%s"
+					defer templateRecovery(name,localid, &d)
+    				
+    				// render and return template result
+					return executeTemplate(name , localid ,&d)
 				}
 
 				// Unmarshal a json string to the template's struct
 				// type
 				func  netc%s(args ...interface{}) (d %s) {
-					if len(args) > 0 {
-					var jsonBlob = []byte(args[0].(string))
-					err := json.Unmarshal(jsonBlob, &d)
-					if err != nil {
-						log.Println("error:", err)
-						return 
-					}
-					} else {
-						d = %s{}
-					}
-    				return
-				}
-
-				// Create a struct variable of template.
-				func  c%s(args ...interface{}) (d %s) {
-					if len(args) > 0 {
-						d = netc%s(args[0])
-					} else {
-						d = netc%s()
-					}
-    				return
-				}
-
 				
-
-			
-				`,  appname, appname, commentstring , imp.Name, imp.Struct,strings.Title(imp.Name), imp.Struct, imp.Name ,imp.Name, imp.TemplateFile, imp.Name, tmpl, imp.TemplateFile, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Struct, imp.Name, netMa, imp.Name, imp.Struct, imp.Name, commentstring, imp.Name, imp.Struct, imp.Name, imp.Name, imp.Name, netMa, imp.Struct, imp.Name, imp.Struct, imp.Struct, imp.Name, imp.Struct, imp.Name, imp.Name)
+					if len(args) > 0 {
+						jsonData := args[0].(string)
+						err := parseJSON(jsonData, &d)
+						if err != nil {
+							log.Println("error:", err)
+							return 
+						}
+					}
+					
+    				return
+				}
+	
+				`,  appname, appname, imp.Name, tmpl, imp.TemplateFile,commentstring , imp.Name, imp.Struct,strings.Title(imp.Name), imp.Struct, imp.Name, imp.Name, imp.Name, imp.Name, imp.Name, imp.Struct, imp.Name, imp.Name,imp.Name ,imp.Struct)
 				
 				if !strings.Contains(templateTests, imp.Name) {
 					templateTests += fmt.Sprintf(`
@@ -1699,6 +1607,73 @@ import (
 		}
 
 		ioutil.WriteFile("./api/templates/templates_test.go", []byte(templateTests), 0700)
+
+		templateUtils := fmt.Sprintf(`// File generated by Gopher Sauce
+			// DO NOT EDIT!!
+			package templates
+
+			import "%s/api/assets"
+
+			// Unmarshal JSON to specified pointer interface.
+			func parseJSON(str string, v interface{}) error {
+				var jsonBlob = []byte(str)
+				err := json.Unmarshal(jsonBlob, v)
+				if err != nil {	
+					return err
+				}
+
+				return nil
+			}
+
+
+			// Function used to inspect template on 
+			// panic.
+			func templateRecovery(name, localid string, d interface{}){
+				 if n := recover(); n != nil {
+					color.Red(fmt.Sprintf("Error loading template in path (%%s) : %%s. Reason : %%s" , name ,localid, n ) )
+					DebugTemplatePath(localid, d)	
+				}
+			}
+
+
+			// Render template.
+			// Adds template to cache if not present.
+			func executeTemplate(name, localid string, d interface{}) (result string) {
+
+				output := new(bytes.Buffer)
+
+				if _, ok := templateCache.Get(localid); !ok || !Prod {
+
+					body, err := assets.Asset(localid)
+					if err != nil {
+						log.Println(err)
+						return 
+					}
+
+					var localtemplate = template.New(name)
+					localtemplate.Funcs(TemplateFuncStore)
+					var tmpstr = string(body)
+					localtemplate.Parse(tmpstr)
+					body = nil
+					templateCache.Put(localid, localtemplate)
+				}
+
+				err := templateCache.JGet(localid).Execute(output, d)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+
+				var out = output.String()
+				result = html.UnescapeString(out)
+				output.Reset()
+				output = nil
+				return
+			}`,  appname)
+
+
+
+		ioutil.WriteFile("./api/templates/templates_abstraction.go", []byte(templateUtils), 0700)
 
 		templatesFile = fmt.Sprintf(`
 			// File generated by Gopher Sauce
@@ -1791,7 +1766,7 @@ import (
 				  
 				 } 
 				
-				   
+				  
 			
 				 %s`, appname, appname, appname, appname, appname,fmt.Sprintf(`func StoreNetfn () int {
 				 	// List of pipelines linked to each template.
