@@ -2554,12 +2554,18 @@ func (d *gos) ensureBackwardsCompatible(){
 
 		for mE, e := range d.Endpoints.Endpoints {
 
+			// revert new statements to older type
+			e.Method = ReplaceLegacy(e.Method, newName, currentName)
+
 			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
 			d.Endpoints.Endpoints[mE] = e
 
 		}
 
 		for mI, mM := range d.Methods.Methods {
+
+			// revert new statements to older type
+			mM.Method = ReplaceLegacy(mM.Method, newName, currentName)
 
 			mM.Method = ReplaceLegacy(mM.Method,  currentName, newName)
 			d.Methods.Methods[mI] = mM
@@ -2635,6 +2641,11 @@ func (d *gos) ensureBackwardsCompatible(){
 		for mE, e := range d.Endpoints.Endpoints {
 
 			e.Method = ReplaceLegacy(e.Method, "net_", "net")
+
+			// revert new statements to older type
+			e.Method = ReplaceLegacy(e.Method,  newName, currentName)
+			e.Method = ReplaceLegacy(e.Method, newNameArr, currentNameArr)
+
 			e.Method = ReplaceLegacy(e.Method,  currentName, newName)
 			e.Method = ReplaceLegacy(e.Method,  currentNameArr, newNameArr)
 
@@ -2647,6 +2658,11 @@ func (d *gos) ensureBackwardsCompatible(){
 		for mI, mM := range d.Methods.Methods {
 
 			mM.Method = ReplaceLegacy(mM.Method, "net_", "net")
+			
+			// revert new statements to older type
+			mM.Method = ReplaceLegacy(mM.Method,  newName, currentName)
+			mM.Method = ReplaceLegacy(mM.Method, newNameArr, currentNameArr)
+
 			mM.Method = ReplaceLegacy(mM.Method,  assertType, newAssertType)
 			mM.Method = ReplaceLegacy(mM.Method,  currentName, newName)
 			mM.Method = ReplaceLegacy(mM.Method,  currentNameArr, newNameArr)
