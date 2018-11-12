@@ -4,17 +4,13 @@
 # Go server overview :
 
 - [x] Template engine.
-- [x] Applications are generated with built-in debuggers.
-- [x] Simple web service development.
-- [x] Generate tests of your application.
-- [x] Choose from the 50,000+ go packages online to build your application.
-- [x] Build and use ready-for-use GXML extensions.
+- [x] Built in request tracer.
+- [x] web service abstractions.
 - [x] Live reload on project source file updates.
-- [x] Open tracing on local port `8700`.
 - [x] Generate tests of web server abstractions.
 
 ## Documentation here :
-[Docs](http://gophersauce.com)
+[Docs](http://gophersauce.com/docs)
 
 ## IDE here :
 [thestrukture/IDE](https://github.com/thestrukture/IDE)
