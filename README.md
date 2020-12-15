@@ -1,3 +1,6 @@
+# Archived
+Due to the security concerns surrounding XML, this package is now archived. 
+
 
 [![GoDoc](https://godoc.org/github.com/cheikhshift/gos?status.svg)](https://godoc.org/github.com/cheikhshift/gos) [![Go Report Card](https://goreportcard.com/badge/github.com/cheikhshift/gos)](https://goreportcard.com/report/github.com/cheikhshift/gos)
 
